@@ -1,6 +1,7 @@
 from wit_world.exports import Reactor as BaseReactor
-from wit_world.imports import log
-from wit_world.imports import http_req, http_resp, http_body
+from wit_world.imports import log, http_req, http_resp, http_body
+from wit_world.imports.http_body import read, write
+from wit_world.imports.http_resp import send_downstream
 import sys
 import traceback
 import io
@@ -17,23 +18,15 @@ def print(msg):
 
 
 def do_serve(req: int, body: int) -> None:
-    print("In do_serve")
-    method = http_req.method_get(req, 24)
-    # resp = HttpResponse()
     # resp.set_status(418)
-    # body_handle = http_body.new()
-    res = http_body.read(body, 1024)
-    print(f"Look at your body: {res}")
+    request_body = read(body, 1024)
+    print(f"Look at your body: {request_body}")
 
-    # Make our body be twice as strong
-    resp_body_handle = http_body.new()
-    out = art.text2art(res.decode()).encode()
-    http_body.write(resp_body_handle, out, http_body.WriteEnd.BACK)
-    resp_handle = http_resp.new()
-    http_resp.send_downstream(resp_handle, resp_body_handle, False)
-
-    print(f"method: {method}")
-
+    response_body = http_body.new()
+    write(response_body, b"bytes!", http_body.WriteEnd.BACK)
+    
+    response = http_resp.new()
+    send_downstream(response, response_body, False)
 
 class Reactor(BaseReactor):
     def serve(self, req: int, body: int) -> None:
