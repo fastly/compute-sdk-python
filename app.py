@@ -4,6 +4,7 @@ from wit_world.imports import http_req, http_resp, http_body
 import sys
 import traceback
 import io
+import art
 
 
 def init():
@@ -26,7 +27,8 @@ def do_serve(req: int, body: int) -> None:
 
     # Make our body be twice as strong
     resp_body_handle = http_body.new()
-    http_body.write(resp_body_handle, res * 5, http_body.WriteEnd.BACK)
+    out = art.text2art(res.decode()).encode()
+    http_body.write(resp_body_handle, out, http_body.WriteEnd.BACK)
     resp_handle = http_resp.new()
     http_resp.send_downstream(resp_handle, resp_body_handle, False)
 
