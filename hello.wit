@@ -1,0 +1,4 @@
+package example:hello;
+world hello {
+  export hello: func() -> string;
+}
