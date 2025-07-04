@@ -9,8 +9,11 @@ from wit_world.imports import log, http_req, http_resp, http_body
 from wit_world.imports.http_resp import send_downstream
 
 
+# Enable a bit more debug logging from the framework.
+bottle.debug(True)
+
 app = Bottle()
-app.catchall = False  # bottle backtrace causes issues, use our own
+app.catchall = False  # bottle backtrace causes issues; use our own.
 
 
 @app.route("/hello/<name>")
@@ -29,11 +32,9 @@ def init():
     global log_ep
     log_ep = log.endpoint_get("")
 
-    # enables a bit more debug logging from the framework
-    bottle.debug(True)
-
-
-class Stderr:
+class StdErr:
+    """File-like object to receive errors and direct them to our logging endpoint"""
+    
     def write(self, data: str):
         print(f"wsgi-error: {data}")
 
@@ -42,7 +43,7 @@ class Stderr:
 
 
 def serve_wsgi_request(req, body, app):
-    """Pass a WSGI application a single request, and adapt what it hands us back
+    """Pass a WSGI application a single request, and adapt its behavior back
     to the Fastly API."""
 
     response = http_resp.new()
@@ -51,7 +52,6 @@ def serve_wsgi_request(req, body, app):
         code, _description = status.split(" ", 1)
         http_resp.status_set(response, int(code))
         for header, value in headers:
-            print(f"Header: {header}. Value: {value}.")
             http_resp.header_append(response, header.encode(), value.encode())
         return lambda x: None  # TODO: Return a real write().
 
@@ -63,11 +63,10 @@ def serve_wsgi_request(req, body, app):
         "QUERY_STRING": url.query,
         "SERVER_NAME": url.hostname,
         "SERVER_PORT": str(url.port),
-        "wsgi.errors": Stderr(),
+        "wsgi.errors": StdErr(),
     }
-    print(f"{environ}")
     for body_chunk in app(environ, start_response):
-        # TODO: this would be a good place to stream but for now we just
+        # TODO: this would be a good place to stream, but for now we just
         #       write to the buffer and send once the handler is done.
         http_body.write(response_body, body_chunk, http_body.WriteEnd.BACK)
     send_downstream(response, response_body, False)
@@ -79,19 +78,28 @@ class Reactor(BaseReactor):
         try:
             serve_wsgi_request(req, body, app)
         except Exception as e:
-            # outf = Stdout()
-            try:
-                print(f"Exception {type(e).__name__} - {e}")
-                print("--- Traceback Follows ---")
+            log_exception(e)
 
-                current_tb = e.__traceback__
-                while current_tb:
-                    frame = current_tb.tb_frame
-                    print(
-                        f"  File: {frame.f_code.co_filename}, "
-                        f"Function: {frame.f_code.co_name}, "
-                        f"Line: {frame.f_lineno}"
-                    )
-                    current_tb = current_tb.tb_next
-            except Exception as e2:
-                print(f"print_exc failed {e2}")
+
+def log_exception(e):
+    """Pretty-print an exception to our logging endpoint.
+
+    Do it without callling format_exc(), which calls stat() to determine whether
+    we're in a tty and what its width is. stat() and other fd routines currently
+    crash.
+    """
+    try:
+        print(f"Exception {type(e).__name__} - {e}")
+        print("--- Traceback Follows ---")
+
+        current_tb = e.__traceback__
+        while current_tb:
+            frame = current_tb.tb_frame
+            print(
+                f"  File: {frame.f_code.co_filename}, "
+                f"Function: {frame.f_code.co_name}, "
+                f"Line: {frame.f_lineno}"
+            )
+            current_tb = current_tb.tb_next
+    except Exception as e2:
+        print(f"print_exc failed {e2}")
