@@ -91,7 +91,8 @@ def log_exception(e):
 
     Do it without callling format_exc(), which calls stat() to determine whether
     we're in a tty and what its width is. stat() and other fd routines currently
-    crash.
+    crash when they try to access stdout or stderr, probably because they are
+    not in the preopens.
     """
     try:
         print(f"Exception {type(e).__name__} - {e}")
