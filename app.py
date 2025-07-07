@@ -47,15 +47,20 @@ def serve_wsgi_request(req, body, app):
     to the Fastly API."""
 
     response = http_resp.new()
+    response_body = http_body.new()
+
+    def write(body_data: bytes):
+        """Implement a mostly deprecated alternative body-writing mechanism of
+        WSGI."""
+        http_body.write(response_body, body_data, http_body.WriteEnd.BACK)
 
     def start_response(status: str, headers: list[tuple], exc_info=None):
         code, _description = status.split(" ", 1)
         http_resp.status_set(response, int(code))
         for header, value in headers:
             http_resp.header_append(response, header.encode(), value.encode())
-        return lambda x: None  # TODO: Return a real write().
+        return write
 
-    response_body = http_body.new()
     url = urlparse(http_req.uri_get(req, 2048))
     environ = {
         "REQUEST_METHOD": http_req.method_get(req, 12),
@@ -68,7 +73,7 @@ def serve_wsgi_request(req, body, app):
     for body_chunk in app(environ, start_response):
         # TODO: this would be a good place to stream, but for now we just
         #       write to the buffer and send once the handler is done.
-        http_body.write(response_body, body_chunk, http_body.WriteEnd.BACK)
+        write(body_chunk)
     send_downstream(response, response_body, False)
 
 
