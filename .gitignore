@@ -1,3 +1,8 @@
+# Python/uv artifacts
+.venv/
+*.egg-info
+uv.lock
+
 /hello_compute/
 __pycache__
 app.wasm
