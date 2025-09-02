@@ -3,6 +3,6 @@
 *.egg-info
 uv.lock
 
-/hello_compute/
+/stubs/
 __pycache__
 app.wasm

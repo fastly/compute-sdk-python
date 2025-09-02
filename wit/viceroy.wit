@@ -1,5 +1,7 @@
 package fastly:viceroy;
 
-world compute {
-	include fastly:api/compute;
+world viceroy {
+    include fastly:compute/custom-imports;
+    include fastly:adapter/adapter-imports;
+    include fastly:compute/custom-exports;
 }

@@ -40,7 +40,30 @@ Currently, this demonstrates…
 # Build and Run
 
 1. `make serve`
-2. Visit http://127.0.0.1:7676/hello/fred in a browser.
+2. Visit http://127.0.0.1:7676/hello/world or http://127.0.0.1:7676/info in a browser.
 
 You are seeing Bottle, a simple Python web framework, run on a Fastly Compute
 worker!
+
+# Testing
+
+```bash
+# Install dependencies and run tests
+uv sync --extra dev --extra test
+make test
+```
+
+The integration tests automatically build the WebAssembly component, start viceroy, and verify all endpoints work correctly with the WIT APIs.
+
+# Development
+
+```bash
+# Format code
+make format
+
+# Check formatting
+make format-check
+
+# Run linting
+make lint
+```
