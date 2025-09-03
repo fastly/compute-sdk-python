@@ -1,3 +1,4 @@
+import sys
 from urllib.parse import urlparse
 
 from bottle import Bottle
@@ -32,16 +33,6 @@ def info():
     }
 
 
-class StdErr:
-    """File-like object to receive errors and direct them to our logging endpoint"""
-
-    def write(self, data: str):
-        print(f"wsgi-error: {data}")
-
-    def flush(self):
-        pass
-
-
 def serve_wsgi_request(req, body, app):
     """Pass a WSGI application a single request, and adapt its behavior back
     to the Fastly API."""
@@ -68,7 +59,7 @@ def serve_wsgi_request(req, body, app):
         "QUERY_STRING": url.query,
         "SERVER_NAME": url.hostname,
         "SERVER_PORT": str(url.port),
-        "wsgi.errors": StdErr(),
+        "wsgi.errors": sys.stderr,
     }
     for body_chunk in app(environ, start_response):
         # TODO: this would be a good place to stream, but for now we just
