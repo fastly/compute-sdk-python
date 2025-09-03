@@ -2,7 +2,7 @@ from urllib.parse import urlparse
 
 from bottle import Bottle
 from wit_world.exports import HttpIncoming as BaseHttpIncoming
-from wit_world.imports import compute_runtime, http_body, http_resp, log
+from wit_world.imports import compute_runtime, http_body, http_resp
 from wit_world.imports.http_resp import send_downstream
 
 # Enable a bit more debug logging from the framework.

@@ -16,6 +16,9 @@ test:
 lint:
 	uv run --extra dev ruff check .
 
+lint-fix:
+	uv run --extra dev ruf check --fix .
+
 format:
 	uv run --extra dev ruff format .
 
