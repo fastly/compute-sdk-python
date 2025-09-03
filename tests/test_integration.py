@@ -2,9 +2,11 @@
 
 import socket
 import subprocess
+import threading
 import time
 from dataclasses import dataclass
 from pathlib import Path
+from queue import Queue, Empty
 
 import pytest
 import requests
@@ -28,7 +30,7 @@ class TestFastlyComputeService:
     def _find_free_port() -> int:
         """Find an available port on localhost."""
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.bind(('', 0))
+            s.bind(("", 0))
             s.listen(1)
             port = s.getsockname()[1]
         return port
@@ -55,23 +57,65 @@ class TestFastlyComputeService:
         port = self._find_free_port()
         base_url = f"http://127.0.0.1:{port}"
 
-        # Start viceroy in the background with the specific port
+        # Start viceroy in the background with the specific port and verbose output
         process = subprocess.Popen(
-            ["viceroy", "serve", "app.wasm", "--addr", f"127.0.0.1:{port}"],
+            ["viceroy", "serve", "app.wasm", "--addr", f"127.0.0.1:{port}", "-v"],
             cwd=Path(__file__).parent.parent,
             stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
+            stderr=subprocess.STDOUT,  # Redirect stderr to stdout for easier monitoring
             text=True,
         )
 
-        # Wait for server to start
-        # TODO: key off some other signal or logs to speed this up...
-        time.sleep(10)
+        # Use a queue to communicate between threads; this extra work is mostly
+        # so that we have a solution that will work well enough on windows.
+        output_queue = Queue()
 
-        # Check if process is still running
-        if process.poll() is not None:
-            stdout, stderr = process.communicate()
-            pytest.fail(f"Viceroy failed to start: {stderr}")
+        def read_output():
+            """Read process output in a separate thread."""
+            try:
+                for line in iter(process.stdout.readline, ""):
+                    output_queue.put(line.strip())
+                    if not line:
+                        break
+            except Exception:
+                pass
+
+        # Start the output reading thread
+        output_thread = threading.Thread(target=read_output, daemon=True)
+        output_thread.start()
+
+        # Wait for server to start by monitoring output
+        timeout = 15  # Maximum wait time in seconds
+        start_time = time.time()
+        server_ready = False
+
+        while time.time() - start_time < timeout:
+            # Check if process is still running
+            if process.poll() is not None:
+                # Collect any remaining output
+                remaining_lines = []
+                try:
+                    while True:
+                        line = output_queue.get_nowait()
+                        remaining_lines.append(line)
+                except Empty:
+                    pass
+                all_output = "\n".join(remaining_lines)
+                pytest.fail(f"Viceroy failed to start. Output:\n{all_output}")
+
+            # Check for output indicating server is ready
+            try:
+                line = output_queue.get(timeout=0.1)
+                if "Listening on" in line:
+                    print(f"Server ready: {line}")
+                    server_ready = True
+                    break
+            except Empty:
+                continue
+
+        if not server_ready:
+            process.terminate()
+            pytest.fail(f"Viceroy server did not start within {timeout} seconds")
 
         yield ViceroyServer(process=process, base_url=base_url)
 
