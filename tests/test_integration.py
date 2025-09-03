@@ -1,19 +1,37 @@
 """Integration tests for the Fastly Compute Python service."""
 
+import socket
 import subprocess
 import time
+from dataclasses import dataclass
 from pathlib import Path
 
 import pytest
 import requests
 
 
+@dataclass
+class ViceroyServer:
+    """Represents a running viceroy server instance."""
+
+    process: subprocess.Popen
+    base_url: str
+
+
 @pytest.mark.integration
 class TestFastlyComputeService:
     """Integration tests for the Fastly Compute service running under viceroy."""
 
-    BASE_URL = "http://127.0.0.1:7676"
     REQUEST_TIMEOUT = 10
+
+    @staticmethod
+    def _find_free_port() -> int:
+        """Find an available port on localhost."""
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.bind(('', 0))
+            s.listen(1)
+            port = s.getsockname()[1]
+        return port
 
     @pytest.fixture(scope="class", autouse=True)
     def build_service(self):
@@ -33,9 +51,13 @@ class TestFastlyComputeService:
         """Start viceroy server for the duration of the test class."""
         print("Starting viceroy server...")
 
-        # Start viceroy in the background
+        # Find an available port
+        port = self._find_free_port()
+        base_url = f"http://127.0.0.1:{port}"
+
+        # Start viceroy in the background with the specific port
         process = subprocess.Popen(
-            ["make", "serve"],
+            ["viceroy", "serve", "app.wasm", "--addr", f"127.0.0.1:{port}"],
             cwd=Path(__file__).parent.parent,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
@@ -51,7 +73,7 @@ class TestFastlyComputeService:
             stdout, stderr = process.communicate()
             pytest.fail(f"Viceroy failed to start: {stderr}")
 
-        yield process
+        yield ViceroyServer(process=process, base_url=base_url)
 
         # Cleanup: terminate the process
         print("Stopping viceroy server...")
@@ -61,27 +83,27 @@ class TestFastlyComputeService:
         except subprocess.TimeoutExpired:
             process.kill()
 
-    def _get(self, path: str) -> requests.Response:
+    def _get(self, path: str, server: ViceroyServer) -> requests.Response:
         """Make a GET request to the service."""
-        return requests.get(f"{self.BASE_URL}{path}", timeout=self.REQUEST_TIMEOUT)
+        return requests.get(f"{server.base_url}{path}", timeout=self.REQUEST_TIMEOUT)
 
     def test_hello_endpoint(self, viceroy_server):
         """Test the hello endpoint returns expected content."""
-        response = self._get("/hello/test")
+        response = self._get("/hello/test", viceroy_server)
 
         assert response.status_code == 200
         assert response.text == "Hello test!"
 
     def test_hello_endpoint_with_different_name(self, viceroy_server):
         """Test the hello endpoint with a different name parameter."""
-        response = self._get("/hello/world")
+        response = self._get("/hello/world", viceroy_server)
 
         assert response.status_code == 200
         assert response.text == "Hello world!"
 
     def test_info_endpoint(self, viceroy_server):
         """Test the info endpoint returns expected JSON with WIT data."""
-        response = self._get("/info")
+        response = self._get("/info", viceroy_server)
 
         assert response.status_code == 200
         assert response.headers.get("content-type", "").startswith("application/json")
@@ -103,7 +125,7 @@ class TestFastlyComputeService:
 
     def test_nonexistent_endpoint(self, viceroy_server):
         """Test that nonexistent endpoints return 404."""
-        response = self._get("/nonexistent")
+        response = self._get("/nonexistent", viceroy_server)
 
         assert response.status_code == 404
 
@@ -111,7 +133,7 @@ class TestFastlyComputeService:
         """Test that the service is healthy and responsive."""
         # Make multiple requests to ensure stability
         for _ in range(3):
-            response = self._get("/info")
+            response = self._get("/info", viceroy_server)
             assert response.status_code == 200
 
             data = response.json()
