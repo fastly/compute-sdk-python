@@ -10,14 +10,14 @@ app.wasm: wit/viceroy.wit wit/deps/fastly/compute.wit app.py
 serve: app.wasm
 	viceroy serve app.wasm
 
-test:
+test: app.wasm
 	uv run --extra test pytest -m integration
 
 lint:
 	uv run --extra dev ruff check .
 
 lint-fix:
-	uv run --extra dev ruf check --fix .
+	uv run --extra dev ruff check --fix .
 
 format:
 	uv run --extra dev ruff format .

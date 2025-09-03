@@ -33,6 +33,12 @@ def info():
     }
 
 
+@app.route("/error")
+def error():
+    """Endpoint that intentionally raises an exception to test error handling."""
+    raise RuntimeError("This is an intentional error for testing purposes")
+
+
 def serve_wsgi_request(req, body, app):
     """Pass a WSGI application a single request, and adapt its behavior back
     to the Fastly API."""
