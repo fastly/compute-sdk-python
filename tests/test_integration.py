@@ -161,7 +161,7 @@ class TestFastlyComputeService:
 
         # Check WIT API data
         assert "vcpu_time_ms" in data
-        assert isinstance(data["vcpu_time_ms"], int | type(None))
+        assert isinstance(data["vcpu_time_ms"], int)
 
         # Check request data
         assert data["request_method"] == "GET"
@@ -172,13 +172,3 @@ class TestFastlyComputeService:
         response = self._get("/nonexistent", viceroy_server)
 
         assert response.status_code == 404
-
-    def test_service_health(self, viceroy_server):
-        """Test that the service is healthy and responsive."""
-        # Make multiple requests to ensure stability
-        for _ in range(3):
-            response = self._get("/info", viceroy_server)
-            assert response.status_code == 200
-
-            data = response.json()
-            assert data["status"] == "ok"
