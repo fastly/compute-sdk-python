@@ -11,8 +11,8 @@ from fastly_compute.testing import ViceroyTestBase
 
 @pytest.mark.integration
 class TestMyService(ViceroyTestBase):
-    def test_endpoint(self, viceroy_server):
-        response = self.get("/test", viceroy_server)
+    def test_endpoint(self):
+        response = self.get("/test")
         assert response.status_code == 200
 ```
 
@@ -20,9 +20,9 @@ class TestMyService(ViceroyTestBase):
 
 ## Available Methods
 
-- `self.get(path, viceroy_server, **kwargs)` - GET request
-- `self.post(path, viceroy_server, **kwargs)` - POST request  
-- `self.request(method, path, viceroy_server, **kwargs)` - Any HTTP method
+- `self.get(path, **kwargs)` - GET request
+- `self.post(path, **kwargs)` - POST request  
+- `self.request(method, path, **kwargs)` - Any HTTP method
 
 ## Configuration
 

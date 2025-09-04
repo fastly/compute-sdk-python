@@ -45,13 +45,14 @@ class ViceroyTestBase:
         @pytest.mark.integration
         class TestMyService(ViceroyTestBase):
             def test_my_endpoint(self, viceroy_server):
-                response = self.get("/my-endpoint", viceroy_server)
+                response = self.get("/my-endpoint")
                 assert response.status_code == 200
         ```
     """
 
     REQUEST_TIMEOUT = 10
     WASM_FILE = "app.wasm"  # Override this in subclasses if needed
+    server: ViceroyServer = None  # Will be set by the fixture
 
     @staticmethod
     def _find_free_port() -> int:
@@ -61,8 +62,9 @@ class ViceroyTestBase:
             port = s.getsockname()[1]
         return port
 
-    @pytest.fixture(scope="class")
-    def viceroy_server(self) -> ViceroyServer:
+    @pytest.fixture(scope="class", autouse=True)
+    @classmethod
+    def viceroy_server(cls) -> ViceroyServer:
         """Start viceroy server for the duration of the test class.
 
         Note: This assumes the WASM file already exists. Use your build system
@@ -74,14 +76,14 @@ class ViceroyTestBase:
         print("Starting viceroy server...")
 
         # Check if WASM file exists
-        wasm_path = Path(self.WASM_FILE)
+        wasm_path = Path(cls.WASM_FILE)
         if not wasm_path.exists():
             pytest.fail(
-                f"WASM file '{self.WASM_FILE}' not found. Please build it first."
+                f"WASM file '{cls.WASM_FILE}' not found. Please build it first."
             )
 
         # Find an available port
-        port = self._find_free_port()
+        port = cls._find_free_port()
         base_url = f"http://127.0.0.1:{port}"
         output_lines = []  # Capture all output for debugging
         output_lock = threading.Lock()
@@ -89,7 +91,7 @@ class ViceroyTestBase:
 
         # Start viceroy process
         process = subprocess.Popen(
-            ["viceroy", "serve", self.WASM_FILE, "--addr", f"127.0.0.1:{port}", "-v"],
+            ["viceroy", "serve", cls.WASM_FILE, "--addr", f"127.0.0.1:{port}", "-v"],
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             text=True,
@@ -147,6 +149,9 @@ class ViceroyTestBase:
             process=process, base_url=base_url, output_lines=output_lines
         )
 
+        # Set the server as a class attribute so methods can access it
+        cls.server = server
+
         yield server
 
         # Cleanup: stop output capture and terminate the process
@@ -159,45 +164,44 @@ class ViceroyTestBase:
             process.kill()
             process.wait()
 
-    def get(self, path: str, server: ViceroyServer, **kwargs) -> requests.Response:
+    def get(self, path: str, **kwargs) -> requests.Response:
         """Make a GET request to the viceroy server.
 
         Args:
             path: URL path to request
-            server: ViceroyServer instance from fixture
             **kwargs: Additional arguments passed to requests.get()
 
         Returns:
             requests.Response: The HTTP response
         """
         timeout = kwargs.pop("timeout", self.REQUEST_TIMEOUT)
-        response = requests.get(f"{server.base_url}{path}", timeout=timeout, **kwargs)
+        response = requests.get(
+            f"{self.server.base_url}{path}", timeout=timeout, **kwargs
+        )
         return response
 
-    def post(self, path: str, server: ViceroyServer, **kwargs) -> requests.Response:
+    def post(self, path: str, **kwargs) -> requests.Response:
         """Make a POST request to the viceroy server.
 
         Args:
             path: URL path to request
-            server: ViceroyServer instance from fixture
             **kwargs: Additional arguments passed to requests.post()
 
         Returns:
             requests.Response: The HTTP response
         """
         timeout = kwargs.pop("timeout", self.REQUEST_TIMEOUT)
-        response = requests.post(f"{server.base_url}{path}", timeout=timeout, **kwargs)
+        response = requests.post(
+            f"{self.server.base_url}{path}", timeout=timeout, **kwargs
+        )
         return response
 
-    def request(
-        self, method: str, path: str, server: ViceroyServer, **kwargs
-    ) -> requests.Response:
+    def request(self, method: str, path: str, **kwargs) -> requests.Response:
         """Make an HTTP request to the viceroy server.
 
         Args:
             method: HTTP method (GET, POST, PUT, DELETE, etc.)
             path: URL path to request
-            server: ViceroyServer instance from fixture
             **kwargs: Additional arguments passed to requests.request()
 
         Returns:
@@ -205,6 +209,6 @@ class ViceroyTestBase:
         """
         timeout = kwargs.pop("timeout", self.REQUEST_TIMEOUT)
         response = requests.request(
-            method, f"{server.base_url}{path}", timeout=timeout, **kwargs
+            method, f"{self.server.base_url}{path}", timeout=timeout, **kwargs
         )
         return response

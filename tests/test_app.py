@@ -9,23 +9,23 @@ from fastly_compute.testing import ViceroyTestBase
 class TestFastlyComputeApp(ViceroyTestBase):
     """Integration tests for the Fastly Compute service functionality."""
 
-    def test_hello_endpoint(self, viceroy_server):
+    def test_hello_endpoint(self):
         """Test the hello endpoint returns expected content."""
-        response = self.get("/hello/test", viceroy_server)
+        response = self.get("/hello/test")
 
         assert response.status_code == 200
         assert response.text == "Hello test!"
 
-    def test_hello_endpoint_with_different_name(self, viceroy_server):
+    def test_hello_endpoint_with_different_name(self):
         """Test the hello endpoint with a different name parameter."""
-        response = self.get("/hello/world", viceroy_server)
+        response = self.get("/hello/world")
 
         assert response.status_code == 200
         assert response.text == "Hello world!"
 
-    def test_info_endpoint(self, viceroy_server):
+    def test_info_endpoint(self):
         """Test the info endpoint returns expected JSON with WIT data."""
-        response = self.get("/info", viceroy_server)
+        response = self.get("/info")
 
         assert response.status_code == 200
         assert response.headers.get("content-type", "").startswith("application/json")
@@ -45,27 +45,27 @@ class TestFastlyComputeApp(ViceroyTestBase):
         assert data["request_method"] == "GET"
         assert data["path_info"] == "/info"
 
-    def test_nonexistent_endpoint(self, viceroy_server):
+    def test_nonexistent_endpoint(self):
         """Test that nonexistent endpoints return 404."""
-        response = self.get("/nonexistent", viceroy_server)
+        response = self.get("/nonexistent")
 
         assert response.status_code == 404
 
-    def test_post_request_handling(self, viceroy_server):
+    def test_post_request_handling(self):
         """Test that POST requests are handled correctly."""
         # Current app.py doesn't handle POST to /api/data, so expect 404
-        response = self.post("/api/data", viceroy_server, json={"key": "value"})
+        response = self.post("/api/data", json={"key": "value"})
         assert response.status_code == 404
 
-    def test_custom_headers(self, viceroy_server):
+    def test_custom_headers(self):
         """Test requests with custom headers are processed."""
         headers = {"X-Custom-Header": "test-value"}
-        response = self.get("/info", viceroy_server, headers=headers)
+        response = self.get("/info", headers=headers)
         assert response.status_code == 200
 
-    def test_error_endpoint_handling(self, viceroy_server):
+    def test_error_endpoint_handling(self):
         """Test that the error endpoint returns 500 and triggers viceroy output display."""
-        response = self.get("/error", viceroy_server)
+        response = self.get("/error")
 
         # The endpoint should return a 500 error due to the exception
         assert response.status_code == 500
