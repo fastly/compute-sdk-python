@@ -5,4 +5,7 @@ uv.lock
 
 /stubs/
 __pycache__
-app.wasm
+
+# Build artifacts
+/build/
+*.wasm

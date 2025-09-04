@@ -43,14 +43,14 @@ class ViceroyTestBase:
         from fastly_compute.testing import ViceroyTestBase
 
         class TestMyService(ViceroyTestBase):
-            def test_my_endpoint(self, viceroy_server):
+            def test_my_endpoint(self):
                 response = self.get("/my-endpoint")
                 assert response.status_code == 200
         ```
     """
 
     REQUEST_TIMEOUT = 10
-    WASM_FILE = "app.wasm"  # Override this in subclasses if needed
+    WASM_FILE = "build/wit-bottle.wasm"  # Default to the main example
     server: ViceroyServer = None  # Will be set by the fixture
 
     @staticmethod
