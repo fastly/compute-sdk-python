@@ -8,10 +8,10 @@ To enable automatic viceroy output on test failures, add this to your conftest.p
     pytest_plugins = ["fastly_compute.pytest_plugin"]
 """
 
-import asyncio
 import socket
 import subprocess
-import sys
+import threading
+import time
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -84,6 +84,8 @@ class ViceroyTestBase:
         port = self._find_free_port()
         base_url = f"http://127.0.0.1:{port}"
         output_lines = []  # Capture all output for debugging
+        output_lock = threading.Lock()
+        stop_capture = threading.Event()
 
         # Start viceroy process
         process = subprocess.Popen(
@@ -93,54 +95,53 @@ class ViceroyTestBase:
             text=True,
         )
 
-        async def wait_for_ready():
-            """Monitor process output for readiness signal."""
-            timeout = 15  # Maximum wait time in seconds
+        # Start background thread to continuously capture output
+        def capture_output_thread():
+            """Continuously capture viceroy output throughout test execution."""
+            while not stop_capture.is_set():
+                line = process.stdout.readline()
+                if not line:  # EOF
+                    break
+                with output_lock:
+                    output_lines.append(line.strip())
 
-            async def read_lines():
-                """Async generator to read lines from stdout."""
-                loop = asyncio.get_event_loop()
-                while True:
-                    # Read line in a thread to avoid blocking
-                    line = await loop.run_in_executor(None, process.stdout.readline)
-                    if not line:  # EOF
-                        break
-                    line_stripped = line.strip()
-                    output_lines.append(line_stripped)  # Capture for debugging
-                    yield line_stripped
-
-            try:
-                async with asyncio.timeout(timeout):
-                    async for line in read_lines():
-                        if "Listening on" in line:
-                            print(f"Server ready: {line}")
-                            return
-                        # Check if process died
-                        if process.poll() is not None:
-                            raise RuntimeError(
-                                "Viceroy process ended without starting server"
-                            )
-
-                    # If we get here, process ended without "Listening on"
-                    raise RuntimeError("Viceroy process ended without starting server")
-
-            except TimeoutError as e:
-                process.terminate()
-                process.wait()
-                raise RuntimeError(
-                    f"Viceroy server did not start within {timeout} seconds"
-                ) from e
+        output_thread = threading.Thread(target=capture_output_thread, daemon=True)
+        output_thread.start()
 
         # Wait for server to be ready
-        try:
-            asyncio.run(wait_for_ready())
-        except RuntimeError as e:
-            # Print captured output to stderr for debugging
-            print(f"\nViceroy startup failed: {e}", file=sys.stderr)
-            print("Viceroy output:", file=sys.stderr)
-            for line in output_lines:
-                print(f"  {line}", file=sys.stderr)
-            pytest.fail(str(e))
+        timeout = 15
+        start_time = time.monotonic()
+        server_ready = False
+
+        while time.monotonic() - start_time < timeout:
+            if process.poll() is not None:
+                # Process died, collect output and fail
+                stop_capture.set()
+                time.sleep(0.1)  # Give thread time to capture final output
+                with output_lock:
+                    all_output = "\n".join(output_lines)
+                pytest.fail(f"Viceroy failed to start. Output:\n{all_output}")
+
+            # Check if we've seen the "Listening on" message
+            with output_lock:
+                for line in output_lines:
+                    if "Listening on" in line:
+                        print(f"Server ready: {line}")
+                        server_ready = True
+                        break
+
+            if server_ready:
+                break
+
+        if not server_ready:
+            stop_capture.set()
+            process.terminate()
+            process.wait()
+            with output_lock:
+                all_output = "\n".join(output_lines)
+            pytest.fail(
+                f"Viceroy server did not start within {timeout} seconds. Output:\n{all_output}"
+            )
 
         server = ViceroyServer(
             process=process, base_url=base_url, output_lines=output_lines
@@ -148,8 +149,9 @@ class ViceroyTestBase:
 
         yield server
 
-        # Cleanup: terminate the process
+        # Cleanup: stop output capture and terminate the process
         print("Stopping viceroy server...")
+        stop_capture.set()
         process.terminate()
         try:
             process.wait(timeout=5)
@@ -168,17 +170,9 @@ class ViceroyTestBase:
         Returns:
             requests.Response: The HTTP response
         """
-        try:
-            timeout = kwargs.pop("timeout", self.REQUEST_TIMEOUT)
-            return requests.get(f"{server.base_url}{path}", timeout=timeout, **kwargs)
-        except Exception as e:
-            # On request failure, print viceroy output for debugging
-            print(f"\nRequest to {server.base_url}{path} failed: {e}", file=sys.stderr)
-            print("Recent viceroy output:", file=sys.stderr)
-            # Show last 20 lines of output
-            for line in server.output_lines[-20:]:
-                print(f"  {line}", file=sys.stderr)
-            raise
+        timeout = kwargs.pop("timeout", self.REQUEST_TIMEOUT)
+        response = requests.get(f"{server.base_url}{path}", timeout=timeout, **kwargs)
+        return response
 
     def post(self, path: str, server: ViceroyServer, **kwargs) -> requests.Response:
         """Make a POST request to the viceroy server.
@@ -191,20 +185,9 @@ class ViceroyTestBase:
         Returns:
             requests.Response: The HTTP response
         """
-        try:
-            timeout = kwargs.pop("timeout", self.REQUEST_TIMEOUT)
-            return requests.post(f"{server.base_url}{path}", timeout=timeout, **kwargs)
-        except Exception as e:
-            # On request failure, print viceroy output for debugging
-            print(
-                f"\nPOST request to {server.base_url}{path} failed: {e}",
-                file=sys.stderr,
-            )
-            print("Recent viceroy output:", file=sys.stderr)
-            # Show last 20 lines of output
-            for line in server.output_lines[-20:]:
-                print(f"  {line}", file=sys.stderr)
-            raise
+        timeout = kwargs.pop("timeout", self.REQUEST_TIMEOUT)
+        response = requests.post(f"{server.base_url}{path}", timeout=timeout, **kwargs)
+        return response
 
     def request(
         self, method: str, path: str, server: ViceroyServer, **kwargs
@@ -220,133 +203,8 @@ class ViceroyTestBase:
         Returns:
             requests.Response: The HTTP response
         """
-        try:
-            timeout = kwargs.pop("timeout", self.REQUEST_TIMEOUT)
-            return requests.request(
-                method, f"{server.base_url}{path}", timeout=timeout, **kwargs
-            )
-        except Exception as e:
-            # On request failure, print viceroy output for debugging
-            print(
-                f"\n{method} request to {server.base_url}{path} failed: {e}",
-                file=sys.stderr,
-            )
-            print("Recent viceroy output:", file=sys.stderr)
-            # Show last 20 lines of output
-            for line in server.output_lines[-20:]:
-                print(f"  {line}", file=sys.stderr)
-            raise
-
-
-def create_viceroy_server_fixture(
-    wasm_file: str = "app.wasm", scope: str = "class", timeout: int = 15
-):
-    """Factory function to create a viceroy server fixture with custom settings.
-
-    Args:
-        wasm_file: Name of the WASM file to serve (default: "app.wasm")
-        scope: Pytest fixture scope (default: "class")
-        timeout: Server startup timeout in seconds (default: 15)
-
-    Returns:
-        pytest fixture function
-
-    Example:
-        ```python
-        from fastly_compute.testing import create_viceroy_server_fixture
-
-        # Custom fixture for different WASM file
-        my_server = create_viceroy_server_fixture("my-service.wasm")
-
-        class TestMyService:
-            def test_endpoint(self, my_server):
-                # my_server is a ViceroyServer instance
-                response = requests.get(f"{my_server.base_url}/test")
-                assert response.status_code == 200
-        ```
-    """
-
-    @pytest.fixture(scope=scope)
-    def _viceroy_server_fixture():
-        """Custom viceroy server fixture."""
-        print(f"Starting viceroy server with {wasm_file}...")
-
-        # Check if WASM file exists
-        wasm_path = Path(wasm_file)
-        if not wasm_path.exists():
-            pytest.fail(f"WASM file '{wasm_file}' not found. Please build it first.")
-
-        # Find an available port
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.bind(("", 0))
-            port = s.getsockname()[1]
-
-        base_url = f"http://127.0.0.1:{port}"
-        output_lines = []
-
-        # Start viceroy process
-        process = subprocess.Popen(
-            ["viceroy", "serve", wasm_file, "--addr", f"127.0.0.1:{port}", "-v"],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            text=True,
+        timeout = kwargs.pop("timeout", self.REQUEST_TIMEOUT)
+        response = requests.request(
+            method, f"{server.base_url}{path}", timeout=timeout, **kwargs
         )
-
-        async def wait_for_ready():
-            """Monitor process output for readiness signal."""
-
-            async def read_lines():
-                """Async generator to read lines from stdout."""
-                loop = asyncio.get_event_loop()
-                while True:
-                    line = await loop.run_in_executor(None, process.stdout.readline)
-                    if not line:
-                        break
-                    line_stripped = line.strip()
-                    output_lines.append(line_stripped)
-                    yield line_stripped
-
-            try:
-                async with asyncio.timeout(timeout):
-                    async for line in read_lines():
-                        if "Listening on" in line:
-                            print(f"Server ready: {line}")
-                            return
-                        if process.poll() is not None:
-                            raise RuntimeError(
-                                "Viceroy process ended without starting server"
-                            )
-                    raise RuntimeError("Viceroy process ended without starting server")
-            except TimeoutError as e:
-                process.terminate()
-                process.wait()
-                raise RuntimeError(
-                    f"Viceroy server did not start within {timeout} seconds"
-                ) from e
-
-        # Wait for server to be ready
-        try:
-            asyncio.run(wait_for_ready())
-        except RuntimeError as e:
-            print(f"\nViceroy startup failed: {e}", file=sys.stderr)
-            print("Viceroy output:", file=sys.stderr)
-            for line in output_lines:
-                print(f"  {line}", file=sys.stderr)
-            pytest.fail(str(e))
-
-        server = ViceroyServer(
-            process=process, base_url=base_url, output_lines=output_lines
-        )
-
-        yield server
-
-        # Cleanup
-        print("Stopping viceroy server...")
-        process.terminate()
-        try:
-            process.wait(timeout=5)
-        except subprocess.TimeoutExpired:
-            process.kill()
-            process.wait()
-
-    return _viceroy_server_fixture
+        return response

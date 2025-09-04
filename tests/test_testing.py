@@ -3,7 +3,7 @@
 import pytest
 import requests
 
-from fastly_compute.testing import ViceroyTestBase, create_viceroy_server_fixture
+from fastly_compute.testing import ViceroyTestBase
 
 
 @pytest.mark.integration
@@ -75,36 +75,3 @@ class TestViceroyTestingFramework(ViceroyTestBase):
         finally:
             # Restore original timeout
             self.REQUEST_TIMEOUT = original_timeout
-
-
-class TestCustomWasmFile(ViceroyTestBase):
-    """Test custom WASM file configuration."""
-
-    # Use the same WASM file but test the configuration mechanism
-    WASM_FILE = "app.wasm"
-
-    def test_custom_wasm_file_attribute(self, viceroy_server):
-        """Test that custom WASM_FILE attribute is respected."""
-        # This test verifies that the WASM_FILE attribute mechanism works
-        # The server should start successfully with our custom WASM file
-        response = self.get("/info", viceroy_server)
-        assert response.status_code == 200
-
-
-# Test the factory function
-custom_server = create_viceroy_server_fixture("app.wasm")
-
-
-class TestFactoryFunction:
-    """Test the create_viceroy_server_fixture factory function."""
-
-    def test_factory_function_creates_working_fixture(self, custom_server):
-        """Test that the factory function creates a working viceroy server."""
-        # Check that the fixture returns a ViceroyServer with expected attributes
-        assert hasattr(custom_server, "process")
-        assert hasattr(custom_server, "base_url")
-        assert hasattr(custom_server, "output_lines")
-
-        # Test that we can make requests to it
-        response = requests.get(f"{custom_server.base_url}/info")
-        assert response.status_code == 200
