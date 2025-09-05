@@ -21,13 +21,6 @@ Currently, this demonstrates…
   native-code compression stdlibs which haven't been compiled against WASI yet.
   Moving componentize-py to a new Python may help, as [WASIp1 is now a Tier 2
   supported platform](https://peps.python.org/pep-0011/#tier-2).
-* It crashes every time something tries to write to stdout or stderr. It may be
-  that those aren't in the preopens; adding those to the preopens should be
-  possible with changes to Viceroy. We're also using `--stub-wasi` at the
-  moment, which means things like `fd_write` are coded to immediately trap; that
-  probably doesn't help. Finally, it may be possible to monkeypatch in Python
-  and redirect them to a logging endpoint, but our initial attempts were
-  unsuccessful.
 
 # Install Dependencies
 
@@ -66,4 +59,7 @@ make format-check
 
 # Run linting
 make lint
+
+# Run linting and apply automatic fixes
+make lint-fix
 ```
