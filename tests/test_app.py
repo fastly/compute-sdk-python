@@ -4,8 +4,6 @@ from fastly_compute.testing import ViceroyTestBase
 
 
 class TestFastlyComputeApp(ViceroyTestBase):
-    """Integration tests for the Fastly Compute service functionality."""
-
     def test_hello_endpoint(self):
         """Test the hello endpoint returns expected content."""
         response = self.get("/hello/test")

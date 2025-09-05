@@ -1,6 +1,6 @@
-# Fastly Compute Integration Tests
+# Fastly Compute SDK Tests
 
-Integration tests for Fastly Compute services using viceroy with automatic
+Tests for Fastly Compute SDK using viceroy with automatic
 server management, dynamic port allocation, and comprehensive error handling.
 
 ## Quick Start
@@ -34,9 +34,8 @@ class TestMyService(ViceroyTestBase):
 ## Running Tests
 
 ```bash
-make test                    # Build and run tests
-pytest -m integration       # Run integration tests only
-pytest -m integration -v -s # Verbose output with viceroy logs
+make test           # Build and run tests
+uv run pytest -v -s # Verbose output with viceroy logs
 ```
 
 ### Enabling Automatic Viceroy Output

@@ -1,4 +1,4 @@
-"""Testing utilities for Fastly Compute integration tests.
+"""Testing utilities for Fastly Compute tests.
 
 This module provides pytest fixtures and base classes for testing
 Fastly Compute services with viceroy.
@@ -29,7 +29,7 @@ class ViceroyServer:
 
 
 class ViceroyTestBase:
-    """Base class for viceroy integration tests.
+    """Base class for viceroy tests.
 
     Provides common functionality for testing Fastly Compute services.
     Inherit from this class and use the viceroy_server fixture.

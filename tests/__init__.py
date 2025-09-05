@@ -1,1 +1,1 @@
-"""Test package for Fastly Compute integration tests."""
+"""Test package for Fastly Compute tests."""
