@@ -6,7 +6,7 @@ BUILD_DIR := build
 EXAMPLES_DIR := examples
 
 # Define all available examples (add new ones here)
-EXAMPLES := wit-bottle flask-app
+EXAMPLES := wit-bottle flask-app backend-simple requests-simple
 
 # Default example for serve target
 EXAMPLE ?= wit-bottle

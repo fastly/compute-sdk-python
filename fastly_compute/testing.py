@@ -8,8 +8,10 @@ To enable automatic viceroy output on test failures, add this to your conftest.p
     pytest_plugins = ["fastly_compute.pytest_plugin"]
 """
 
+import os
 import socket
 import subprocess
+import tempfile
 import threading
 import time
 from dataclasses import dataclass
@@ -17,6 +19,7 @@ from pathlib import Path
 
 import pytest
 import requests
+import tomli_w
 
 
 @dataclass
@@ -53,6 +56,10 @@ class ViceroyTestBase:
     WASM_FILE = "build/wit-bottle.wasm"  # Default to the main example
     server: ViceroyServer = None  # Will be set by the fixture
 
+    # Configuration for backend testing
+    VICEROY_CONFIG = None  # Dict with viceroy config, or None for no config
+    _config_file_path = None  # Will store temp config file path
+
     @staticmethod
     def _find_free_port() -> int:
         """Find an available port on localhost."""
@@ -60,6 +67,68 @@ class ViceroyTestBase:
             s.bind(("", 0))
             port = s.getsockname()[1]
         return port
+
+    @classmethod
+    def _create_viceroy_config(cls, backends: dict[str, str] | None = None) -> str:
+        """
+        Create a temporary viceroy configuration file.
+
+        Args:
+            backends: Dict mapping backend names to URLs
+                     e.g., {"httpbin": "http://127.0.0.1:8080"}
+
+        Returns:
+            Path to the temporary configuration file
+        """
+        config_dict = {}
+
+        # Add backends if provided
+        if backends:
+            config_dict["local_server"] = {
+                "backends": {name: {"url": url} for name, url in backends.items()}
+            }
+
+        # Add any additional config from class
+        if cls.VICEROY_CONFIG:
+            # Merge with class config
+            if "local_server" in config_dict and "local_server" in cls.VICEROY_CONFIG:
+                # Merge local_server sections
+                for key, value in cls.VICEROY_CONFIG["local_server"].items():
+                    if key == "backends" and "backends" in config_dict["local_server"]:
+                        # Merge backends
+                        config_dict["local_server"]["backends"].update(value)
+                    else:
+                        config_dict["local_server"][key] = value
+            else:
+                # Add other sections
+                config_dict.update(cls.VICEROY_CONFIG)
+
+        # Generate TOML content
+        toml_content = tomli_w.dumps(config_dict)
+
+        # Create temporary file
+        fd, temp_path = tempfile.mkstemp(suffix=".toml", prefix="viceroy_config_")
+        try:
+            with os.fdopen(fd, "w") as f:
+                f.write(toml_content)
+        except:
+            os.close(fd)  # Close if write failed
+            raise
+
+        return temp_path
+
+    @classmethod
+    def setup_backends(cls, backends: dict[str, str]):
+        """
+        Set up backends for testing.
+
+        Call this in setUpClass or as a class-level setup.
+
+        Args:
+            backends: Dict mapping backend names to URLs
+                     e.g., {"httpbin": "http://127.0.0.1:8080"}
+        """
+        cls._test_backends = backends
 
     @pytest.fixture(scope="class", autouse=True)
     @classmethod
@@ -88,9 +157,29 @@ class ViceroyTestBase:
         output_lock = threading.Lock()
         stop_capture = threading.Event()
 
+        # Create config file if needed
+        config_file_path = None
+        if hasattr(cls, "_test_backends") or cls.VICEROY_CONFIG:
+            # Get backends from test setup (if any)
+            backends = getattr(cls, "_test_backends", None)
+            config_file_path = cls._create_viceroy_config(backends)
+            cls._config_file_path = config_file_path
+
+        # Build viceroy command
+        viceroy_cmd = [
+            "viceroy",
+            "serve",
+            cls.WASM_FILE,
+            "--addr",
+            f"127.0.0.1:{port}",
+            "-v",
+        ]
+        if config_file_path:
+            viceroy_cmd.extend(["-C", config_file_path])
+
         # Start viceroy process
         process = subprocess.Popen(
-            ["viceroy", "serve", cls.WASM_FILE, "--addr", f"127.0.0.1:{port}", "-v"],
+            viceroy_cmd,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             text=True,
@@ -162,6 +251,14 @@ class ViceroyTestBase:
         except subprocess.TimeoutExpired:
             process.kill()
             process.wait()
+
+        # Clean up config file if we created one
+        if cls._config_file_path and os.path.exists(cls._config_file_path):
+            try:
+                os.unlink(cls._config_file_path)
+            except OSError:
+                pass  # Ignore cleanup errors
+            cls._config_file_path = None
 
     def get(self, path: str, **kwargs) -> requests.Response:
         """Make a GET request to the viceroy server.
