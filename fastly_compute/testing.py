@@ -42,7 +42,6 @@ class ViceroyTestBase:
         import pytest
         from fastly_compute.testing import ViceroyTestBase
 
-        @pytest.mark.integration
         class TestMyService(ViceroyTestBase):
             def test_my_endpoint(self, viceroy_server):
                 response = self.get("/my-endpoint")

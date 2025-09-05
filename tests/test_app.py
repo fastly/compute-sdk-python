@@ -1,11 +1,8 @@
 """Tests for the Fastly Compute Python service (app.wasm functionality)."""
 
-import pytest
-
 from fastly_compute.testing import ViceroyTestBase
 
 
-@pytest.mark.integration
 class TestFastlyComputeApp(ViceroyTestBase):
     """Integration tests for the Fastly Compute service functionality."""
 

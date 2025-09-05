@@ -6,7 +6,6 @@ import requests
 from fastly_compute.testing import ViceroyTestBase
 
 
-@pytest.mark.integration
 class TestViceroyTestingFramework(ViceroyTestBase):
     """Tests that verify the testing framework itself works correctly."""
 

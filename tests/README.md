@@ -9,7 +9,6 @@ server management, dynamic port allocation, and comprehensive error handling.
 import pytest
 from fastly_compute.testing import ViceroyTestBase
 
-@pytest.mark.integration
 class TestMyService(ViceroyTestBase):
     def test_endpoint(self):
         response = self.get("/test")

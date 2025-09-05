@@ -53,7 +53,7 @@ uv sync --extra dev --extra test
 make test
 ```
 
-The integration tests automatically build the WebAssembly component, start viceroy, and verify all endpoints work correctly with the WIT APIs.
+The tests automatically build the WebAssembly component, start viceroy, and verify all endpoints work correctly with the WIT APIs.
 
 # Development
 

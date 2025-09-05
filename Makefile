@@ -11,7 +11,7 @@ serve: app.wasm
 	viceroy serve app.wasm
 
 test: app.wasm
-	uv run --extra test pytest -m integration
+	uv run --extra test pytest
 
 lint:
 	uv run --extra dev ruff check .
