@@ -1,11 +1,28 @@
 all: app.wasm
 
+STUBS_DIR := stubs
+
 app.wasm: wit/viceroy.wit wit/deps/fastly/compute.wit app.py
-	rm -rf hello_compute
-	uv run componentize-py -d wit -w compute bindings hello_compute
-	uv run componentize-py -d wit -w compute componentize --stub-wasi app -o app.wasm
+	rm -rf ${STUBS_DIR}
+	uv run componentize-py -d wit -w viceroy bindings ${STUBS_DIR}
+	uv run componentize-py -d wit -w viceroy componentize app -o app.wasm
 
 serve: app.wasm
-	viceroy --adapt app.wasm
+	viceroy serve app.wasm
 
-.PHONY: all serve
+test: app.wasm
+	uv run --extra test pytest
+
+lint:
+	uv run --extra dev ruff check .
+
+lint-fix:
+	uv run --extra dev ruff check --fix .
+
+format:
+	uv run --extra dev ruff format .
+
+format-check:
+	uv run --extra dev ruff format --check .
+
+.PHONY: all serve test lint format format-check

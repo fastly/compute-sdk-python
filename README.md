@@ -21,13 +21,6 @@ Currently, this demonstrates…
   native-code compression stdlibs which haven't been compiled against WASI yet.
   Moving componentize-py to a new Python may help, as [WASIp1 is now a Tier 2
   supported platform](https://peps.python.org/pep-0011/#tier-2).
-* It crashes every time something tries to write to stdout or stderr. It may be
-  that those aren't in the preopens; adding those to the preopens should be
-  possible with changes to Viceroy. We're also using `--stub-wasi` at the
-  moment, which means things like `fd_write` are coded to immediately trap; that
-  probably doesn't help. Finally, it may be possible to monkeypatch in Python
-  and redirect them to a logging endpoint, but our initial attempts were
-  unsuccessful.
 
 # Install Dependencies
 
@@ -40,7 +33,33 @@ Currently, this demonstrates…
 # Build and Run
 
 1. `make serve`
-2. Visit http://127.0.0.1:7676/hello/fred in a browser.
+2. Visit http://127.0.0.1:7676/hello/world or http://127.0.0.1:7676/info in a browser.
 
 You are seeing Bottle, a simple Python web framework, run on a Fastly Compute
 worker!
+
+# Testing
+
+```bash
+# Install dependencies and run tests
+uv sync --extra dev --extra test
+make test
+```
+
+The tests automatically build the WebAssembly component, start viceroy, and verify all endpoints work correctly with the WIT APIs.
+
+# Development
+
+```bash
+# Format code
+make format
+
+# Check formatting
+make format-check
+
+# Run linting
+make lint
+
+# Run linting and apply automatic fixes
+make lint-fix
+```
