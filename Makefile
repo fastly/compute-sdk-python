@@ -9,13 +9,15 @@ BUILD_DIR := build
 EXAMPLES_DIR := examples
 
 # Define all available examples (add new ones here)
-EXAMPLES := bottle-app flask-app game-of-life
+EXAMPLES := bottle-app flask-app backend-simple requests-simple game-of-life
 
 # Default example for serve target
 EXAMPLE ?= bottle-app
 WASM_FILE := $(BUILD_DIR)/$(EXAMPLE).composed.wasm
 
 TARGET_WORLD := fastly:compute/service
+
+VICEROY ?= viceroy
 
 # Generate WASM file paths for all examples
 EXAMPLE_WASMS := $(foreach example,$(EXAMPLES),$(BUILD_DIR)/$(example).wasm)
@@ -54,7 +56,7 @@ serve: $(WASM_FILE)
 
 # Test all examples (requires all WASM files to be built)
 test: $(COMPOSED_WASMS)
-	uv run --extra test pytest
+	VICEROY=$(VICEROY) uv run --extra test pytest
 
 # List available examples
 list-examples:
