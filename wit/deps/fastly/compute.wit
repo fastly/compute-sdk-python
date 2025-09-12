@@ -316,9 +316,11 @@ interface http-downstream {
 
   /// Waits until the next request is available, and then returns the resulting
   /// request and body.
+  ///
+  /// Returns `ok(none)` if there are no more requests for this session.
   await-next-request: func(
     pending: request-promise,
-  ) -> result<request-with-body, error>;
+  ) -> result<option<request-with-body>, error>;
 
   next-request-abandon: func(
     pending: request-promise,
@@ -376,67 +378,85 @@ interface http-downstream {
   /// Returns whether the request was tagged as contributing to a DDoS attack.
   downstream-client-ddos-detected: func(
     ds-request: borrow<request>
-  ) -> result<u32, error>;
+  ) -> result<bool, error>;
 
   /// Gets the cipher suite used to secure the downstream client TLS connection.
   ///
   /// The value returned will be consistent with the [OpenSSL name] for the cipher suite.
   ///
+  /// Returns `ok(none)` if the downstream client connection is not a TLS connection.
+  ///
   /// [OpenSSL name]: https://testssl.sh/openssl-iana.mapping.html
   downstream-tls-cipher-openssl-name: func(
     ds-request: borrow<request>,
     max-len: u64
-  ) -> result<list<u8>, error>;
+  ) -> result<option<list<u8>>, error>;
 
   /// Gets the TLS protocol version used to secure the downstream client TLS connection.
+  ///
+  /// Returns `ok(none)` if the downstream client connection is not a TLS connection.
   downstream-tls-protocol: func(
     ds-request: borrow<request>,
     max-len: u64
-  ) -> result<list<u8>, error>;
+  ) -> result<option<list<u8>>, error>;
 
   /// Gets the raw bytes sent by the client in the TLS ClientHello message.
   ///
   /// See [RFC 5246] for details.
   ///
+  /// Returns `ok(none)` if the downstream client connection is not a TLS connection.
+  ///
   /// [RFC 5246]: https://www.rfc-editor.org/rfc/rfc5246#section-7.4.1.2
   downstream-tls-client-hello: func(
     ds-request: borrow<request>,
     max-len: u64
-  ) -> result<list<u8>, error>;
+  ) -> result<option<list<u8>>, error>;
 
   /// Gets the raw client certificate used to secure the downstream client mTLS connection.
   ///
   /// The value returned will be based on PEM format.
   ///
-  /// Returns `error.optional-none` if the connection is not mTLS or is unavailable.
+  /// Returns `ok(none)` if the downstream client connection is not a TLS connection.
   downstream-tls-raw-client-certificate: func(
     ds-request: borrow<request>,
     max-len: u64
-  ) -> result<list<u8>, error>;
+  ) -> result<option<list<u8>>, error>;
 
   /// Returns the `client-cert-verify-result` from the downstream client mTLS handshake.
   ///
-  /// Returns `none` if not available.
+  /// Returns `ok(none)` if the downstream client connection is not a TLS connection.
   downstream-tls-client-cert-verify-result: func(
     ds-request: borrow<request>
-  ) -> result<client-cert-verify-result, error>;
+  ) -> result<option<client-cert-verify-result>, error>;
+
+  /// Returns the Server Name Indication from the downstream client TLS handshake.
+  ///
+  /// Returns `ok(none)` if not available.
+  downstream-tls-client-servername: func(
+    ds-request: borrow<request>,
+    max-len: u64
+  ) -> result<option<string>, error>;
 
   /// Gets the JA3 hash of the TLS ClientHello message.
+  ///
+  /// Returns `ok(none)` if the downstream client connection is not a TLS connection.
   downstream-tls-ja3-md5: func(
     ds-request: borrow<request>
-  ) -> result<list<u8>, error>;
+  ) -> result<option<list<u8>>, error>;
 
   /// Gets the JA4 hash of the TLS ClientHello message.
+  ///
+  /// Returns `ok(none)` if the downstream client connection is not a TLS connection.
   downstream-tls-ja4: func(
     ds-request: borrow<request>,
     max-len: u64
-  ) -> result<string, error>;
+  ) -> result<option<string>, error>;
 
   /// Gets the compliance region that the client IP address is in.
   downstream-compliance-region: func(
     ds-request: borrow<request>,
     max-len: u64
-  ) -> result<string, error>;
+  ) -> result<option<string>, error>;
 
   /// Returns whether or not the original client request arrived with a
   /// Fastly-Key belonging to a user with the rights to purge content on this
@@ -453,7 +473,6 @@ interface http-req {
   use http-types.{http-version, content-encodings, framing-headers-mode, tls-version};
   use http-resp.{response};
   use http-body.{body};
-  use secret-store.{secret};
   use http-resp.{response-with-body};
 
   /// Handle that can be used to wait for a sent request.
@@ -843,6 +862,7 @@ interface http-req {
   record inspect-options {
     corp: option<string>,
     workspace: option<string>,
+    override-client-ip: option<ip-address>,
 
     /// Additional options may be added in the future via this resource type.
     extra: option<borrow<extra-inspect-options>>,
@@ -865,37 +885,6 @@ interface http-req {
 
   upgrade-websocket: func(backend: string) -> result<_, error>;
 
-  /// Create a backend for later use
-  register-dynamic-backend: func(
-    prefix: string,
-    target: string,
-    options: dynamic-backend-options,
-  ) -> result<_, error>;
-
-  /// Create a backend for later use
-  resource dynamic-backend-options {
-    constructor();
-
-    host-override: func(value: string);
-    connect-timeout: func(value: u32);
-    first-byte-timeout: func(value: u32);
-    between-bytes-timeout: func(value: u32);
-    use-tls: func(value: bool);
-    tls-min-version: func(value: tls-version);
-    tls-max-version: func(value: tls-version);
-    cert-hostname: func(value: string);
-    ca-cert: func(value: string);
-    ciphers: func(value: string);
-    sni-hostname: func(value: string);
-    client-cert: func(client-cert: string, key: borrow<secret>);
-    http-keepalive-time-ms: func(value: u32);
-    tcp-keepalive-enable: func(value: u32);
-    tcp-keepalive-interval-secs: func(value: u32);
-    tcp-keepalive-probes: func(value: u32);
-    tcp-keepalive-time-secs: func(value: u32);
-    pooling: func(value: bool);
-    grpc: func(value: bool);
-  }
 }
 
 /// HTTP responses.
@@ -1059,9 +1048,9 @@ interface dictionary {
 
     /// Tries to look up a value in this dictionary.
     ///
-    /// If the lookup is successful, this function returns `ok(s)` containing the found string
-    /// `s`, or `err(error.optional-none)` if no entry with the given key was found.
-    get: func(
+    /// If the lookup is successful, this function returns `ok(some(s))` containing the found
+    /// string `s`, or `ok(none)` if no entry with the given key was found.
+    lookup: func(
       key: string,
       max-len: u64,
     ) -> result<option<string>, error>;
@@ -1152,58 +1141,6 @@ interface erl {
     penalty-box: string,
     entry: string,
   ) -> result<bool, error>;
-}
-
-/// Object Store (deprecated in favor of `kv-store`)
-interface object-store {
-
-  use types.{error};
-  use http-body.{body};
-
-  /// (DEPRECATED) An Object Store.
-  resource store {
-    open: static func(name: string) -> result<option<store>, error>;
-
-    lookup: func(
-      key: string,
-    ) -> result<option<body>, error>;
-
-    lookup-async: func(
-      key: string,
-    ) -> result<pending-lookup, error>;
-
-    insert: func(
-      key: string,
-      body: body,
-    ) -> result<_, error>;
-
-    insert-async: func(
-      key: string,
-      body: body,
-    ) -> result<pending-insert, error>;
-
-    delete-async: func(
-      key: string,
-    ) -> result<pending-delete, error>;
-  }
-  /// (DEPRECATED) A pending Object Store lookup.
-  resource pending-lookup {}
-  /// (DEPRECATED) A pending Object Store insert.
-  resource pending-insert {}
-  /// (DEPRECATED) A pending Object Store delete.
-  resource pending-delete {}
-
-  await-pending-lookup: func(
-    handle: pending-lookup,
-  ) -> result<option<body>, error>;
-
-  await-pending-insert: func(
-    handle: pending-insert,
-  ) -> result<_, error>;
-
-  await-pending-delete: func(
-    handle: pending-delete,
-  ) -> result<_, error>;
 }
 
 /// Interface to Fastly's [Compute KV Store].
@@ -1386,7 +1323,7 @@ interface kv-store {
     /// After calling this method, this entry will no longer have a body.
     take-body: func() -> option<body>;
 
-    /// Read the metadata of the KV Store item.
+    /// Read the metadata of the KV Store item, if present.
     metadata: func(max-len: u64) -> result<option<string>, error>;
 
     /// Read the current generation of the KV Store item.
@@ -1540,24 +1477,24 @@ interface acl {
 
     /// Performs a lookup of the given IP address in the ACL.
     ///
-    /// If no matches are found, then `ok(none)` is returned.
+    /// If no matches are found, then `ok(none)` is returned. This corresponds
+    /// to an HTTP error code of 204, “No Content”.
     lookup: func(
       ip-addr: ip-address,
-    ) -> result<tuple<option<body>, acl-error>, error>;
+    ) -> result<option<body>, acl-error>;
   }
 
   /// Errors returned on ACL lookup failure.
   enum acl-error {
-    /// The $acl_error has not been initialized.
-    uninitialized,
-    /// There was no error.
-    ok,
-    /// This will map to the api's 204 code.
-    /// It indicates that the request succeeded, yet returned nothing.
-    no-content,
-    /// This will map to the api's 429 code.
     /// Too many requests have been made.
+    ///
+    /// This corresponds to an HTTP error code of 429, “Too Many Requests”.
     too-many-requests,
+
+    /// Generic error value.
+    ///
+    /// This means that some unexpected error occurred.
+    generic-error,
   }
 }
 
@@ -1583,6 +1520,170 @@ interface acl {
 interface backend {
   use types.{error};
   use http-types.{tls-version};
+  use secret-store.{secret};
+
+  /// Creates a new dynamic backend.
+  ///
+  /// The arguments are the name of the new backend to use, along with a string describing the
+  /// backend host. The latter can be of the form:
+  ///
+  /// - "<ip address>"
+  /// - "<hostname>"
+  /// - "<ip address>:<port>"
+  /// - "<hostname>:<port>"
+  ///
+  /// The name can be whatever you would like, as long as it does not match the name of any of the
+  /// static service backends nor match any other dynamic backends built during this session.
+  /// (Names can overlap between different sessions of the same service—they will be treated as
+  /// completely separate entities and will not be pooled—but you cannot, for example, declare
+  /// a dynamic backend named “dynamic-backend” twice in the same session.)
+  ///
+  /// Dynamic backends must be enabled for the Compute service. You can determine whether or not
+  /// dynamic backends have been allowed for the current service by checking for the
+  /// `error.unsupported` error result. This error only arises when attempting to use dynamic
+  /// backends with a service that has not had dynamic backends enabled, or dynamic backends have
+  /// been administratively prohibited for the node in response to an ongoing incident.
+  register-dynamic-backend: func(
+    prefix: string,
+    target: string,
+    options: dynamic-backend-options,
+  ) -> result<_, error>;
+
+  /// Options for `register-dynamic-backend`.
+  resource dynamic-backend-options {
+    /// Constructs an options resource with default values for all other possible fields for the
+    /// backend, which can be overridden using the other methods provided.
+    constructor();
+
+    /// Sets a host header override when contacting this backend.
+    ///
+    /// This will force the value of the “Host” header to the given string when sending out the
+    /// origin request. If this is not set and no header already exists, the “Host” header will
+    /// default to the target.
+    ///
+    /// For more information, see [the Fastly documentation on override hosts].
+    ///
+    /// [the Fastly documentation on override hosts]: https://docs.fastly.com/en/guides/specifying-an-override-host>
+    override-host: func(value: string);
+
+    /// Sets the connection timeout, in milliseconds, for this backend.
+    ///
+    /// Defaults to 1,000ms (1s).
+    connect-timeout: func(value: u32);
+
+    /// Sets a timeout, in milliseconds, that applies between the time of connection and the time we
+    /// get the first byte back.
+    ///
+    /// Defaults to 15,000ms (15s).
+    first-byte-timeout: func(value: u32);
+
+    /// Sets a timeout, in milliseconds, that applies between any two bytes we receive across the
+    /// wire.
+    ///
+    /// Defaults to 10,000ms (10s).
+    between-bytes-timeout: func(value: u32);
+
+    /// Enables or disables TLS to connect to the backend.
+    ///
+    /// When using TLS, Fastly checks the validity of the backend’s certificate, and fails the
+    /// connection if the certificate is invalid. This check is not optional: an invalid
+    /// certificate will cause the backend connection to fail (but read on).
+    ///
+    /// By default, the validity check does not require that the certificate hostname matches the
+    /// hostname of your request. You can use check_certificate to request a check of the
+    /// certificate hostname.
+    ///
+    /// By default, certificate validity uses a set of public certificate authorities. You can
+    /// specify an alternative CA using ca_certificate.
+    use-tls: func(value: bool);
+
+    /// Sets the minimum TLS version for connecting to the backend.
+    ///
+    /// Setting this will enable TLS for the connection as a side effect.
+    tls-min-version: func(value: tls-version);
+
+    /// Sets the maximum TLS version for connecting to the backend.
+    ///
+    /// Setting this will enable TLS for the connection as a side effect. (
+    tls-max-version: func(value: tls-version);
+
+    /// Defines the hostname that the server certificate should declare, and turn on validation
+    /// during backend connections.
+    ///
+    /// You should enable this if you are using TLS, and setting this will enable TLS for the
+    /// connection as a side effect.
+    ///
+    /// If `check-certificate` is not provided (default), the server certificate’s hostname may
+    /// have any value.
+    cert-hostname: func(value: string);
+
+    /// Sets the CA certificate to use when checking the validity of the backend.
+    ///
+    /// Setting this will enable TLS for the connection as a side effect.
+    ///
+    /// If `ca-certificate` is not provided (default), the backends’s certificate is validated
+    /// using a set of public root CAs.
+    ca-certificate: func(value: string);
+
+    /// Sets the acceptable cipher suites to use for TLS 1.0 - 1.2 connections.
+    ///
+    /// Setting this will enable TLS for the connection as a side effect.
+    tls-ciphers: func(value: string);
+
+    /// Sets the SNI hostname for the backend connection.
+    ///
+    /// Setting this will enable TLS for the connection as a side effect.
+    sni-hostname: func(value: string);
+
+    /// Provides the given client certificate to the server as part of the TLS handshake.
+    ///
+    /// Setting this will enable TLS for the connection as a side effect. Both the certificate and
+    /// the key to use should be in standard PEM format; providing the information in another
+    /// format will lead to an error. We suggest that (at least the) key should be held in
+    /// something like the Fastly secret store for security, with the handle passed to this
+    /// function without unpacking it via Secret::plaintext; the certificate can be held in a less
+    /// secure medium.
+    ///
+    /// (If it is absolutely necessary to get the key from another source, we suggest the use of
+    /// `secret.from-bytes`.
+    client-cert: func(client-cert: string, key: borrow<secret>);
+
+    /// Configures up to how long to allow HTTP keepalive connections to remain idle in the
+    /// connection pool.
+    http-keepalive-time-ms: func(value: u32);
+
+    /// Configures whether or not to use TCP keepalive on the connection to the backend.
+    tcp-keepalive-enable: func(value: u32);
+
+    /// Configures how long to wait in between each TCP keepalive probe sent to the backend.
+    tcp-keepalive-interval-secs: func(value: u32);
+
+    /// Configures up to how many TCP keepalive probes to send to the backend before the connection
+    /// is considered dead.
+    tcp-keepalive-probes: func(value: u32);
+
+    /// Configures how long to wait after the last sent data over the TCP connection before starting
+    /// to send TCP keepalive probes.
+    tcp-keepalive-time-secs: func(value: u32);
+
+    /// Determines whether or not connections to the same backend should be pooled across different
+    /// sessions.
+    ///
+    /// Fastly considers two backends “the same” if they’re registered with the same name and
+    /// the exact same settings. In those cases, when pooling is enabled, if Session 1 opens a
+    /// connection to this backend it will be left open, and can be re-used by Session 2. This can
+    /// help improve backend latency, by removing the need for the initial
+    /// network / TLS handshake(s).
+    ///
+    /// By default, pooling is enabled for dynamic backends.
+    pooling: func(value: bool);
+
+    /// Sets whether or not this backend will be used for gRPC traffic.
+    ///
+    /// Warning: Setting this for backends that will not be used with gRPC may have unpredictable
+    /// effects. Fastly only currently guarantees that this connection will work for gRPC traffic.
+    grpc: func(value: bool);
+  }
 
   type timeout-ms = u32;
   type timeout-secs = u32;
@@ -1770,7 +1871,9 @@ interface purge {
   /// A surrogate key must contain only printable ASCII characters (those between `0x21` and `0x7E`,
   /// inclusive).
   ///
-  /// Never returns `error.optional-none`.
+  /// Returns a [JSON purge response].
+  ///
+  /// [JSON purge response]: https://developer.fastly.com/reference/api/purging/#purge-tag
   purge-surrogate-key: func(
     surrogate-keys: string,
     purge-options: purge-options,
@@ -1778,13 +1881,8 @@ interface purge {
 
   /// Purge a surrogate key for the current service, and return the purge id.
   ///
-  /// This is similar to `purge-surrogate-key`, but on success, returns a
-  /// [JSON purge response] containing an ASCII alphanumeric string identifying
-  /// a purging.
-  ///
-  /// Never returns `error.optional-none`.
-  ///
-  /// [JSON purge response]: https://developer.fastly.com/reference/api/purging/#purge-tag
+  /// This is similar to `purge-surrogate-key`, but on success, returns an
+  /// ASCII alphanumeric string identifying a purging.
   purge-surrogate-key-verbose: func(
     surrogate-keys: string,
     purge-options: purge-options,
@@ -1865,11 +1963,11 @@ interface cache {
 
     get-state: func() -> result<lookup-state, error>;
 
-    /// Gets the user metadata of the found object, returning `none` if no object
+    /// Gets the user metadata of the found object, returning `ok(none)` if no object
     /// was found.
     get-user-metadata: func(max-len: u64) -> result<option<list<u8>>, error>;
 
-    /// Gets a range of the found object body, returning the `optional-none` error if there
+    /// Gets a range of the found object body, returning `ok(none)` if there
     /// was no found object.
     ///
     /// The returned `body` must be closed before calling this function again on the same
@@ -1882,25 +1980,25 @@ interface cache {
       options: get-body-options,
     ) -> result<body, error>;
 
-    /// Gets the content length of the found object, returning the `error.optional-none` error if
+    /// Gets the content length of the found object, returning `ok(none)` if
     /// there was no found object, or no content length was provided.
-    get-length: func() -> result<object-length, error>;
+    get-length: func() -> result<option<object-length>, error>;
 
-    /// Gets the configured max age of the found object, returning the `error.optional-none` error
+    /// Gets the configured max age of the found object, returning `ok(none)`
     /// if there was no found object.
-    get-max-age-ns: func() -> result<duration-ns, error>;
+    get-max-age-ns: func() -> result<option<duration-ns>, error>;
 
-    /// Gets the configured stale-while-revalidate period of the found object, returning the
-    /// `error.optional-none` error if there was no found object.
-    get-stale-while-revalidate-ns: func() -> result<duration-ns, error>;
+    /// Gets the configured stale-while-revalidate period of the found object, returning `ok(none)`
+    /// if there was no found object.
+    get-stale-while-revalidate-ns: func() -> result<option<duration-ns>, error>;
 
-    /// Gets the age of the found object, returning the `error.optional-none` error if there
+    /// Gets the age of the found object, returning `ok(none)` if there
     /// was no found object.
-    get-age-ns: func() -> result<duration-ns, error>;
+    get-age-ns: func() -> result<option<duration-ns>, error>;
 
-    /// Gets the number of cache hits for the found object, returning the `error.optional-none`
-    /// error if there was no found object.
-    get-hits: func() -> result<cache-hit-count, error>;
+    /// Gets the number of cache hits for the found object, returning `ok(none)`
+    /// if there was no found object.
+    get-hits: func() -> result<option<cache-hit-count>, error>;
 
     /// Cancel an obligation to provide an object to the cache.
     ///
@@ -1932,12 +2030,12 @@ interface cache {
   ) -> result<body, error>;
 
   /// Gets the age of the existing object during replace, returning
-  /// `none` if there was no object.
+  /// `ok(none)` if there was no object.
   replace-get-age-ns: func(
     handle: borrow<replace-entry>,
   ) -> result<option<duration-ns>, error>;
 
-  /// Gets a range of the existing object body, returning `none` if there
+  /// Gets a range of the existing object body, returning `ok(none)` if there
   /// was no existing object.
   ///
   /// The returned `body` must be closed before calling this function
@@ -1948,39 +2046,39 @@ interface cache {
   ) -> result<option<body>, error>;
 
   /// Gets the number of cache hits for the existing object during replace,
-  /// returning `none` if there was no object.
+  /// returning `ok(none)` if there was no object.
   replace-get-hits: func(
     handle: borrow<replace-entry>,
   ) -> result<option<cache-hit-count>, error>;
 
   /// Gets the content length of the existing object during replace,
-  /// returning `none` if there was no object, or no content
+  /// returning `ok(none)` if there was no object, or no content
   /// length was provided.
   replace-get-length: func(
     handle: borrow<replace-entry>,
   ) -> result<option<object-length>, error>;
 
   /// Gets the configured max age of the existing object during replace,
-  /// returning the `error.optional-none` error if there was no object.
+  /// returning `ok(none)` if there was no object.
   replace-get-max-age-ns: func(
     handle: borrow<replace-entry>,
   ) -> result<option<duration-ns>, error>;
 
   /// Gets the configured stale-while-revalidate period of the existing
-  /// object during replace, returning the `error.optional-none` error if there was no
+  /// object during replace, returning `ok(none)` if there was no
   /// object.
   replace-get-stale-while-revalidate-ns: func(
     handle: borrow<replace-entry>,
   ) -> result<option<duration-ns>, error>;
 
   /// Gets the lookup state of the existing object during replace, returning
-  /// the `error.optional-none` error if there was no object.
+  /// `ok(none)` if there was no object.
   replace-get-state: func(
     handle: borrow<replace-entry>,
   ) -> result<option<lookup-state>, error>;
 
   /// Gets the user metadata of the existing object during replace, returning
-  /// the `error.optional-none` error if there was no object.
+  /// `ok(none)` if there was no object.
   replace-get-user-metadata: func(
     handle: borrow<replace-entry>,
     max-len: u64,
@@ -2096,7 +2194,7 @@ interface cache {
   /// choosing a new waiter to perform the insertion/update.
   ///
   /// This may be passed either an `entry` or a `replace-entry`.
-  close: func(handle: entry) -> result<_, error>;
+  close-entry: func(handle: entry) -> result<_, error>;
 
   /// Options for cache replace operations
   record replace-options {
@@ -2169,7 +2267,7 @@ interface http-cache {
   use types.{error};
   use http-body.{body};
   use http-req.{request};
-  use http-resp.{response};
+  use http-resp.{response, response-with-body};
   use cache.{lookup-state, object-length, duration-ns, cache-hit-count};
 
   /// An HTTP Cache transaction.
@@ -2278,7 +2376,7 @@ interface http-cache {
       response: borrow<response>,
     ) -> result<tuple<storage-action, response>, error>;
 
-    /// Retrieves a stored response from the cache, returning the `error.optional-none` error if
+    /// Retrieves a stored response from the cache, returning `ok(none)` if
     /// there was no response found.
     ///
     /// If `transform-for-client` is set, the response will be adjusted according to the looked-up
@@ -2286,7 +2384,7 @@ interface http-cache {
     /// `206 Partial Content` response with an appropriate `content-range` header.
     get-found-response: func(
       transform-for-client: u32,
-    ) -> result<tuple<response, body>, error>;
+    ) -> result<option<response-with-body>, error>;
 
     /// Gets the state of a cache transaction.
     ///
@@ -2295,35 +2393,35 @@ interface http-cache {
     get-state: func(
     ) -> result<lookup-state, error>;
 
-    /// Gets the length of the found response, returning the `error.optional-none` error if there
+    /// Gets the length of the found response, returning `ok(none)` if there
     /// was no response found or no length was provided.
-    get-length: func() -> result<object-length, error>;
+    get-length: func() -> result<option<object-length>, error>;
 
-    /// Gets the configured max age of the found response in nanoseconds, returning the
-    /// `error.optional-none` error if there was no response found.
-    get-max-age-ns: func() -> result<duration-ns, error>;
+    /// Gets the configured max age of the found response in nanoseconds, returning `ok(none)`
+    /// if there was no response found.
+    get-max-age-ns: func() -> result<option<duration-ns>, error>;
 
     /// Gets the configured stale-while-revalidate period of the found response in nanoseconds,
-    /// returning the `error.optional-none` error if there was no response found.
+    /// returning `ok(none)` if there was no response found.
     get-stale-while-revalidate-ns: func(
-    ) -> result<duration-ns, error>;
+    ) -> result<option<duration-ns>, error>;
 
-    /// Gets the age of the found response in nanoseconds, returning the `error.optional-none` error
+    /// Gets the age of the found response in nanoseconds, returning `ok(none)`
     /// if there was no response found.
-    get-age-ns: func() -> result<duration-ns, error>;
+    get-age-ns: func() -> result<option<duration-ns>, error>;
 
-    /// Gets the number of cache hits for the found response, returning the `error.optional-none`
-    /// error if there was no response found.
+    /// Gets the number of cache hits for the found response, returning `ok(none)`
+    /// if there was no response found.
     ///
     /// This figure only reflects hits for a stored response in a particular cache server
     /// or cluster, not the entire Fastly network.
-    get-hits: func() -> result<cache-hit-count, error>;
+    get-hits: func() -> result<option<cache-hit-count>, error>;
 
-    /// Gets whether a found response is marked as containing sensitive data, returning the
-    /// `error.optional-none` error if there was no response found.
-    get-sensitive-data: func() -> result<bool, error>;
+    /// Gets whether a found response is marked as containing sensitive data, returning `ok(none)`
+    /// if there was no response found.
+    get-sensitive-data: func() -> result<option<bool>, error>;
 
-    /// Gets the surrogate keys of the found response, returning the `error.optional-none` error if
+    /// Gets the surrogate keys of the found response, returning `ok(none)` if
     /// there was no response found.
     ///
     /// The output is a list of surrogate keys separated by spaces.
@@ -2332,9 +2430,9 @@ interface http-cache {
     /// error is returned containing the required size.
     get-surrogate-keys: func(
       max-len: u64,
-    ) -> result<string, error>;
+    ) -> result<option<string>, error>;
 
-    /// Gets the vary rule of the found response, returning the `error.optional-none` error if there
+    /// Gets the vary rule of the found response, returning `ok(none)` if there
     /// was no response found.
     ///
     /// The output is a list of header names separated by spaces.
@@ -2343,7 +2441,7 @@ interface http-cache {
     /// error is returned containing the required size.
     get-vary-rule: func(
       max-len: u64,
-    ) -> result<string, error>;
+    ) -> result<option<string>, error>;
 
     /// Abandons an obligation to provide a response to the cache.
     ///
@@ -2474,7 +2572,7 @@ interface http-cache {
   /// If the cache handle state includes `must-insert-or-update` (and hence no insert or update
   /// has been performed), closing the handle cancels any request collapsing, potentially choosing
   /// a new waiter to perform the insertion/update.
-  close: func(
+  close-entry: func(
     handle: entry,
   ) -> result<_, error>;
 
@@ -2514,7 +2612,7 @@ interface config-store {
     /// Names are case sensitive.
     open: static func(name: string) -> result<store, error>;
 
-    /// Fetches a value from the config store, returning `none` if it doesn't exist.
+    /// Fetches a value from the config store, returning `ok(none)` if it doesn't exist.
     get: func(
       key: string,
       max-len: u64,
@@ -2572,24 +2670,11 @@ interface image-optimizer {
   /// Extensibility for `image-optimizer-transform-options`
   resource extra-image-optimizer-transform-options {}
 
-  enum image-optimizer-error-tag {
-    uninitialized,
-    ok,
-    error,
-    warning,
-  }
-
-  record image-optimizer-error-detail {
-    tag: image-optimizer-error-tag,
-    message: list<u8>,
-  }
-
   transform-image-optimizer-request: func(
     origin-image-request: borrow<request>,
     origin-image-request-body: option<body>,
     origin-image-request-backend: string,
     io-transform-options: image-optimizer-transform-options,
-    io-error-detail: image-optimizer-error-detail,
   ) -> result<response-with-body, error>;
 }
 
@@ -2619,7 +2704,7 @@ interface compute-runtime {
   /// A timestamp in milliseconds.
   type vcpu-ms = u64;
 
-  /// Gets the amount of vCPU time that has passed since this instance was started, in milliseconds.
+  /// Gets the amount of vCPU time that has passed since this session was started, in milliseconds.
   ///
   /// This function returns only time spent running on a vCPU, and does not include time spent
   /// performing any I/O operations. However, it is based on clock time passing, and so will include
@@ -2629,10 +2714,100 @@ interface compute-runtime {
   /// As a result, this function *should not be used in benchmarking across runs*. It can be used,
   /// with caution, to compare the runtime of different operations within the same session.
   get-vcpu-ms: func() -> vcpu-ms;
+
+  /// A UUID generated by Fastly for each session.
+  ///
+  /// This is often a useful value to include in log messages, and also to send to upstream
+  /// servers as an additional custom HTTP header, allowing for straightforward correlation of
+  /// which WebAssembly session processed a request to requests later processed by an origin
+  /// server. If a session is used to process multiple downstream requests, then you may wish to
+  /// use the per-request UUID associated with each individual request handle instead of this
+  /// field.
+  ///
+  /// Equivalent to the "FASTLY_TRACE_ID" environment variable.
+  get-session-id: func() -> string;
+
+  /// The hostname of the Fastly cache server which is executing the current session, for
+  /// example, `cache-jfk1034`.
+  ///
+  /// Equivalent to the "FASTLY_HOSTNAME" environment variable and to [`server.hostname`] in VCL.
+  ///
+  /// [`server.hostname`]: https://www.fastly.com/documentation/reference/vcl/variables/server/server-hostname/
+  get-hostname: func() -> string;
+
+  /// The three-character identifying code of the [Fastly POP] in which the current session is
+  /// running.
+  ///
+  /// Equivalent to the "FASTLY_POP" environment variable and to [`server.datacenter`] in VCL.
+  ///
+  /// [Fastly POP]: https://www.fastly.com/documentation/guides/concepts/pop/
+  /// [`server.datacenter`]: https://www.fastly.com/documentation/reference/vcl/variables/server/server-datacenter/
+  get-pop: func() -> string;
+
+  /// A code representing the general geographic region in which the [Fastly POP] processing the
+  /// current Compute session resides.
+  ///
+  /// Equivalent to the "FASTLY_REGION" environment variable and to [`server.region`] in VCL, and
+  /// has the same possible values.
+  ///
+  /// [`server.region`]: https://www.fastly.com/documentation/reference/vcl/variables/server/server-region/
+  /// [Fastly POP]: https://www.fastly.com/documentation/guides/concepts/pop/
+  get-region: func() -> string;
+
+  /// The current cache generation value for this Fastly service.
+  ///
+  /// The cache generation value is incremented by [purge-all operations].
+  ///
+  /// Equivalent to the "FASTLY_CACHE_GENERATION" environment variable and to
+  /// [`req.vcl.generation`] in VCL.
+  ///
+  /// [purge-all operations]: https://www.fastly.com/documentation/guides/concepts/edge-state/cache/purging/
+  /// [`req.vcl.generation`]: https://www.fastly.com/documentation/reference/vcl/variables/miscellaneous/req-vcl-generation/
+  get-cache-generation: func() -> u64;
+
+  /// The customer ID of the Fastly customer account to which the currently executing Fastly
+  /// service belongs.
+  ///
+  /// Equivalent to the "FASTLY_CUSTOMER_ID" environment variable and to [`req.customer_id`] in VCL.
+  ///
+  /// [`req.customer_id`]: https://www.fastly.com/documentation/reference/vcl/variables/miscellaneous/req-customer-id/
+  get-customer-id: func() -> string;
+
+  /// Whether the request is running in the Fastly service's [staging environment].
+  ///
+  /// `false` for production or `true` for staging.
+  ///
+  /// Equivalent to the "FASTLY_IS_STAGING" environment variable and to [`fastly.is_staging`] in VCL. 
+  ///
+  /// [`fastly.is_staging`]: https://www.fastly.com/documentation/reference/vcl/variables/miscellaneous/fastly-is-staging/
+  /// [staging environment]: https://docs.fastly.com/products/staging
+  get-is-staging: func() -> bool;
+
+  /// The identifier for the Fastly service that is processing the current request.
+  ///
+  /// Equivalent to the "FASTLY_SERVICE_ID" environment variable and to [`req.service_id`] in VCL.
+  ///
+  /// [`req.service_id`]: https://www.fastly.com/documentation/reference/vcl/variables/miscellaneous/req-service-id/
+  get-service-id: func() -> string;
+
+  /// The version number for the Fastly service that is processing the current request.
+  ///
+  /// Equivalent to the "FASTLY_SERVICE_VERSION" environment variable and to [`req.vcl.version`]
+  /// in VCL.
+  ///
+  /// [`req.vcl.version`]: https://www.fastly.com/documentation/reference/vcl/variables/miscellaneous/req-vcl-version/
+  get-service-version: func() -> u64;
+
+  /// This function is not suitable for general-purpose use.
+  get-namespace-id: func() -> string;
 }
 
-/// WASI interfaces used by `fastly:compute/service`.
-world wasi-imports {
+/// Interfaces that a Fastly Compute service may import.
+///
+/// This contains the imports used in the `service` world, factored out into a
+/// separate world so that it can be used by library components. Library components
+/// are components that do not export anything themselves.
+world service-imports {
   import wasi:clocks/wall-clock@0.2.6;
   import wasi:clocks/monotonic-clock@0.2.6;
   import wasi:io/error@0.2.6;
@@ -2643,10 +2818,7 @@ world wasi-imports {
   import wasi:cli/stdout@0.2.6;
   import wasi:cli/stderr@0.2.6;
   import wasi:cli/stdin@0.2.6;
-}
 
-/// Custom interfaces used by `fastly:compute/service`.
-world custom-imports {
   import acl;
   import async-io;
   import backend;
@@ -2665,25 +2837,9 @@ world custom-imports {
   import image-optimizer;
   import log;
   import kv-store;
-  import object-store;
   import purge;
   import secret-store;
   import shielding;
-}
-
-world custom-exports {
-  // Export the `http-incoming` interface.
-  export http-incoming;
-}
-
-/// Interfaces that a Fastly Compute service may import.
-///
-/// This contains the imports used in the `service` world, factored out into a
-/// separate world so that it can be used by library components. Library components
-/// are components that do not export anything themselves.
-world service-imports {
-    include wasi-imports;
-    include custom-imports;
 }
 
 /// A Fastly Compute service.
@@ -2695,5 +2851,7 @@ world service-imports {
 /// `http-incoming` exports.
 world service {
   include service-imports;
-  include custom-exports;
+
+  // Export the `http-incoming` interface.
+  export http-incoming;
 }
