@@ -5,7 +5,6 @@ import pytest
 from fastly_compute.testing import ViceroyTestBase
 
 
-@pytest.mark.integration
 class TestFlaskApp(ViceroyTestBase):
     """Integration tests for the Flask example application."""
 
