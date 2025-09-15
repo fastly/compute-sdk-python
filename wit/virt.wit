@@ -1,0 +1,6 @@
+package python:virt;
+
+world python-virt {
+    export wasi:cli/terminal-input@0.2.6;
+}
+// version fairly arbitrary
