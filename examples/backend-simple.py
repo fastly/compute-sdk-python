@@ -53,6 +53,9 @@ def make_static_backend_request(backend_name: str, path: str) -> SimpleResponse:
     request.set_method("GET")
     request.set_uri(path)
     request.insert_header("User-Agent", b"FastlyCompute-BackendExample/1.0")
+
+    # TODO: this shouldn't be required and is a bug in viceroy for component
+    #       model interactions, most likely.
     request.insert_header("Host", b"localhost")
 
     # Create empty body for GET request
