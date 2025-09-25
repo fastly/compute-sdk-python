@@ -1,18 +1,56 @@
-all: app.wasm
+# Fastly Compute Python SDK
 
+# Configuration
 STUBS_DIR := stubs
+BUILD_DIR := build
+EXAMPLES_DIR := examples
 
-app.wasm: wit/viceroy.wit wit/deps/fastly/compute.wit app.py
-	rm -rf ${STUBS_DIR}
-	uv run componentize-py -d wit -w viceroy bindings ${STUBS_DIR}
-	uv run componentize-py -d wit -w viceroy componentize app -o app.wasm
+# Define all available examples (add new ones here)
+EXAMPLES := wit-bottle flask-app
 
-serve: app.wasm
-	viceroy serve app.wasm
+# Default example for serve target
+EXAMPLE ?= wit-bottle
+WASM_FILE := $(BUILD_DIR)/$(EXAMPLE).wasm
 
-test: app.wasm
+# Generate WASM file paths for all examples
+EXAMPLE_WASMS := $(foreach example,$(EXAMPLES),$(BUILD_DIR)/$(example).wasm)
+
+# Default target builds all examples
+all: $(EXAMPLE_WASMS)
+
+# Pattern rule for building any example
+$(BUILD_DIR)/%.wasm: $(EXAMPLES_DIR)/%.py wit/viceroy.wit wit/deps/fastly/compute.wit | $(BUILD_DIR)
+	@echo "Building $* example..."
+	rm -rf $(STUBS_DIR)
+	uv run componentize-py -d wit -w viceroy bindings $(STUBS_DIR)
+	uv run componentize-py -d wit -w viceroy componentize $* -p $(EXAMPLES_DIR) -p . -o $@
+
+# Create build directory
+$(BUILD_DIR):
+	mkdir -p $(BUILD_DIR)
+
+# Serve the specified example (default: wit-bottle)
+serve: $(WASM_FILE)
+	@echo "Serving $(EXAMPLE) example on http://127.0.0.1:7676"
+	viceroy serve $(WASM_FILE)
+
+# Test all examples (requires all WASM files to be built)
+test: $(EXAMPLE_WASMS)
 	uv run --extra test pytest
 
+# List available examples
+list-examples:
+	@echo "Available examples:"
+	@for example in $(EXAMPLES); do echo "  $$example"; done
+
+# Build all examples (alias for 'all')
+build-all: all
+
+# Clean build artifacts
+clean:
+	rm -rf $(BUILD_DIR) $(STUBS_DIR)
+
+# Development tools
 lint:
 	uv run --extra dev ruff check .
 
@@ -25,4 +63,29 @@ format:
 format-check:
 	uv run --extra dev ruff format --check .
 
-.PHONY: all serve test lint format format-check
+# Help target
+help:
+	@echo "Fastly Compute Python SDK"
+	@echo ""
+	@echo "Targets:"
+	@echo "  all                 Build all examples"
+	@echo "  serve [EXAMPLE=name] Serve example (default: $(EXAMPLE))"
+	@echo "  test                Run integration tests (builds all examples)"
+	@echo "  build-all           Build all examples (alias for 'all')"
+	@echo "  list-examples       List available examples"
+	@echo "  clean               Clean build artifacts"
+	@echo "  lint                Run linter"
+	@echo "  lint-fix            Run linter with auto-fix"
+	@echo "  format              Format code"
+	@echo "  format-check        Check code formatting"
+	@echo ""
+	@echo "Examples:"
+	@echo "  make                          # Build all examples"
+	@echo "  make serve                    # Serve wit-bottle example"
+	@echo "  make serve EXAMPLE=flask-app  # Serve flask-app example"
+	@echo "  make build/flask-app.wasm     # Build specific example"
+	@echo ""
+	@echo "Available examples: $(EXAMPLES)"
+
+.PHONY: all serve test list-examples build-all clean lint lint-fix format format-check help
+
