@@ -6,6 +6,9 @@ uv.lock
 /stubs/
 __pycache__
 
+# Downloads
+wasi-packages/
+
 # Build artifacts
 /build/
 *.wasm
