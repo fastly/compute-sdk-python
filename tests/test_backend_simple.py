@@ -22,24 +22,13 @@ class TestBackendSimple(ViceroyTestBase):
         cls.test_server_url = cls.test_server.start()
 
         # Configure the backend for viceroy
-        cls.setup_backends({"httpbin": cls.test_server_url})
+        cls.setup_backends({"test-be": cls.test_server_url})
 
     @classmethod
     def teardown_class(cls):
         """Clean up test servers."""
         if hasattr(cls, "test_server"):
             cls.test_server.stop()
-
-    def test_service_info(self):
-        """Test the service info endpoint."""
-        response = self.get("/")
-        assert response.status_code == 200
-
-        data = response.json()
-        assert data["service"] == "fastly-compute-backend-example"
-        assert data["status"] == "ok"
-        assert "vcpu_time_ms" in data
-        assert "available_endpoints" in data
 
     def test_static_backend_request(self):
         """Test static backend request to local test server."""
@@ -48,7 +37,7 @@ class TestBackendSimple(ViceroyTestBase):
 
         data = response.json()
         assert data["backend_type"] == "static"
-        assert data["backend_name"] == "httpbin"
+        assert data["backend_name"] == "test-be"
         assert data["status"] == 200
 
         # Check that we got httpbin-like response data
@@ -60,14 +49,14 @@ class TestBackendSimple(ViceroyTestBase):
 
     def test_dynamic_backend_request(self):
         """Test dynamic backend request (should work without static backend config)."""
-        response = self.get("/dynamic")
+        response = self.get("/dynamic?target=https://http-me.fastly.dev/get")
         assert response.status_code == 200
 
         data = response.json()
         assert data["backend_type"] == "dynamic"
-        assert "httpbin.org" in data["target"]
+        assert data["target"] == "https://http-me.fastly.dev/get"
 
-        # This might fail if external httpbin.org is not accessible
+        # This might fail if external http-me.fastly.dev is not accessible
         # But the test should at least show our code handling the dynamic backend
         if "error" in data:
             # External request failed - verify error handling
@@ -76,14 +65,25 @@ class TestBackendSimple(ViceroyTestBase):
             # External request succeeded
             assert data["status"] == 200
 
+    def test_dynamic_backend_no_target(self):
+        """Test dynamic backend request without target parameter."""
+        response = self.get("/dynamic")
+        assert response.status_code == 200
+
+        data = response.json()
+        assert data["backend_type"] == "dynamic"
+        assert "error" in data
+        assert "target query parameter is required" in data["error"]
+
     def test_dynamic_post_request(self):
         """Test dynamic backend POST request."""
-        response = self.get("/dynamic-post")
+        response = self.get("/dynamic-post?target=https://http-me.fastly.dev/post")
         assert response.status_code == 200
 
         data = response.json()
         assert data["backend_type"] == "dynamic"
         assert data["method"] == "POST"
+        assert data["target"] == "https://http-me.fastly.dev/post"
 
         # Similar to GET test - external dependency
         if "error" in data:
@@ -93,6 +93,17 @@ class TestBackendSimple(ViceroyTestBase):
             # External request succeeded
             assert "sent_data" in data
             assert data["sent_data"]["test"] is True
+
+    def test_dynamic_post_no_target(self):
+        """Test dynamic backend POST request without target parameter."""
+        response = self.get("/dynamic-post")
+        assert response.status_code == 200
+
+        data = response.json()
+        assert data["backend_type"] == "dynamic"
+        assert data["method"] == "POST"
+        assert "error" in data
+        assert "target query parameter is required" in data["error"]
 
 
 @pytest.mark.integration
@@ -104,7 +115,7 @@ class TestBackendSimpleWithMockResponses(ViceroyTestBase):
     @classmethod
     def setup_class(cls):
         """Set up mock server with predefined responses."""
-        # Create mock responses that match what httpbin.org would return
+        # Create mock responses that match what http-me.fastly.dev would return
         mock_responses = {
             "/get": {
                 "status": 200,
@@ -128,7 +139,7 @@ class TestBackendSimpleWithMockResponses(ViceroyTestBase):
         cls.mock_server_url = cls.mock_server.start()
 
         # Configure backend
-        cls.setup_backends({"httpbin": cls.mock_server_url})
+        cls.setup_backends({"test-be": cls.mock_server_url})
 
     @classmethod
     def teardown_class(cls):
@@ -143,7 +154,7 @@ class TestBackendSimpleWithMockResponses(ViceroyTestBase):
 
         data = response.json()
         assert data["backend_type"] == "static"
-        assert data["backend_name"] == "httpbin"
+        assert data["backend_name"] == "test-be"
         assert data["status"] == 200
 
         # Check the mock response data

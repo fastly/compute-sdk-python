@@ -58,25 +58,14 @@ class TestRequestsSimple(ViceroyTestBase):
         cls.test_server = LocalTestServer(config)
         cls.test_server_url = cls.test_server.start()
 
-        # Configure httpbin backend for static backend tests
-        cls.setup_backends({"httpbin": cls.test_server_url})
+        # Configure test-be backend for static backend tests
+        cls.setup_backends({"test-be": cls.test_server_url})
 
     @classmethod
     def teardown_class(cls):
         """Clean up test server."""
         if hasattr(cls, "test_server"):
             cls.test_server.stop()
-
-    def test_service_info(self):
-        """Test the service info endpoint."""
-        response = self.get("/")
-        assert response.status_code == 200
-
-        data = response.json()
-        assert data["service"] == "fastly-compute-requests-simple"
-        assert data["status"] == "ok"
-        assert "vcpu_time_ms" in data
-        assert "endpoints" in data
 
     def test_static_get_request(self):
         """Test static backend GET request."""
@@ -86,7 +75,7 @@ class TestRequestsSimple(ViceroyTestBase):
         data = response.json()
         assert data["demo"] == "static-get"
         assert data["backend_type"] == "static"
-        assert data["backend_name"] == "httpbin"
+        assert data["backend_name"] == "test-be"
         assert data["status_code"] == 200
         assert data["success"] is True
         assert "url" in data
@@ -107,7 +96,7 @@ class TestRequestsSimple(ViceroyTestBase):
             # Request succeeded
             assert data["demo"] == "static-post"
             assert data["backend_type"] == "static"
-            assert data["backend_name"] == "httpbin"
+            assert data["backend_name"] == "test-be"
             assert data["status_code"] == 200
             assert data["success"] is True
 
@@ -119,13 +108,13 @@ class TestRequestsSimple(ViceroyTestBase):
 
     def test_dynamic_get_request(self):
         """Test dynamic backend GET request."""
-        response = self.get("/dynamic-get")
+        response = self.get("/dynamic-get?target=https://http-me.fastly.dev/get")
         assert response.status_code == 200
 
         data = response.json()
         assert data["demo"] == "dynamic-get"
 
-        # This test might fail if external httpbin.org is not accessible
+        # This test might fail if external http-me.fastly.dev is not accessible
         if "error" in data:
             # External request failed - verify error handling
             assert "error" in data
@@ -133,15 +122,25 @@ class TestRequestsSimple(ViceroyTestBase):
         else:
             # External request succeeded
             assert data["backend_type"] == "dynamic"
-            assert data["target_url"] == "https://httpbin.org/get"
+            assert data["target_url"] == "https://http-me.fastly.dev/get"
             assert data["status_code"] == 200
             assert data["success"] is True
             assert "url" in data
             assert "headers" in data
 
+    def test_dynamic_get_no_target(self):
+        """Test dynamic backend GET request without target parameter."""
+        response = self.get("/dynamic-get")
+        assert response.status_code == 200
+
+        data = response.json()
+        assert data["demo"] == "dynamic-get"
+        assert "error" in data
+        assert "target query parameter is required" in data["error"]
+
     def test_dynamic_post_request(self):
         """Test dynamic backend POST request."""
-        response = self.get("/dynamic-post")
+        response = self.get("/dynamic-post?target=https://http-me.fastly.dev/post")
         assert response.status_code == 200
 
         data = response.json()
@@ -153,11 +152,21 @@ class TestRequestsSimple(ViceroyTestBase):
             assert "error_type" in data
         else:
             assert data["backend_type"] == "dynamic"
-            assert data["target_url"] == "https://httpbin.org/post"
+            assert data["target_url"] == "https://http-me.fastly.dev/post"
             assert "sent_data" in data
             sent_data = data["sent_data"]
             assert sent_data["service"] == "fastly-compute"
             assert sent_data["demo"] == "dynamic-post"
+
+    def test_dynamic_post_no_target(self):
+        """Test dynamic backend POST request without target parameter."""
+        response = self.get("/dynamic-post")
+        assert response.status_code == 200
+
+        data = response.json()
+        assert data["demo"] == "dynamic-post"
+        assert "error" in data
+        assert "target query parameter is required" in data["error"]
 
     def test_error_handling(self):
         """Test error handling scenarios."""
@@ -179,26 +188,3 @@ class TestRequestsSimple(ViceroyTestBase):
             if result["status"] == "expected_error":
                 assert "error" in result
                 assert "error_type" in result
-
-    def test_features_demo(self):
-        """Test various requests library features."""
-        response = self.get("/features-demo")
-        assert response.status_code == 200
-
-        data = response.json()
-        assert data["demo"] == "features-demo"
-        assert "success" in data
-
-        # This might fail due to external dependency
-        if not data["success"]:
-            # External request failed - verify error handling
-            assert "error" in data
-            assert "error_type" in data
-        else:
-            # External request succeeded - check features
-            features = data["features"]
-            assert "status_code" in features
-            assert "ok" in features
-            assert "url" in features
-            assert "headers_count" in features
-            assert "content_length" in features

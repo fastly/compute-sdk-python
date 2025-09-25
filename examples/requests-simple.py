@@ -19,13 +19,13 @@ app = Bottle()
 def static_get():
     """Demo GET request using static backend."""
     try:
-        # Use static backend (requires 'httpbin' backend in viceroy.toml)
-        response = requests.get("/get", backend="httpbin")
+        # Use static backend (requires 'test-be' backend in viceroy.toml)
+        response = requests.get("/get", backend="test-be")
 
         return {
             "demo": "static-get",
             "backend_type": "static",
-            "backend_name": "httpbin",
+            "backend_name": "test-be",
             "status_code": response.status_code,
             "success": response.ok,
             "url": response.url,
@@ -50,12 +50,12 @@ def static_post():
             "vcpu_time": compute_runtime.get_vcpu_ms(),
         }
 
-        response = requests.post("/post", backend="httpbin", json=post_data)
+        response = requests.post("/post", backend="test-be", json=post_data)
 
         return {
             "demo": "static-post",
             "backend_type": "static",
-            "backend_name": "httpbin",
+            "backend_name": "test-be",
             "status_code": response.status_code,
             "success": response.ok,
             "sent_data": post_data,
@@ -71,17 +71,27 @@ def static_post():
 @app.route("/dynamic-get")
 def dynamic_get():
     """Demo GET request using dynamic backend."""
+    from bottle import request
+
+    # Get target from query parameter (required)
+    target = request.query.get('target')
+    if not target:
+        return {
+            "demo": "dynamic-get",
+            "error": "target query parameter is required (e.g., ?target=https://http-me.fastly.dev/get)"
+        }
+
     try:
         # Make request to external service (creates dynamic backend)
         response = requests.get(
-            "https://httpbin.org/get",
+            target,
             headers={"User-Agent": "FastlyCompute-SimpleDemo/1.0"},
         )
 
         return {
             "demo": "dynamic-get",
             "backend_type": "dynamic",
-            "target_url": "https://httpbin.org/get",
+            "target_url": target,
             "status_code": response.status_code,
             "success": response.ok,
             "url": response.url,
@@ -98,6 +108,16 @@ def dynamic_get():
 @app.route("/dynamic-post")
 def dynamic_post():
     """Demo POST request using dynamic backend."""
+    from bottle import request
+
+    # Get target from query parameter (required)
+    target = request.query.get('target')
+    if not target:
+        return {
+            "demo": "dynamic-post",
+            "error": "target query parameter is required (e.g., ?target=https://http-me.fastly.dev/post)"
+        }
+
     try:
         # POST to external service
         post_data = {
@@ -108,7 +128,7 @@ def dynamic_post():
         }
 
         response = requests.post(
-            "https://httpbin.org/post",
+            target,
             json=post_data,
             headers={
                 "User-Agent": "FastlyCompute-SimpleDemo/1.0",
@@ -119,7 +139,7 @@ def dynamic_post():
         return {
             "demo": "dynamic-post",
             "backend_type": "dynamic",
-            "target_url": "https://httpbin.org/post",
+            "target_url": target,
             "status_code": response.status_code,
             "success": response.ok,
             "sent_data": post_data,
@@ -172,39 +192,6 @@ def error_demo():
         )
 
     return {"demo": "error-demo", "test_results": results}
-
-
-@app.route("/features-demo")
-def features_demo():
-    """Demo various requests library features."""
-    try:
-        # Test with query parameters
-        response = requests.get(
-            "https://httpbin.org/get",
-            params={"demo": "fastly-compute", "feature": "params"},
-        )
-
-        # Test response properties
-        features = {
-            "status_code": response.status_code,
-            "ok": response.ok,
-            "url": response.url,
-            "headers_count": len(response.headers),
-            "content_length": len(response.content),
-            "text_length": len(response.text),
-            "encoding": response.encoding,
-            "content_type": response.headers.get("content-type", "unknown"),
-        }
-
-        return {"demo": "features-demo", "success": True, "features": features}
-
-    except Exception as e:
-        return {
-            "demo": "features-demo",
-            "success": False,
-            "error": str(e),
-            "error_type": type(e).__name__,
-        }
 
 
 # Create the HTTP handler

@@ -11,10 +11,10 @@ Usage:
     response = requests.get("/api/users", backend="api-backend")
 
     # Dynamic backend (external URLs)
-    response = requests.get("https://httpbin.org/get")
+    response = requests.get("https://http-me.fastly.dev/get")
 
     # POST with JSON
-    response = requests.post("https://httpbin.org/post",
+    response = requests.post("https://http-me.fastly.dev/post",
                            json={"key": "value"})
 """
 

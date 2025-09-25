@@ -53,7 +53,7 @@ def make_static_backend_request(backend_name: str, path: str) -> SimpleResponse:
     request.set_method("GET")
     request.set_uri(path)
     request.insert_header("User-Agent", b"FastlyCompute-BackendExample/1.0")
-    # request.insert_header("Host", b"localhost")
+    request.insert_header("Host", b"localhost")
 
     # Create empty body for GET request
     body = http_body.new()
@@ -227,29 +227,11 @@ def make_dynamic_post_request(target_url: str, post_data: dict) -> SimpleRespons
     return SimpleResponse(status=status, body=response_data)
 
 
-@app.route("/")
-def index():
-    """Root path - show available endpoints"""
-    vcpu_time = compute_runtime.get_vcpu_ms()
-
-    return {
-        "service": "fastly-compute-backend-example",
-        "status": "ok",
-        "vcpu_time_ms": vcpu_time,
-        "available_endpoints": [
-            "/static - Test static backend request",
-            "/dynamic - Test dynamic backend request",
-            "/dynamic-post - Test dynamic backend POST request",
-            "/info - Show service information",
-        ],
-    }
-
-
 @app.route("/static")
 def test_static_backend():
-    """Test static backend (requires backend named 'httpbin' in viceroy.toml)"""
+    """Test static backend (requires backend named 'test-be' in viceroy.toml)"""
     try:
-        response = make_static_backend_request("httpbin", "/get")
+        response = make_static_backend_request("test-be", "/get")
 
         # Try to parse response as JSON
         try:
@@ -259,19 +241,29 @@ def test_static_backend():
 
         return {
             "backend_type": "static",
-            "backend_name": "httpbin",
+            "backend_name": "test-be",
             "status": response.status,
             "data": response_data,
         }
     except Exception as e:
-        return {"backend_type": "static", "backend_name": "httpbin", "error": str(e)}
+        return {"backend_type": "static", "backend_name": "test-be", "error": str(e)}
 
 
 @app.route("/dynamic")
 def test_dynamic_backend():
     """Test dynamic backend to a public API"""
+    from bottle import request
+
+    # Get target from query parameter (required)
+    target = request.query.get('target')
+    if not target:
+        return {
+            "backend_type": "dynamic",
+            "error": "target query parameter is required (e.g., ?target=https://httpbin.org/get)"
+        }
+
     try:
-        response = make_dynamic_backend_request("https://httpbin.org/get")
+        response = make_dynamic_backend_request(target)
 
         # Try to parse response as JSON
         try:
@@ -281,14 +273,14 @@ def test_dynamic_backend():
 
         return {
             "backend_type": "dynamic",
-            "target": "https://httpbin.org/get",
+            "target": target,
             "status": response.status,
             "data": response_data,
         }
     except Exception as e:
         return {
             "backend_type": "dynamic",
-            "target": "https://httpbin.org/get",
+            "target": target,
             "error": str(e),
         }
 
@@ -296,6 +288,17 @@ def test_dynamic_backend():
 @app.route("/dynamic-post")
 def test_dynamic_post():
     """Test dynamic backend POST"""
+    from bottle import request
+
+    # Get target from query parameter (required)
+    target = request.query.get('target')
+    if not target:
+        return {
+            "backend_type": "dynamic",
+            "method": "POST",
+            "error": "target query parameter is required (e.g., ?target=https://httpbin.org/post)"
+        }
+
     vcpu_time = compute_runtime.get_vcpu_ms()
     test_data = {
         "message": "Hello from Fastly Compute!",
@@ -304,7 +307,7 @@ def test_dynamic_post():
     }
 
     try:
-        response = make_dynamic_post_request("https://httpbin.org/post", test_data)
+        response = make_dynamic_post_request(target, test_data)
 
         # Try to parse response as JSON
         try:
@@ -315,7 +318,7 @@ def test_dynamic_post():
         return {
             "backend_type": "dynamic",
             "method": "POST",
-            "target": "https://httpbin.org/post",
+            "target": target,
             "status": response.status,
             "sent_data": test_data,
             "data": response_data,
@@ -324,7 +327,7 @@ def test_dynamic_post():
         return {
             "backend_type": "dynamic",
             "method": "POST",
-            "target": "https://httpbin.org/post",
+            "target": target,
             "error": str(e),
         }
 
