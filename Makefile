@@ -12,6 +12,8 @@ EXAMPLES := wit-bottle flask-app backend-simple requests-simple
 EXAMPLE ?= wit-bottle
 WASM_FILE := $(BUILD_DIR)/$(EXAMPLE).wasm
 
+VICEROY ?= viceroy
+
 # Generate WASM file paths for all examples
 EXAMPLE_WASMS := $(foreach example,$(EXAMPLES),$(BUILD_DIR)/$(example).wasm)
 
@@ -32,11 +34,11 @@ $(BUILD_DIR):
 # Serve the specified example (default: wit-bottle)
 serve: $(WASM_FILE)
 	@echo "Serving $(EXAMPLE) example on http://127.0.0.1:7676"
-	viceroy serve $(WASM_FILE)
+	$(VICEROY) serve $(WASM_FILE)
 
 # Test all examples (requires all WASM files to be built)
 test: $(EXAMPLE_WASMS)
-	uv run --extra test pytest
+	VICEROY=$(VICEROY) uv run --extra test pytest
 
 # List available examples
 list-examples:

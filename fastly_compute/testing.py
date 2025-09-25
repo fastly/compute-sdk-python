@@ -167,7 +167,7 @@ class ViceroyTestBase:
 
         # Build viceroy command
         viceroy_cmd = [
-            "viceroy",
+            os.getenv("VICEROY", "viceroy"),
             "serve",
             cls.WASM_FILE,
             "--addr",
