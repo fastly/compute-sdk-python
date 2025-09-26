@@ -1,6 +1,6 @@
-package python:virt;
+package fastly:wasiless;
 
-world python-virt {
+world wasiless {
     export wasi:cli/terminal-input@0.2.6;
     export wasi:cli/terminal-output@0.2.6;
     export wasi:cli/terminal-stdin@0.2.6;

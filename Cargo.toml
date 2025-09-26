@@ -1,7 +1,8 @@
 [package]
-name = "python-virt"
+name = "wasiless"
 version = "0.1.0"
 edition = "2024"
+description = "A null implementation of WASI, doing as little as possible while still allowing each function to return without trapping"
 
 [dependencies]
 wit-bindgen = "0.46.0"
