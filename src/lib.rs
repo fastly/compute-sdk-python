@@ -6,20 +6,21 @@ wit_bindgen::generate!({
 
 // This already miraculously exports wasi::cli::terminal_input::TerminalInput!
 
-use exports::wasi::cli::terminal_input::{Guest, GuestTerminalInput, TerminalInput};
+use exports::wasi::cli::terminal_input;
+use exports::wasi::cli::terminal_input::{GuestTerminalInput, TerminalInput};
 
 static mut ONE_TRUE_TERMINAL: u8 = 0;
 
 // TODO: Make less bogus so it stands a chance of not crashing at runtime. For now, I'm just seeing if I can get it to link.
 impl GuestTerminalInput for TerminalInput {
-    unsafe fn _resource_new(val: *mut u8) -> u32
+    unsafe fn _resource_new(_val: *mut u8) -> u32
     where
         Self: Sized,
     {
         0
     }
 
-    fn _resource_rep(handle: u32) -> *mut u8
+    fn _resource_rep(_handle: u32) -> *mut u8
     where
         Self: Sized,
     {
@@ -29,7 +30,7 @@ impl GuestTerminalInput for TerminalInput {
 
 struct MyComponent;
 
-impl Guest for MyComponent {
+impl terminal_input::Guest for MyComponent {
     type TerminalInput = TerminalInput;
 }
 
