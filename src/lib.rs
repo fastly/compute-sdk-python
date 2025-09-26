@@ -8,10 +8,14 @@ wit_bindgen::generate!({
 
 use exports::wasi::cli::terminal_input;
 use exports::wasi::cli::terminal_input::{GuestTerminalInput, TerminalInput};
+use exports::wasi::cli::terminal_output;
+use exports::wasi::cli::terminal_output::{GuestTerminalOutput, TerminalOutput};
+use exports::wasi::cli::terminal_stdin;
 
 static mut ONE_TRUE_TERMINAL: u8 = 0;
 
-// TODO: Make less bogus so it stands a chance of not crashing at runtime. For now, I'm just seeing if I can get it to link.
+// TODO: Make less bogus so it stands a chance of not crashing at runtime. For
+// now, I'm just seeing if I can get it to link.
 impl GuestTerminalInput for TerminalInput {
     unsafe fn _resource_new(_val: *mut u8) -> u32
     where
@@ -32,6 +36,33 @@ struct MyComponent;
 
 impl terminal_input::Guest for MyComponent {
     type TerminalInput = TerminalInput;
+}
+
+// TODO: Make less bogus, as above.
+impl GuestTerminalOutput for TerminalOutput {
+    unsafe fn _resource_new(_val: *mut u8) -> u32
+    where
+        Self: Sized,
+    {
+        0
+    }
+
+    fn _resource_rep(_handle: u32) -> *mut u8
+    where
+        Self: Sized,
+    {
+        &raw mut ONE_TRUE_TERMINAL
+    }
+}
+
+impl terminal_output::Guest for MyComponent {
+    type TerminalOutput = TerminalOutput;
+}
+
+impl terminal_stdin::Guest for MyComponent {
+    fn get_terminal_stdin() -> Option<<MyComponent as terminal_input::Guest>::TerminalInput> {
+        None
+    }
 }
 
 export!(MyComponent);
