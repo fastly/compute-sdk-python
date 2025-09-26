@@ -10,7 +10,9 @@ use exports::wasi::cli::terminal_input;
 use exports::wasi::cli::terminal_input::{GuestTerminalInput, TerminalInput};
 use exports::wasi::cli::terminal_output;
 use exports::wasi::cli::terminal_output::{GuestTerminalOutput, TerminalOutput};
+use exports::wasi::cli::terminal_stderr;
 use exports::wasi::cli::terminal_stdin;
+use exports::wasi::cli::terminal_stdout;
 
 static mut ONE_TRUE_TERMINAL: u8 = 0;
 
@@ -63,6 +65,18 @@ impl terminal_output::Guest for Wasiless {
 
 impl terminal_stdin::Guest for Wasiless {
     fn get_terminal_stdin() -> Option<<Wasiless as terminal_input::Guest>::TerminalInput> {
+        None
+    }
+}
+
+impl terminal_stdout::Guest for Wasiless {
+    fn get_terminal_stdout() -> Option<<Wasiless as terminal_output::Guest>::TerminalOutput> {
+        None
+    }
+}
+
+impl terminal_stderr::Guest for Wasiless {
+    fn get_terminal_stderr() -> Option<<Wasiless as terminal_output::Guest>::TerminalOutput> {
         None
     }
 }
