@@ -120,10 +120,12 @@ impl GuestPollable for Pollable {
         &raw mut BOGUS_RESOURCE
     }
 
+    /// Returns true for consistency with the fact that our block() doesn't block.
     fn ready(&self) -> bool {
-        false
+        true
     }
 
+    /// Never blocks, lest we block forever.
     fn block(&self) -> () {
         ()
     }
@@ -132,8 +134,24 @@ impl GuestPollable for Pollable {
 impl poll::Guest for Wasiless {
     type Pollable = Pollable;
 
-    fn poll(_in: Vec<PollableBorrow>) -> Vec<u32> {
-        vec![]
+    /// This is a real implementation, in an attempt to present a consistent
+    /// picture of our fake reality to callers and thus avoid provoking crashes
+    /// unnecessarily.
+    fn poll(pollables: Vec<PollableBorrow>) -> Vec<u32> {
+        if pollables.len() > (u32::MAX as usize) {
+            panic!("list of pollables too long to be indexed with a u32")
+        }
+        pollables
+            .iter()
+            .enumerate()
+            .filter_map(|(i, p)| {
+                if p.get::<self::Pollable>().ready() {
+                    Some(i as u32)
+                } else {
+                    None
+                }
+            })
+            .collect()
     }
 }
 
