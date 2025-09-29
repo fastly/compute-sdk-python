@@ -1,3 +1,10 @@
+// General philosophy thus far: Avoid returning error conditions; appear to
+// succeed. But lie as little as possible beyond that: IO read and write
+// routines claim 0 bytes were written, "successfully". This is in service of
+// creating as little surprise for the caller as possible. Keep in mind this
+// philosophy may be proven unhelpful through actual experience with the
+// behavior of real-world clients.
+
 wit_bindgen::generate!({
     world: "wasiless",
     path: "wit",
@@ -13,8 +20,13 @@ use exports::wasi::cli::terminal_stdin;
 use exports::wasi::cli::terminal_stdout;
 use exports::wasi::io::error::{self, Error, GuestError};
 use exports::wasi::io::poll::{self, GuestPollable, Pollable, PollableBorrow};
+use exports::wasi::io::streams::{
+    self, GuestInputStream, GuestOutputStream, InputStream, InputStreamBorrow, OutputStream,
+    StreamError,
+};
 
 static mut BOGUS_RESOURCE: u8 = 0;
+static BOGUS_HANDLE: u32 = 0;
 
 // TODO: Make less bogus so it stands a chance of not crashing at runtime. For
 // now, I'm just seeing if I can get it to link.
@@ -23,7 +35,7 @@ impl GuestTerminalInput for TerminalInput {
     where
         Self: Sized,
     {
-        0
+        BOGUS_HANDLE
     }
 
     fn _resource_rep(_handle: u32) -> *mut u8
@@ -48,7 +60,7 @@ impl GuestTerminalOutput for TerminalOutput {
     where
         Self: Sized,
     {
-        0
+        BOGUS_HANDLE
     }
 
     fn _resource_rep(_handle: u32) -> *mut u8
@@ -86,7 +98,7 @@ impl GuestError for Error {
     where
         Self: Sized,
     {
-        0
+        BOGUS_HANDLE
     }
 
     fn _resource_rep(_handle: u32) -> *mut u8
@@ -110,7 +122,7 @@ impl GuestPollable for Pollable {
     where
         Self: Sized,
     {
-        0
+        BOGUS_HANDLE
     }
 
     fn _resource_rep(_handle: u32) -> *mut u8
@@ -153,6 +165,105 @@ impl poll::Guest for Wasiless {
             })
             .collect()
     }
+}
+
+impl GuestInputStream for InputStream {
+    unsafe fn _resource_new(_val: *mut u8) -> u32
+    where
+        Self: Sized,
+    {
+        BOGUS_HANDLE
+    }
+
+    fn _resource_rep(_handle: u32) -> *mut u8
+    where
+        Self: Sized,
+    {
+        &raw mut BOGUS_RESOURCE
+    }
+
+    fn read(&self, _len: u64) -> Result<Vec<u8>, StreamError> {
+        Ok(Vec::new())
+    }
+
+    fn blocking_read(&self, _len: u64) -> Result<Vec<u8>, StreamError> {
+        Ok(Vec::new())
+    }
+
+    fn skip(&self, _len: u64) -> Result<u64, StreamError> {
+        Ok(0)
+    }
+
+    fn blocking_skip(&self, _len: u64) -> Result<u64, StreamError> {
+        Ok(0)
+    }
+
+    fn subscribe(&self) -> Pollable {
+        // TODO: Return a handle that points to a mock. Or maybe make this trap in the interrim.
+        unsafe { Pollable::from_handle(BOGUS_HANDLE) }
+    }
+}
+
+/// Writes appear to go through without error but also report back that they wrote 0 bytes.
+impl GuestOutputStream for OutputStream {
+    unsafe fn _resource_new(_val: *mut u8) -> u32
+    where
+        Self: Sized,
+    {
+        BOGUS_HANDLE
+    }
+
+    fn _resource_rep(_handle: u32) -> *mut u8
+    where
+        Self: Sized,
+    {
+        &raw mut BOGUS_RESOURCE
+    }
+
+    fn check_write(&self) -> Result<u64, StreamError> {
+        Ok(4096) // TODO: Make this interlock with subscribe().
+    }
+
+    fn write(&self, _contents: Vec<u8>) -> Result<(), StreamError> {
+        Ok(())
+    }
+
+    fn blocking_write_and_flush(&self, _contents: Vec<u8>) -> Result<(), StreamError> {
+        Ok(())
+    }
+
+    fn flush(&self) -> Result<(), StreamError> {
+        Ok(())
+    }
+
+    fn blocking_flush(&self) -> Result<(), StreamError> {
+        Ok(())
+    }
+
+    fn subscribe(&self) -> Pollable {
+        unsafe { Pollable::from_handle(BOGUS_HANDLE) }
+    }
+
+    fn write_zeroes(&self, _len: u64) -> Result<(), StreamError> {
+        Ok(())
+    }
+
+    fn blocking_write_zeroes_and_flush(&self, _len: u64) -> Result<(), StreamError> {
+        Ok(())
+    }
+
+    fn splice(&self, _src: InputStreamBorrow, _len: u64) -> Result<u64, StreamError> {
+        Ok(0)
+    }
+
+    fn blocking_splice(&self, _src: InputStreamBorrow, _len: u64) -> Result<u64, StreamError> {
+        Ok(0)
+    }
+}
+
+impl streams::Guest for Wasiless {
+    type InputStream = InputStream;
+    type OutputStream = OutputStream;
 }
 
 export!(Wasiless);
