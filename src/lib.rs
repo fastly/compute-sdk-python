@@ -12,6 +12,7 @@ use exports::wasi::cli::terminal_stderr;
 use exports::wasi::cli::terminal_stdin;
 use exports::wasi::cli::terminal_stdout;
 use exports::wasi::io::error::{self, Error, GuestError};
+use exports::wasi::io::poll::{self, GuestPollable, Pollable, PollableBorrow};
 
 static mut BOGUS_RESOURCE: u8 = 0;
 
@@ -102,6 +103,38 @@ impl GuestError for Error {
 
 impl error::Guest for Wasiless {
     type Error = Error;
+}
+
+impl GuestPollable for Pollable {
+    unsafe fn _resource_new(_val: *mut u8) -> u32
+    where
+        Self: Sized,
+    {
+        0
+    }
+
+    fn _resource_rep(_handle: u32) -> *mut u8
+    where
+        Self: Sized,
+    {
+        &raw mut BOGUS_RESOURCE
+    }
+
+    fn ready(&self) -> bool {
+        false
+    }
+
+    fn block(&self) -> () {
+        ()
+    }
+}
+
+impl poll::Guest for Wasiless {
+    type Pollable = Pollable;
+
+    fn poll(_in: Vec<PollableBorrow>) -> Vec<u32> {
+        vec![]
+    }
 }
 
 export!(Wasiless);
