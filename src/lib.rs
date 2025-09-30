@@ -3,7 +3,8 @@
 // routines claim 0 bytes were written, "successfully". This is in service of
 // creating as little surprise for the caller as possible. Keep in mind this
 // philosophy may be proven unhelpful through actual experience with the
-// behavior of real-world clients.
+// behavior of real-world clients. It may be helpful (and even less surprising)
+// to crash as early as possible.
 
 wit_bindgen::generate!({
     world: "wasiless",
@@ -28,8 +29,9 @@ use exports::wasi::io::streams::{
 static mut BOGUS_RESOURCE: u8 = 0;
 static BOGUS_HANDLE: u32 = 0;
 
-// TODO: Make less bogus so it stands a chance of not crashing at runtime. For
-// now, I'm just seeing if I can get it to link.
+// TODO: Make less bogus so it stands a chance of not crashing at runtime. Same
+// for other BOGUS_RESOURCE and BOGUS_HANDLE users. For now, I'm just seeing if
+// I can get it to link.
 impl GuestTerminalInput for TerminalInput {
     unsafe fn _resource_new(_val: *mut u8) -> u32
     where
@@ -54,7 +56,6 @@ impl terminal_input::Guest for Wasiless {
     type TerminalInput = TerminalInput;
 }
 
-// TODO: Make less bogus, as above. Make all BOGUS_RESOURCE users less bogus.
 impl GuestTerminalOutput for TerminalOutput {
     unsafe fn _resource_new(_val: *mut u8) -> u32
     where
@@ -199,7 +200,6 @@ impl GuestInputStream for InputStream {
     }
 
     fn subscribe(&self) -> Pollable {
-        // TODO: Return a handle that points to a mock. Or maybe make this trap in the interrim.
         unsafe { Pollable::from_handle(BOGUS_HANDLE) }
     }
 }
