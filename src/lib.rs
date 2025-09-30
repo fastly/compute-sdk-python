@@ -19,6 +19,7 @@ use exports::wasi::cli::terminal_output::{self, GuestTerminalOutput, TerminalOut
 use exports::wasi::cli::terminal_stderr;
 use exports::wasi::cli::terminal_stdin;
 use exports::wasi::cli::terminal_stdout;
+use exports::wasi::clocks::wall_clock::{self, Datetime};
 use exports::wasi::io::error::{self, Error, GuestError};
 use exports::wasi::io::poll::{self, GuestPollable, Pollable, PollableBorrow};
 use exports::wasi::io::streams::{
@@ -264,6 +265,22 @@ impl GuestOutputStream for OutputStream {
 impl streams::Guest for Wasiless {
     type InputStream = InputStream;
     type OutputStream = OutputStream;
+}
+
+impl wall_clock::Guest for Wasiless {
+    fn now() -> Datetime {
+        Datetime {
+            seconds: 0,
+            nanoseconds: 0,
+        }
+    }
+
+    fn resolution() -> Datetime {
+        Datetime {
+            seconds: 0,
+            nanoseconds: 0,
+        }
+    }
 }
 
 export!(Wasiless);
