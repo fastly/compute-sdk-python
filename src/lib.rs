@@ -6,22 +6,19 @@
 // behavior of real-world clients. It may be helpful (and even less surprising)
 // to crash as early as possible.
 
-wit_bindgen::generate!({
-    world: "wasiless",
-    path: "wit",
-    generate_all,
-});
-
 // This already miraculously exports wasi::cli::terminal_input::TerminalInput!
 
-use exports::wasi::cli::terminal_input::{self, GuestTerminalInput, TerminalInput};
-use exports::wasi::cli::terminal_output::{self, GuestTerminalOutput, TerminalOutput};
-use exports::wasi::cli::terminal_stderr;
-use exports::wasi::cli::terminal_stdin;
-use exports::wasi::cli::terminal_stdout;
-use exports::wasi::clocks::monotonic_clock::{self, Duration, Instant};
-use exports::wasi::clocks::wall_clock::{self, Datetime};
-use exports::wasi::filesystem::{
+mod bindings;
+
+use bindings::export;
+use bindings::wasi::cli::terminal_input::{self, GuestTerminalInput, TerminalInput};
+use bindings::wasi::cli::terminal_output::{self, GuestTerminalOutput, TerminalOutput};
+use bindings::wasi::cli::terminal_stderr;
+use bindings::wasi::cli::terminal_stdin;
+use bindings::wasi::cli::terminal_stdout;
+use bindings::wasi::clocks::monotonic_clock::{self, Duration, Instant};
+use bindings::wasi::clocks::wall_clock::{self, Datetime};
+use bindings::wasi::filesystem::{
     self,
     types::{
         Advice, Descriptor, DescriptorBorrow, DescriptorFlags, DescriptorStat, DescriptorType,
@@ -29,9 +26,9 @@ use exports::wasi::filesystem::{
         GuestDirectoryEntryStream, MetadataHashValue, NewTimestamp, OpenFlags, PathFlags,
     },
 };
-use exports::wasi::io::error::{self, Error, GuestError};
-use exports::wasi::io::poll::{self, GuestPollable, Pollable, PollableBorrow};
-use exports::wasi::io::streams::{
+use bindings::wasi::io::error::{self, Error, GuestError};
+use bindings::wasi::io::poll::{self, GuestPollable, Pollable, PollableBorrow};
+use bindings::wasi::io::streams::{
     self, GuestInputStream, GuestOutputStream, InputStream, InputStreamBorrow, OutputStream,
     StreamError,
 };
@@ -470,4 +467,4 @@ impl filesystem::types::Guest for Wasiless {
     }
 }
 
-export!(Wasiless);
+export!(Wasiless with_types_in bindings);
