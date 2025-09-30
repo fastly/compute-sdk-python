@@ -168,3 +168,9 @@ impl filesystem::types::Guest for Wasiless {
         None
     }
 }
+
+impl filesystem::preopens::Guest for Wasiless {
+    fn get_directories() -> Vec<(Descriptor, String)> {
+        Vec::new()
+    }
+}
