@@ -19,6 +19,7 @@ use exports::wasi::cli::terminal_output::{self, GuestTerminalOutput, TerminalOut
 use exports::wasi::cli::terminal_stderr;
 use exports::wasi::cli::terminal_stdin;
 use exports::wasi::cli::terminal_stdout;
+use exports::wasi::clocks::monotonic_clock::{self, Duration, Instant};
 use exports::wasi::clocks::wall_clock::{self, Datetime};
 use exports::wasi::io::error::{self, Error, GuestError};
 use exports::wasi::io::poll::{self, GuestPollable, Pollable, PollableBorrow};
@@ -280,6 +281,24 @@ impl wall_clock::Guest for Wasiless {
             seconds: 0,
             nanoseconds: 0,
         }
+    }
+}
+
+impl monotonic_clock::Guest for Wasiless {
+    fn now() -> Instant {
+        0
+    }
+
+    fn resolution() -> Duration {
+        1 // A little less absurd than 0
+    }
+
+    fn subscribe_instant(_when: Instant) -> Pollable {
+        unsafe { Pollable::from_handle(BOGUS_HANDLE) }
+    }
+
+    fn subscribe_duration(_when: Duration) -> Pollable {
+        unsafe { Pollable::from_handle(BOGUS_HANDLE) }
     }
 }
 
