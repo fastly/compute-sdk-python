@@ -15,7 +15,7 @@ world wasiless {
     export wasi:sockets/network@0.2.6;
     export wasi:sockets/instance-network@0.2.6;
     export wasi:sockets/udp@0.2.6;
-//  export wasi:sockets/udp-create-socket@0.2.6;
+    export wasi:sockets/udp-create-socket@0.2.6;
     export wasi:clocks/monotonic-clock@0.2.6;
 //  export wasi:sockets/tcp@0.2.6;
 //  export wasi:sockets/tcp-create-socket@0.2.6;

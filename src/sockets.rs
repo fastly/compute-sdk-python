@@ -7,6 +7,7 @@ use crate::bindings::wasi::sockets::udp::{
     self, GuestIncomingDatagramStream, GuestOutgoingDatagramStream, GuestUdpSocket,
     IncomingDatagram, IncomingDatagramStream, OutgoingDatagram, OutgoingDatagramStream, UdpSocket,
 };
+use crate::bindings::wasi::sockets::udp_create_socket;
 use crate::{BOGUS_HANDLE, Wasiless};
 
 impl GuestNetwork for Network {}
@@ -108,4 +109,10 @@ impl udp::Guest for Wasiless {
     type UdpSocket = UdpSocket;
     type IncomingDatagramStream = IncomingDatagramStream;
     type OutgoingDatagramStream = OutgoingDatagramStream;
+}
+
+impl udp_create_socket::Guest for Wasiless {
+    fn create_udp_socket(_address_family: IpAddressFamily) -> Result<UdpSocket, ErrorCode> {
+        unimplemented!()
+    }
 }
