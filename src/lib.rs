@@ -11,6 +11,7 @@ mod cli;
 mod clocks;
 mod filesystem;
 mod io;
+mod sockets;
 
 use bindings::export;
 
