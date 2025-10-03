@@ -1,9 +1,11 @@
 use crate::bindings::wasi::io::poll::Pollable;
 use crate::bindings::wasi::sockets::instance_network;
+use crate::bindings::wasi::sockets::ip_name_lookup;
 use crate::bindings::wasi::sockets::network::{
     self, ErrorCode, GuestNetwork, IpAddressFamily, IpSocketAddress, Network, NetworkBorrow,
 };
 use crate::bindings::wasi::sockets::tcp::{self, GuestTcpSocket, TcpSocket};
+use crate::bindings::wasi::sockets::tcp_create_socket;
 use crate::bindings::wasi::sockets::udp::{
     self, GuestIncomingDatagramStream, GuestOutgoingDatagramStream, GuestUdpSocket,
     IncomingDatagram, IncomingDatagramStream, OutgoingDatagram, OutgoingDatagramStream, UdpSocket,
@@ -244,4 +246,35 @@ impl GuestTcpSocket for TcpSocket {
 
 impl tcp::Guest for Wasiless {
     type TcpSocket = TcpSocket;
+}
+
+impl tcp_create_socket::Guest for Wasiless {
+    fn create_tcp_socket(
+        _address_family: tcp_create_socket::IpAddressFamily,
+    ) -> Result<tcp_create_socket::TcpSocket, tcp_create_socket::ErrorCode> {
+        unreachable!()
+    }
+}
+
+impl ip_name_lookup::GuestResolveAddressStream for Wasiless {
+    #[allow(unused_variables)]
+    fn resolve_next_address(
+        &self,
+    ) -> Result<Option<ip_name_lookup::IpAddress>, ip_name_lookup::ErrorCode> {
+        unreachable!()
+    }
+    #[allow(unused_variables)]
+    fn subscribe(&self) -> ip_name_lookup::Pollable {
+        unreachable!()
+    }
+}
+impl ip_name_lookup::Guest for Wasiless {
+    type ResolveAddressStream = Wasiless;
+    #[allow(unused_variables)]
+    fn resolve_addresses(
+        network: ip_name_lookup::NetworkBorrow<'_>,
+        name: String,
+    ) -> Result<ip_name_lookup::ResolveAddressStream, ip_name_lookup::ErrorCode> {
+        unreachable!()
+    }
 }

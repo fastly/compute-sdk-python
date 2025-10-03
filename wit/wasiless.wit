@@ -18,8 +18,8 @@ world wasiless {
     export wasi:sockets/udp-create-socket@0.2.6;
     export wasi:clocks/monotonic-clock@0.2.6;
     export wasi:sockets/tcp@0.2.6;
-//  export wasi:sockets/tcp-create-socket@0.2.6;
-//  export wasi:sockets/ip-name-lookup@0.2.6;
+    export wasi:sockets/tcp-create-socket@0.2.6;
+    export wasi:sockets/ip-name-lookup@0.2.6;
 //  export wasi:random/insecure@0.2.6;
 //  export wasi:random/insecure-seed@0.2.6;
 //  export wasi:random/random@0.2.6;
