@@ -1,3 +1,4 @@
+use crate::Wasiless;
 use crate::bindings::wasi::io::error::{self, Error, GuestError};
 use crate::bindings::wasi::io::poll::Pollable;
 use crate::bindings::wasi::io::poll::{self, GuestPollable, PollableBorrow};
@@ -5,23 +6,8 @@ use crate::bindings::wasi::io::streams::{
     self, GuestInputStream, GuestOutputStream, InputStream, InputStreamBorrow, OutputStream,
     StreamError,
 };
-use crate::{BOGUS_HANDLE, BOGUS_RESOURCE, Wasiless};
 
 impl GuestError for Error {
-    unsafe fn _resource_new(_val: *mut u8) -> u32
-    where
-        Self: Sized,
-    {
-        BOGUS_HANDLE
-    }
-
-    fn _resource_rep(_handle: u32) -> *mut u8
-    where
-        Self: Sized,
-    {
-        &raw mut BOGUS_RESOURCE
-    }
-
     fn to_debug_string(&self) -> String {
         "".to_owned()
     }
@@ -32,20 +18,6 @@ impl error::Guest for Wasiless {
 }
 
 impl GuestPollable for Pollable {
-    unsafe fn _resource_new(_val: *mut u8) -> u32
-    where
-        Self: Sized,
-    {
-        BOGUS_HANDLE
-    }
-
-    fn _resource_rep(_handle: u32) -> *mut u8
-    where
-        Self: Sized,
-    {
-        &raw mut BOGUS_RESOURCE
-    }
-
     /// Returns true for consistency with the fact that our block() doesn't block.
     fn ready(&self) -> bool {
         true
@@ -82,20 +54,6 @@ impl poll::Guest for Wasiless {
 }
 
 impl GuestInputStream for InputStream {
-    unsafe fn _resource_new(_val: *mut u8) -> u32
-    where
-        Self: Sized,
-    {
-        BOGUS_HANDLE
-    }
-
-    fn _resource_rep(_handle: u32) -> *mut u8
-    where
-        Self: Sized,
-    {
-        &raw mut BOGUS_RESOURCE
-    }
-
     fn read(&self, _len: u64) -> Result<Vec<u8>, StreamError> {
         Ok(Vec::new())
     }
@@ -113,27 +71,12 @@ impl GuestInputStream for InputStream {
     }
 
     fn subscribe(&self) -> Pollable {
-        unsafe { Pollable::from_handle(BOGUS_HANDLE) }
+        unreachable!()
     }
 }
 
 /// Writes appear to go through without error but also report back that they wrote 0 bytes.
 impl GuestOutputStream for OutputStream {
-    // TODO: Maybe we can delete all these _resource*() funcs; the trait has a crashing default impl.
-    unsafe fn _resource_new(_val: *mut u8) -> u32
-    where
-        Self: Sized,
-    {
-        BOGUS_HANDLE
-    }
-
-    fn _resource_rep(_handle: u32) -> *mut u8
-    where
-        Self: Sized,
-    {
-        &raw mut BOGUS_RESOURCE
-    }
-
     fn check_write(&self) -> Result<u64, StreamError> {
         Ok(4096) // TODO: Make this interlock with subscribe().
     }
@@ -155,7 +98,7 @@ impl GuestOutputStream for OutputStream {
     }
 
     fn subscribe(&self) -> Pollable {
-        unsafe { Pollable::from_handle(BOGUS_HANDLE) }
+        unreachable!()
     }
 
     fn write_zeroes(&self, _len: u64) -> Result<(), StreamError> {

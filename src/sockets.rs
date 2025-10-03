@@ -1,3 +1,4 @@
+use crate::Wasiless;
 use crate::bindings::wasi::io::poll::Pollable;
 use crate::bindings::wasi::sockets::instance_network;
 use crate::bindings::wasi::sockets::ip_name_lookup;
@@ -11,7 +12,6 @@ use crate::bindings::wasi::sockets::udp::{
     IncomingDatagram, IncomingDatagramStream, OutgoingDatagram, OutgoingDatagramStream, UdpSocket,
 };
 use crate::bindings::wasi::sockets::udp_create_socket;
-use crate::{BOGUS_HANDLE, Wasiless};
 
 impl GuestNetwork for Network {}
 
@@ -21,7 +21,7 @@ impl network::Guest for Wasiless {
 
 impl instance_network::Guest for Wasiless {
     fn instance_network() -> Network {
-        unsafe { Network::from_handle(BOGUS_HANDLE) }
+        unreachable!()
     }
 }
 

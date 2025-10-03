@@ -1,7 +1,7 @@
+use crate::Wasiless;
 use crate::bindings::wasi::clocks::monotonic_clock::{self, Duration, Instant};
 use crate::bindings::wasi::clocks::wall_clock::{self, Datetime};
 use crate::bindings::wasi::io::poll::Pollable;
-use crate::{BOGUS_HANDLE, Wasiless};
 
 impl wall_clock::Guest for Wasiless {
     fn now() -> Datetime {
@@ -29,10 +29,10 @@ impl monotonic_clock::Guest for Wasiless {
     }
 
     fn subscribe_instant(_when: Instant) -> Pollable {
-        unsafe { Pollable::from_handle(BOGUS_HANDLE) }
+        unreachable!()
     }
 
     fn subscribe_duration(_when: Duration) -> Pollable {
-        unsafe { Pollable::from_handle(BOGUS_HANDLE) }
+        unreachable!()
     }
 }

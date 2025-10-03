@@ -16,9 +16,6 @@ mod sockets;
 
 use bindings::export;
 
-static mut BOGUS_RESOURCE: u8 = 0;
-static BOGUS_HANDLE: u32 = 0;
-
 /// Wasm component implementing WASI with as little functionality as possible
 /// without trapping
 struct Wasiless;

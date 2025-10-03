@@ -1,48 +1,17 @@
+use crate::Wasiless;
 use crate::bindings::wasi::cli::terminal_input::{self, GuestTerminalInput, TerminalInput};
 use crate::bindings::wasi::cli::terminal_output::{self, GuestTerminalOutput, TerminalOutput};
 use crate::bindings::wasi::cli::{
     environment, exit, stderr, stdin, stdout, terminal_stderr, terminal_stdin, terminal_stdout,
 };
-use crate::{BOGUS_HANDLE, BOGUS_RESOURCE, Wasiless};
 
-// TODO: Make less bogus so it stands a chance of not crashing at runtime. Same
-// for other BOGUS_RESOURCE and BOGUS_HANDLE users. For now, I'm just seeing if
-// I can get it to link.
-impl GuestTerminalInput for TerminalInput {
-    unsafe fn _resource_new(_val: *mut u8) -> u32
-    where
-        Self: Sized,
-    {
-        BOGUS_HANDLE
-    }
-
-    fn _resource_rep(_handle: u32) -> *mut u8
-    where
-        Self: Sized,
-    {
-        &raw mut BOGUS_RESOURCE
-    }
-}
+impl GuestTerminalInput for TerminalInput {}
 
 impl terminal_input::Guest for Wasiless {
     type TerminalInput = TerminalInput;
 }
 
-impl GuestTerminalOutput for TerminalOutput {
-    unsafe fn _resource_new(_val: *mut u8) -> u32
-    where
-        Self: Sized,
-    {
-        BOGUS_HANDLE
-    }
-
-    fn _resource_rep(_handle: u32) -> *mut u8
-    where
-        Self: Sized,
-    {
-        &raw mut BOGUS_RESOURCE
-    }
-}
+impl GuestTerminalOutput for TerminalOutput {}
 
 impl terminal_output::Guest for Wasiless {
     type TerminalOutput = TerminalOutput;
