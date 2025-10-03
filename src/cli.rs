@@ -69,11 +69,11 @@ impl terminal_stderr::Guest for Wasiless {
 impl environment::Guest for Wasiless {
     #[allow(unused_variables)]
     fn get_environment() -> Vec<(String, String)> {
-        unreachable!()
+        Vec::new()
     }
     #[allow(unused_variables)]
     fn get_arguments() -> Vec<String> {
-        unreachable!()
+        Vec::new()
     }
     #[allow(unused_variables)]
     fn initial_cwd() -> Option<String> {
