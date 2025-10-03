@@ -22,7 +22,10 @@ impl random::insecure_seed::Guest for Wasiless {
 impl random::random::Guest for Wasiless {
     #[allow(unused_variables)]
     fn get_random_bytes(len: u64) -> Vec<u8> {
-        unreachable!()
+        // TODO: This isn't random at all, let alone cryptographically so. As
+        // such, it violates the WASI spec, which stipulates this must be left
+        // out if it can't be random.
+        Vec::with_capacity(len as usize)
     }
     #[allow(unused_variables)]
     fn get_random_u64() -> u64 {
