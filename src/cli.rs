@@ -1,8 +1,8 @@
 use crate::bindings::wasi::cli::terminal_input::{self, GuestTerminalInput, TerminalInput};
 use crate::bindings::wasi::cli::terminal_output::{self, GuestTerminalOutput, TerminalOutput};
-use crate::bindings::wasi::cli::terminal_stderr;
-use crate::bindings::wasi::cli::terminal_stdin;
-use crate::bindings::wasi::cli::terminal_stdout;
+use crate::bindings::wasi::cli::{
+    environment, exit, stderr, stdin, stdout, terminal_stderr, terminal_stdin, terminal_stdout,
+};
 use crate::{BOGUS_HANDLE, BOGUS_RESOURCE, Wasiless};
 
 // TODO: Make less bogus so it stands a chance of not crashing at runtime. Same
@@ -63,5 +63,48 @@ impl terminal_stdout::Guest for Wasiless {
 impl terminal_stderr::Guest for Wasiless {
     fn get_terminal_stderr() -> Option<<Wasiless as terminal_output::Guest>::TerminalOutput> {
         None
+    }
+}
+
+impl environment::Guest for Wasiless {
+    #[allow(unused_variables)]
+    fn get_environment() -> Vec<(String, String)> {
+        unreachable!()
+    }
+    #[allow(unused_variables)]
+    fn get_arguments() -> Vec<String> {
+        unreachable!()
+    }
+    #[allow(unused_variables)]
+    fn initial_cwd() -> Option<String> {
+        unreachable!()
+    }
+}
+
+impl exit::Guest for Wasiless {
+    #[allow(unused_variables)]
+    fn exit(status: Result<(), ()>) -> () {
+        unreachable!()
+    }
+}
+
+impl stdout::Guest for Wasiless {
+    #[allow(unused_variables)]
+    fn get_stdout() -> stdout::OutputStream {
+        unreachable!()
+    }
+}
+
+impl stderr::Guest for Wasiless {
+    #[allow(unused_variables)]
+    fn get_stderr() -> stderr::OutputStream {
+        unreachable!()
+    }
+}
+
+impl stdin::Guest for Wasiless {
+    #[allow(unused_variables)]
+    fn get_stdin() -> stdin::InputStream {
+        unreachable!()
     }
 }

@@ -23,10 +23,10 @@ world wasiless {
     export wasi:random/insecure@0.2.6;
     export wasi:random/insecure-seed@0.2.6;
     export wasi:random/random@0.2.6;
-//  export wasi:cli/environment@0.2.6;
-//  export wasi:cli/exit@0.2.6;
-//  export wasi:cli/stdout@0.2.6;
-//  export wasi:cli/stderr@0.2.6;
-//  export wasi:cli/stdin@0.2.6;
+    export wasi:cli/environment@0.2.6;
+    export wasi:cli/exit@0.2.6;
+    export wasi:cli/stdout@0.2.6;
+    export wasi:cli/stderr@0.2.6;
+    export wasi:cli/stdin@0.2.6;
 }
 // Version numbers are fairly arbitrary.
