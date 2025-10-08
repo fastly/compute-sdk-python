@@ -67,6 +67,31 @@ interface types {
     limit-exceeded,
   }
 
+  /// An error returned by `open`-like functions.
+  enum open-error {
+    /// The given name of the entity to open was invalid.
+    invalid-syntax,
+    /// The given name is longer the maximum permitted length.
+    name-too-long,
+    /// The given name is a reserved name that may not be opened.
+    reserved,
+    /// No entity by the given name was found.
+    not-found,
+    /// Unsupported operation error.
+    ///
+    /// This error is returned when some operation cannot be performed, because it is not supported.
+    unsupported,
+    /// Limit exceeded
+    ///
+    /// This is returned when an attempt to allocate a resource has exceeded the maximum number of
+    /// resources permitted. For example, creating too many response handles.
+    limit-exceeded,
+    /// Generic error value.
+    ///
+    /// This means that some unexpected error occurred.
+    generic-error,
+  }
+
   /// IPv4 addresses.
   type ipv4-address = tuple<u8, u8, u8, u8>;
 
@@ -171,16 +196,15 @@ interface http-body {
   read: func(body: borrow<body>, chunk-size: u32) -> result<list<u8>, error>;
 
   /// Writes to a body.
-  write: func(body: borrow<body>, buf: list<u8>, end: write-end) -> result<u32, error>;
+  ///
+  /// This function may write fewer bytes than requested; on success, the number of
+  /// bytes actually written is returned.
+  write: func(body: borrow<body>, buf: list<u8>) -> result<u32, error>;
 
-  /// Which side of a body to write to.
-  enum write-end {
-    /// Write to the back of the body; that is, append to it.
-    back,
-
-    /// Write to the front of the body; that is, prepend to it.
-    front
-  }
+  /// Prepends bytes to the front of a body.
+  ///
+  /// On success, this function always writes all the bytes of `buf`.
+  write-front: func(body: borrow<body>, buf: list<u8>) -> result<_, error>;
 
   /// Frees a body.
   ///
@@ -224,7 +248,7 @@ interface http-body {
     body: borrow<body>,
     max-len: u64,
     cursor: u32,
-  ) -> result<tuple<string, option<u32>>, error>;
+  ) -> result<tuple<string, option<u32>>, trailer-error>;
 
   /// Gets the value for the trailer with the given name, or `none` if the trailer is not present.
   ///
@@ -239,7 +263,7 @@ interface http-body {
     body: borrow<body>,
     name: string,
     max-len: u64,
-  ) -> result<option<list<u8>>, error>;
+  ) -> result<option<list<u8>>, trailer-error>;
 
   /// Gets multiple values associated with the trailer with the given name.
   ///
@@ -255,15 +279,24 @@ interface http-body {
     name: string,
     max-len: u64,
     cursor: u32
-  ) -> result<tuple<list<u8>, option<u32>>, error>;
+  ) -> result<tuple<list<u8>, option<u32>>, trailer-error>;
+
+  /// Trailers aren't available until the body has been completely transmitted, so this error
+  /// type can either indicate that the errors aren't available yet, or that an error occurred.
+  variant trailer-error {
+    /// The trailers aren't available yet.
+    not-available-yet,
+
+    /// An error occurred.
+    error(error),
+  }
 }
 
 /// Low-level interface to Fastly's [Real-Time Log Streaming] endpoints.
 ///
 /// [Real-Time Log Streaming]: https://docs.fastly.com/en/guides/about-fastlys-realtime-log-streaming-features
 interface log {
-
-  use types.{error};
+  use types.{error, open-error};
 
   /// A logging endpoint.
   resource endpoint {
@@ -278,7 +311,7 @@ interface log {
     /// logging endpoint available in your service will still return a usable endpoint, and writes
     /// to that endpoint will succeed. Refer to your service dashboard to diagnose missing log
     /// events.
-    get: static func(name: string) -> result<endpoint, error>;
+    open: static func(name: string) -> result<endpoint, open-error>;
 
     /// Writes a data to the given endpoint.
     ///
@@ -294,7 +327,7 @@ interface log {
 interface http-downstream {
   use types.{error, ip-address};
   use http-req.{
-    request, client-cert-verify-result, error-with-detail, cache-override, request-promise,
+    request, client-cert-verify-result, error-with-detail, cache-override, pending-request,
     request-with-body,
   };
 
@@ -312,18 +345,18 @@ interface http-downstream {
   /// Starts waiting for the next request.
   next-request: func(
     options: next-request-options,
-  ) -> result<request-promise, error>;
+  ) -> result<pending-request, error>;
 
   /// Waits until the next request is available, and then returns the resulting
   /// request and body.
   ///
   /// Returns `ok(none)` if there are no more requests for this session.
-  await-next-request: func(
-    pending: request-promise,
+  await-request: func(
+    pending: pending-request,
   ) -> result<option<request-with-body>, error>;
 
   next-request-abandon: func(
-    pending: request-promise,
+    pending: pending-request,
   ) -> result<_, error>;
 
   /// Returns the client request's header names exactly as they were originally received.
@@ -475,11 +508,11 @@ interface http-req {
   use http-body.{body};
   use http-resp.{response-with-body};
 
-  /// Handle that can be used to wait for a sent request.
-  use async-io.{pollable as pending-request};
+  /// Handle that can be used to wait for a response from a sent request.
+  use async-io.{pollable as pending-response};
 
   /// Handle that can be used to wait for incoming requests.
-  use async-io.{pollable as request-promise};
+  use async-io.{pollable as pending-request};
 
   /// An HTTP request.
   resource request {
@@ -605,23 +638,6 @@ interface http-req {
       mode: framing-headers-mode,
     ) -> result<_, error>;
 
-    /// Inspects request HTTP traffic using the [NGWAF] lookaside service.
-    ///
-    /// Returns a JSON-encoded string.
-    ///
-    /// [NGWAF]: https://docs.fastly.com/en/ngwaf/
-    inspect: func(
-      body: borrow<body>,
-      options: inspect-options,
-      max-len: u64
-    ) -> result<string, error>;
-
-    /// Instead of having this request cache in this service's space, use the
-    /// cache of the named service
-    on-behalf-of: func(
-      service: string,
-    ) -> result<_, error>;
-
     redirect-to-grip-proxy: func(
       backend: string,
     ) -> result<_, error>;
@@ -648,15 +664,15 @@ interface http-req {
   ) -> result<response-with-body, error-with-detail>;
 
   /// Begins sending the request to the given backend server, and returns a
-  /// `pending-request` that can yield the backend response or an error.
+  /// `pending-response` that can yield the backend response or an error.
   ///
   /// This method returns as soon as the request begins sending to the backend,
   /// and transmission of the request body and headers will continue in the
   /// background.
   ///
   /// This method allows for sending more than one request at once and receiving
-  /// their responses in arbitrary orders. See `pending-request` for more
-  /// details on how to wait on, poll, or select between pending requests.
+  /// their responses in arbitrary orders. See `pending-response` for more
+  /// details on how to wait on, poll, or select between pending responses.
   ///
   /// This method is also useful for sending requests where the response is
   /// unimportant, but the request may take longer than the Compute program is
@@ -666,7 +682,7 @@ interface http-req {
     request: request,
     body: body,
     backend: string
-  ) -> result<pending-request, error>;
+  ) -> result<pending-response, error>;
 
   /// This is to `send-async` as `send-uncached` is to `send`.
   ///
@@ -677,15 +693,15 @@ interface http-req {
     request: request,
     body: body,
     backend: string,
-  ) -> result<pending-request, error>;
+  ) -> result<pending-response, error>;
 
   /// Begins sending the request to the given backend server, and returns a
-  /// `pending-request` that can yield the backend response or an error.
+  /// `pending-response` that can yield the backend response or an error.
   ///
   /// The `body` argument is not consumed, so that it can accept further data to send.
   ///
   /// The backend connection is only closed once `http-body.close` is called. The
-  /// `pending-request` will not yield a `response` until the body is finished.
+  /// `pending-response` will not yield a `response` until the body is finished.
   ///
   /// This method is most useful for programs that do some sort of processing or
   /// inspection of a potentially-large client request body. Streaming allows the
@@ -699,7 +715,7 @@ interface http-req {
     request: request,
     body: borrow<body>,
     backend: string,
-  ) -> result<pending-request, error>;
+  ) -> result<pending-response, error>;
 
   /// This is to `send-async-streaming` as `send-uncached` is to `send`.
   ///
@@ -710,7 +726,7 @@ interface http-req {
     request: request,
     body: borrow<body>,
     backend: string,
-  ) -> result<pending-request, error>;
+  ) -> result<pending-response, error>;
 
   type request-with-body = tuple<request, body>;
 
@@ -780,18 +796,14 @@ interface http-req {
     certificate-unknown,
   }
 
-  enum send-error-detail-tag {
-      /// The $send_error_detail struct has not been populated.
-      uninitialized,
-      /// There was no send error.
-      ok,
+  /// Information about errors encountered by sent requests.
+  variant send-error-detail {
       /// The system encountered a timeout when trying to find an IP address for the backend
       /// hostname.
       dns-timeout,
       /// The system encountered a DNS error when trying to find an IP address for the backend
-      /// hostname. The fields `dns-error-rcode` and `dns-error-info-code` may be set in the
-      /// $send_error_detail.
-      dns-error,
+      /// hostname.
+      dns-error(dns-error-detail),
       /// The system cannot determine which backend to use, or the specified backend was invalid.
       destination-not-found,
       /// The system considers the backend to be unavailable, for example when recent attempts to
@@ -838,21 +850,25 @@ interface http-req {
       http-request-uri-invalid,
       /// The system encountered an unexpected internal error.
       internal-error,
-      /// The system received a TLS alert from the backend. The field `tls-alert-id` may be set in
-      /// the $send_error_detail.
-      tls-alert-received,
+      /// The system received a TLS alert from the backend.
+      tls-alert-received(tls-alert-received-detail),
       /// The system encountered a TLS error when communicating with the backend, either during
       /// the handshake or afterwards.
       tls-protocol-error,
   }
 
-  record send-error-detail {
-      tag: send-error-detail-tag,
-      dns-error-rcode: option<u16>,
-      dns-error-info-code: option<u16>,
-      tls-alert-id: option<u8>,
+  /// Variant fields for `send-error.dns-error`.
+  record dns-error-detail {
+      rcode: option<u16>,
+      info-code: option<u16>,
   }
 
+  /// Variant fields for `send-error.tls-alert-received`.
+  record tls-alert-received-detail {
+      id: option<u8>,
+  }
+
+  /// An `error` code, optionally with extra request error information.
   record error-with-detail {
       detail: option<send-error-detail>,
       error: error,
@@ -873,8 +889,8 @@ interface http-req {
 
   /// Waits until the request is completed, and then returns the resulting
   /// response and body.
-  await-request: func(
-    pending: pending-request
+  await-response: func(
+    pending: pending-response
   ) -> result<response-with-body, error-with-detail>;
 
   /// Closes the `request`, releasing any associated resources.
@@ -885,6 +901,25 @@ interface http-req {
 
   upgrade-websocket: func(backend: string) -> result<_, error>;
 
+}
+
+/// [Fastly Next-Gen WAF] API.
+///
+/// [Fastly Next-Gen WAF]: https://docs.fastly.com/en/ngwaf/
+interface security {
+  use http-req.{request, body, inspect-options, error};
+
+  /// Inspects request HTTP traffic using the [NGWAF] lookaside service.
+  ///
+  /// Returns a JSON-encoded string.
+  ///
+  /// [NGWAF]: https://docs.fastly.com/en/ngwaf/
+  inspect: func(
+    request: borrow<request>,
+    body: borrow<body>,
+    options: inspect-options,
+    max-len: u64
+  ) -> result<string, error>;
 }
 
 /// HTTP responses.
@@ -1036,15 +1071,14 @@ interface http-resp {
 ///
 /// [Compute Dictionaries]: https://www.fastly.com/documentation/guides/concepts/edge-state/dynamic-config/#dictionaries
 interface dictionary {
-
-  use types.{error};
+  use types.{error, open-error};
 
   /// A Compute Dictionary.
   resource dictionary {
     /// Opens a dictionary, given its name.
     ///
     /// Names are case sensitive.
-    open: static func(name: string) -> result<dictionary, error>;
+    open: static func(name: string) -> result<dictionary, open-error>;
 
     /// Tries to look up a value in this dictionary.
     ///
@@ -1150,16 +1184,13 @@ interface erl {
 /// [Compute KV Store]: https://www.fastly.com/documentation/guides/concepts/edge-state/data-stores/#kv-stores
 /// [blog post]: https://www.fastly.com/blog/introducing-the-compute-edge-kv-store-global-persistent-storage-for-compute-functions
 interface kv-store {
-
-  use types.{error};
+  use types.{error, open-error};
   use http-body.{body};
 
   /// A KV Store.
   resource store {
     /// Opens the KV Store with the given name.
-    ///
-    /// If there is no store by that name, this returns `ok(none)`.
-    open: static func(name: string) -> result<option<store>, error>;
+    open: static func(name: string) -> result<store, open-error>;
 
     /// Looks up a value in the KV Store.
     ///
@@ -1421,8 +1452,7 @@ interface kv-store {
 ///
 /// [Secret Store]: https://www.fastly.com/documentation/reference/api/services/resources/secret-store/
 interface secret-store {
-
-  use types.{error};
+  use types.{error, open-error};
 
   /// An individual secret.
   resource secret {
@@ -1444,13 +1474,13 @@ interface secret-store {
     /// Returns the plaintext value of this secret.
     plaintext: func(
       max-len: u64
-    ) -> result<option<list<u8>>, error>;
+    ) -> result<list<u8>, error>;
   }
 
   /// A Secret Store.
   resource store {
     /// Opens the Secret Store with the given name.
-    open: static func(name: string) -> result<store, error>;
+    open: static func(name: string) -> result<store, open-error>;
 
     /// Tries to look up a Secret by name in this secret store.
     ///
@@ -1466,14 +1496,13 @@ interface secret-store {
 ///
 /// [Access Control Lists]: https://www.fastly.com/documentation/reference/api/acls/
 interface acl {
-
-  use types.{error, ip-address};
+  use types.{error, open-error, ip-address};
   use http-body.{body};
 
   /// An ACL.
   resource acl {
     /// Opens an ACL linked to the current service with the given link name.
-    open: static func(name: string) -> result<acl, error>;
+    open: static func(name: string) -> result<acl, open-error>;
 
     /// Performs a lookup of the given IP address in the ACL.
     ///
@@ -1788,7 +1817,7 @@ interface backend {
 interface async-io {
   /// An object supporting generic async operations.
   ///
-  /// Can be a `http-body.body`, `http-req.pending-request`, `http-req.request-promise`,
+  /// Can be a `http-body.body`, `http-req.pending-response`, `http-req.pending-request`,
   /// `cache.pending-entry`. `kv-store.pending-lookup`, `kv-store.pending-insert`,
   /// `kv-store.pending-delete`, or `kv-store.pending-list`.
   ///
@@ -2097,8 +2126,6 @@ interface cache {
     ///
     request-headers: option<borrow<request>>,
 
-    service-id: option<string>,
-
     always-use-requested-range: bool,
 
     /// Additional options may be added in the future via this resource type.
@@ -2106,7 +2133,9 @@ interface cache {
   }
 
   /// Extensibility for `lookup-options`
-  resource extra-lookup-options {}
+  resource extra-lookup-options {
+    constructor();
+  }
 
   /// Configuration for several functions that write to the cache:
   /// - `insert`
@@ -2136,7 +2165,6 @@ interface cache {
     length: option<object-length>,
     user-metadata: option<list<u8>>,
     edge-max-age-ns: option<duration-ns>,
-    service-id: option<string>,
     sensitive-data: bool,
 
     /// Additional options may be added in the future via this resource type.
@@ -2144,7 +2172,9 @@ interface cache {
   }
 
   /// Extensibility for `write-options`
-  resource extra-write-options {}
+  resource extra-write-options {
+    constructor();
+  }
 
   record get-body-options {
     %from: option<u64>,
@@ -2201,7 +2231,6 @@ interface cache {
     /// a full request handle, but used only for its headers
     request-headers: option<borrow<request>>,
     replace-strategy: option<replace-strategy>,
-    service-id: option<string>,
     always-use-requested-range: bool,
 
     /// Additional options may be added in the future via this resource type.
@@ -2209,7 +2238,9 @@ interface cache {
   }
 
   /// Extensibility for `replace-options`
-  resource extra-replace-options {}
+  resource extra-replace-options {
+    constructor();
+  }
 
   enum replace-strategy {
     /// Immediately start the replace and do not wait for any other pending requests for the same
@@ -2272,12 +2303,6 @@ interface http-cache {
 
   /// An HTTP Cache transaction.
   resource entry {
-    /// (DEPRECATED) Use transaction-lookup
-    lookup: static func(
-      req-handle: borrow<request>,
-      options: lookup-options,
-    ) -> result<entry, error>;
-
     /// Performs a cache lookup based on the given request.
     ///
     /// This operation always participates in request collapsing and may return an obligation to
@@ -2603,14 +2628,14 @@ interface http-cache {
 ///
 /// [Config Store]: https://www.fastly.com/documentation/guides/concepts/edge-state/dynamic-config/#config-stores
 interface config-store {
-  use types.{error};
+  use types.{error, open-error};
 
   /// A Config Store.
   resource store {
     /// Attempts to open the named config store.
     ///
     /// Names are case sensitive.
-    open: static func(name: string) -> result<store, error>;
+    open: static func(name: string) -> result<store, open-error>;
 
     /// Fetches a value from the config store, returning `ok(none)` if it doesn't exist.
     get: func(
@@ -2631,19 +2656,17 @@ interface shielding {
     max-len: u64,
   ) -> result<string, error>;
 
-  record shield-backend-options {
-    cache-key: option<string>,
-
-    /// Additional options may be added in the future via this resource type.
-    extra: option<borrow<extra-shield-backend-options>>,
-  }
-
   /// Extensibility for `shield-backend-options`
-  resource extra-shield-backend-options {}
+  resource shield-backend-options {
+    constructor();
+
+    set-cache-key: func(cache-key: string);
+    set-first-byte-timeout: func(timeout-ms: u32);
+  }
 
   backend-for-shield: func(
     name: string,
-    options: shield-backend-options,
+    options: option<borrow<shield-backend-options>>,
     max-len: u64,
   ) -> result<string, error>;
 }
@@ -2839,6 +2862,7 @@ world service-imports {
   import kv-store;
   import purge;
   import secret-store;
+  import security;
   import shielding;
 }
 
