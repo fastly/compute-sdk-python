@@ -1,4 +1,4 @@
-// wac compose --dep fastly:wasiless=wasiless.wasm --dep app:component=app.wasm -o composed.wasm wrap_app_in_wasiless.wac
+// wac compose --dep fastly:wasiless=wasiless.wasm --dep python:component=build/wit-bottle.wasm -o composed.wasm wrap_app_in_wasiless.wac
 
 package fastly:python-wasiless; // TODO: Append "targets fastly:compute/service" as an additional check.
 
@@ -8,7 +8,7 @@ let wasiless = new fastly:wasiless {
 };
 
 // Pass in the 0.2.6 routines from wasiless, even when it wants a different version:
-let app = new app:component {
+let python = new python:component {
   "wasi:cli/terminal-input@0.2.0": wasiless["wasi:cli/terminal-input@0.2.6"],
   "wasi:cli/terminal-output@0.2.0": wasiless["wasi:cli/terminal-output@0.2.6"],
   "wasi:cli/terminal-stdin@0.2.0": wasiless["wasi:cli/terminal-stdin@0.2.6"],
@@ -45,5 +45,5 @@ let app = new app:component {
   ...
 };
 
-export app.exports;
-export app["fastly:compute/http-incoming"];
+export python.exports;
+export python["fastly:compute/http-incoming"];
