@@ -2835,6 +2835,7 @@ world service-imports {
   import wasi:clocks/monotonic-clock@0.2.6;
   import wasi:io/error@0.2.6;
   import wasi:io/streams@0.2.6;
+  import wasi:io/poll@0.2.6;
   import wasi:random/random@0.2.6;
   import wasi:cli/environment@0.2.6;
   import wasi:cli/exit@0.2.6;
