@@ -14,11 +14,7 @@ let app = new app:component {
   "wasi:cli/terminal-stdin@0.2.0": wasiless["wasi:cli/terminal-stdin@0.2.6"],
   "wasi:cli/terminal-stdout@0.2.0": wasiless["wasi:cli/terminal-stdout@0.2.6"],
   "wasi:cli/terminal-stderr@0.2.0": wasiless["wasi:cli/terminal-stderr@0.2.6"],
-//  "wasi:io/error@0.2.6": wasiless["wasi:io/error@0.2.6"],
-//  "wasi:io/poll@0.2.6": wasiless["wasi:io/poll@0.2.6"],
-//  "wasi:io/streams@0.2.6": wasiless["wasi:io/streams@0.2.6"],
-//  "wasi:clocks/wall-clock@0.2.6": wasiless["wasi:clocks/wall-clock@0.2.6"],
-//  "wasi:clocks/monotonic-clock@0.2.6": wasiless["wasi:clocks/monotonic-clock@0.2.6"],
+  "wasi:io/poll@0.2.0": wasiless["wasi:io/poll@0.2.6"],
   "wasi:filesystem/types@0.2.0": wasiless["wasi:filesystem/types@0.2.6"],
   "wasi:filesystem/preopens@0.2.0": wasiless["wasi:filesystem/preopens@0.2.6"],
   "wasi:sockets/network@0.2.0": wasiless["wasi:sockets/network@0.2.6"],
@@ -30,12 +26,18 @@ let app = new app:component {
   "wasi:sockets/ip-name-lookup@0.2.0": wasiless["wasi:sockets/ip-name-lookup@0.2.6"],
   "wasi:random/insecure@0.2.0": wasiless["wasi:random/insecure@0.2.6"],
   "wasi:random/insecure-seed@0.2.0": wasiless["wasi:random/insecure-seed@0.2.6"],
-//  "wasi:random/random@0.2.6": wasiless["wasi:random/random@0.2.6"],
-//  "wasi:cli/environment@0.2.6": wasiless["wasi:cli/environment@0.2.6"],
-//  "wasi:cli/exit@0.2.6": wasiless["wasi:cli/exit@0.2.6"],
-//  "wasi:cli/stdout@0.2.6": wasiless["wasi:cli/stdout@0.2.6"],
-//  "wasi:cli/stderr@0.2.6": wasiless["wasi:cli/stderr@0.2.6"],
-//  "wasi:cli/stdin@0.2.6": wasiless["wasi:cli/stdin@0.2.6"],
+
+  // These should be provided by Viceroy; they are imported by compute.wit:
+  // "wasi:clocks/wall-clock@0.2.6": wasiless["wasi:clocks/wall-clock@0.2.6"],
+  // "wasi:clocks/monotonic-clock@0.2.6": wasiless["wasi:clocks/monotonic-clock@0.2.6"],
+  // "wasi:io/error@0.2.6": wasiless["wasi:io/error@0.2.6"],
+  // "wasi:io/streams@0.2.6": wasiless["wasi:io/streams@0.2.6"],
+  // "wasi:random/random@0.2.6": wasiless["wasi:random/random@0.2.6"],
+  // "wasi:cli/environment@0.2.0": wasiless["wasi:cli/environment@0.2.6"],
+  // "wasi:cli/exit@0.2.6": wasiless["wasi:cli/exit@0.2.6"],
+  // "wasi:cli/stdout@0.2.6": wasiless["wasi:cli/stdout@0.2.6"],
+  // "wasi:cli/stderr@0.2.6": wasiless["wasi:cli/stderr@0.2.6"],
+  // "wasi:cli/stdin@0.2.6": wasiless["wasi:cli/stdin@0.2.6"],
   ...
 };
 
