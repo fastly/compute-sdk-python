@@ -2,6 +2,17 @@
 
 Wasiless is a WebAssembly component that provides minimal or trapping implementations of all WASI interfaces, meant to allow the porting of dynamic runtimes like CPython which expect a normal OS, with normal affordances like filesystems and sockets. Build CPython (or some other runtime) as a component, satisfy its imports with wasiless, and you should be able to run it in an environment that provides only a subset of WASI, like [Viceroy](https://github.com/fastly/Viceroy).
 
+## Build
+
+Build wasiless as a WASIp2 component as follows:
+
+``` shell
+cargo build --release
+wasm-tools component new target/wasm32-unknown-unknown/debug/wasiless.wasm -o componentized.wasm
+```
+
+## Use
+
 Here is an example composition of wasiless and a Python component (built using componentize-py) for use with Viceroy:
 
 ```
@@ -36,13 +47,6 @@ let app = new app:component {
 
 export app.exports;
 export app["fastly:compute/http-incoming"];
-```
-
-Build wasiless as a p2 component as follows:
-
-``` shell
-cargo build --release
-wasm-tools component new target/wasm32-unknown-unknown/debug/wasiless.wasm -o componentized.wasm
 ```
 
 To apply this, save it as `wrap_app_in_wasiless.wac`, then invoke wac like...
