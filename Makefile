@@ -22,8 +22,8 @@ all: $(EXAMPLE_WASMS)
 $(BUILD_DIR)/%.wasm: $(EXAMPLES_DIR)/%.py wit/viceroy.wit wit/deps/fastly/compute.wit | $(BUILD_DIR)
 	@echo "Building $* example..."
 	rm -rf $(STUBS_DIR)
-	uv run componentize-py -d wit -w viceroy bindings $(STUBS_DIR)
-	uv run componentize-py -d wit -w viceroy componentize $* -p $(EXAMPLES_DIR) -p . -o $@
+	uv run componentize-py -d wit -w fastly:compute/service bindings $(STUBS_DIR)
+	uv run componentize-py -d wit -w fastly:compute/service componentize $* -p $(EXAMPLES_DIR) -p . -o $@
 
 # Create build directory
 $(BUILD_DIR):
