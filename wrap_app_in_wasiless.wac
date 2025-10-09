@@ -47,5 +47,4 @@ let python = new python:component {
   ...
 };
 
-export python.exports;
 export python["fastly:compute/http-incoming"];
