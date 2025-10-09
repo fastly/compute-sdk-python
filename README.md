@@ -41,7 +41,8 @@ export app["fastly:compute/http-incoming"];
 Build wasiless as a p2 component as follows:
 
 ``` shell
-cargo build --release --target wasm32-wasip2
+cargo build --release
+wasm-tools component new target/wasm32-unknown-unknown/debug/wasiless.wasm -o componentized.wasm
 ```
 
 To apply this, save it as `wrap_app_in_wasiless.wac`, then invoke wac like...
