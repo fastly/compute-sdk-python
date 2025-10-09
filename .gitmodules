@@ -1,0 +1,3 @@
+[submodule "vendor/wasiless"]
+	path = vendor/wasiless
+	url = git@github.com:fastly/wasiless.git
