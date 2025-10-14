@@ -4,4 +4,4 @@ wit_bindgen::generate!({
     generate_all,
 });
 
-pub use exports::wasi;
+pub use exports::wasiless as wasi;
