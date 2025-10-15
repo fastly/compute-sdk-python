@@ -1,17 +1,17 @@
 use crate::Wasiless;
-use crate::bindings::wasi::io::poll::Pollable;
-use crate::bindings::wasi::sockets::instance_network;
-use crate::bindings::wasi::sockets::ip_name_lookup;
-use crate::bindings::wasi::sockets::network::{
+use crate::bindings::exports::wasi::sockets::instance_network;
+use crate::bindings::exports::wasi::sockets::ip_name_lookup;
+use crate::bindings::exports::wasi::sockets::network::{
     self, ErrorCode, GuestNetwork, IpAddressFamily, IpSocketAddress, Network, NetworkBorrow,
 };
-use crate::bindings::wasi::sockets::tcp::{self, GuestTcpSocket, TcpSocket};
-use crate::bindings::wasi::sockets::tcp_create_socket;
-use crate::bindings::wasi::sockets::udp::{
+use crate::bindings::exports::wasi::sockets::tcp::{self, GuestTcpSocket, TcpSocket};
+use crate::bindings::exports::wasi::sockets::tcp_create_socket;
+use crate::bindings::exports::wasi::sockets::udp::{
     self, GuestIncomingDatagramStream, GuestOutgoingDatagramStream, GuestUdpSocket,
     IncomingDatagram, IncomingDatagramStream, OutgoingDatagram, OutgoingDatagramStream, UdpSocket,
 };
-use crate::bindings::wasi::sockets::udp_create_socket;
+use crate::bindings::exports::wasi::sockets::udp_create_socket;
+use crate::bindings::wasi::io::poll::Pollable;
 
 impl GuestNetwork for Network {}
 

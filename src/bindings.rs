@@ -3,5 +3,3 @@ wit_bindgen::generate!({
     path: "wit",
     generate_all,
 });
-
-pub use exports::wasi;

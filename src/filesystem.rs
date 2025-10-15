@@ -1,9 +1,9 @@
 use crate::Wasiless;
-use crate::bindings::wasi::filesystem::{
+use crate::bindings::exports::wasi::filesystem::{
     self,
     types::{
         Advice, Descriptor, DescriptorBorrow, DescriptorFlags, DescriptorStat, DescriptorType,
-        DirectoryEntry, DirectoryEntryStream, ErrorBorrow, ErrorCode, Filesize, GuestDescriptor,
+        DirectoryEntry, DirectoryEntryStream, Error, ErrorCode, Filesize, GuestDescriptor,
         GuestDirectoryEntryStream, MetadataHashValue, NewTimestamp, OpenFlags, PathFlags,
     },
 };
@@ -164,7 +164,7 @@ impl GuestDirectoryEntryStream for DirectoryEntryStream {
 impl filesystem::types::Guest for Wasiless {
     type Descriptor = Descriptor;
     type DirectoryEntryStream = DirectoryEntryStream;
-    fn filesystem_error_code(_err: ErrorBorrow) -> Option<ErrorCode> {
+    fn filesystem_error_code(_err: &Error) -> Option<ErrorCode> {
         None
     }
 }

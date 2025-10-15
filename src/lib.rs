@@ -8,9 +8,7 @@
 
 mod bindings;
 mod cli;
-mod clocks;
 mod filesystem;
-mod io;
 mod random;
 mod sockets;
 
