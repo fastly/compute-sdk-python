@@ -21,15 +21,14 @@ EXAMPLE_WASMS := $(foreach example,$(EXAMPLES),$(BUILD_DIR)/$(example).wasm)
 COMPOSED_WASMS := $(foreach example,$(EXAMPLES),$(BUILD_DIR)/$(example).composed.wasm)
 
 WASILESS_ROOT := vendor/wasiless
-WASILESS_CORE_MODULE := $(WASILESS_ROOT)/target/wasm32-unknown-unknown/release/wasiless.wasm
-WASILESS_WASM := build/wasiless.wasm
+WASILESS_WASM := $(WASILESS_ROOT)/wasiless.wasm
 
 # Default target builds all examples
 all: $(COMPOSED_WASMS)
 
 $(BUILD_DIR)/%.composed.wasm: $(BUILD_DIR)/%.wasm $(WASILESS_WASM)
 	@echo "Composing $* example"
-	wac compose --dep fastly:wasiless=$(WASILESS_WASM) --dep python:component=$< -o $@ wrap_app_in_wasiless.wac
+	wac compose --dep fastly:wasiless=$(WASILESS_WASM) --dep app:component=$< -o $@ wrap_app_in_wasiless.wac
 
 # Pattern rule for building any example
 $(BUILD_DIR)/%.wasm: $(EXAMPLES_DIR)/%.py wit/viceroy.wit wit/deps/fastly/compute.wit | $(BUILD_DIR)
@@ -39,8 +38,7 @@ $(BUILD_DIR)/%.wasm: $(EXAMPLES_DIR)/%.py wit/viceroy.wit wit/deps/fastly/comput
 	uv run componentize-py -d wit -w $(TARGET_WORLD) componentize $* -p $(EXAMPLES_DIR) -p . -o $@
 
 $(WASILESS_WASM):
-	cargo build --manifest-path $(WASILESS_ROOT)/Cargo.toml --target wasm32-unknown-unknown --release
-	wasm-tools component new $(WASILESS_CORE_MODULE) -o $(WASILESS_WASM)
+	 $(MAKE) -C $(WASILESS_ROOT) wasiless.wasm
 
 # Create build directory
 $(BUILD_DIR):
