@@ -268,6 +268,7 @@ impl ip_name_lookup::GuestResolveAddressStream for Wasiless {
         unreachable!()
     }
 }
+
 impl ip_name_lookup::Guest for Wasiless {
     type ResolveAddressStream = Wasiless;
     #[allow(unused_variables)]
