@@ -1,7 +1,5 @@
 """Tests for the Flask example application."""
 
-import pytest
-
 from fastly_compute.testing import ViceroyTestBase
 
 
