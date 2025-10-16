@@ -53,7 +53,7 @@ serve: $(WASM_FILE)
 	$(VICEROY) serve $(WASM_FILE)
 
 # Test all examples (requires all WASM files to be built)
-test: $(EXAMPLE_WASMS)
+test: $(COMPOSED_WASMS)
 	uv run --extra test pytest
 
 # List available examples
