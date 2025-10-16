@@ -1,5 +1,8 @@
 # Fastly Compute Python SDK
 
+# Default Viceroy location. Set VICEROY env var to change.
+VICEROY ?= viceroy
+
 # Configuration
 STUBS_DIR := stubs
 BUILD_DIR := build
@@ -47,7 +50,7 @@ $(BUILD_DIR):
 # Serve the specified example (default: wit-bottle)
 serve: $(WASM_FILE)
 	@echo "Serving $(EXAMPLE) example on http://127.0.0.1:7676"
-	viceroy serve $(WASM_FILE)
+	$(VICEROY) serve $(WASM_FILE)
 
 # Test all examples (requires all WASM files to be built)
 test: $(EXAMPLE_WASMS)
