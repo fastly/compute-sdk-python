@@ -1,5 +1,3 @@
-// wac compose --dep fastly:wasiless=wasiless.wasm --dep python:component=build/wit-bottle.wasm -o composed.wasm wrap_app_in_wasiless.wac
-
 package fastly:python-wasiless; // TODO: Append "targets fastly:compute/service" as an additional check.
 
 // Instantiate wasiless to satisfy irrelevant WASI interfaces:
@@ -7,6 +5,5 @@ let wasiless = new fastly:wasiless { ... };
 
 let app = new app:component { ...wasiless, ... };
 
-export app...;
-
-//export python["fastly:compute/http-incoming"];
+// Export only the HTTP handler, not the extraneous `exports` bundle:
+export app["fastly:compute/http-incoming"];
