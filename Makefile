@@ -34,7 +34,7 @@ $(BUILD_DIR)/%.composed.wasm: $(BUILD_DIR)/%.wasm $(WASILESS_WASM)
 	wac compose --dep fastly:wasiless=$(WASILESS_WASM) --dep app:component=$< -o $@ wrap_app_in_wasiless.wac
 
 # Pattern rule for building any example
-$(BUILD_DIR)/%.wasm: $(EXAMPLES_DIR)/%.py wit/viceroy.wit wit/deps/fastly/compute.wit | $(BUILD_DIR)
+$(BUILD_DIR)/%.wasm: $(EXAMPLES_DIR)/%.py wit/viceroy.wit wit/deps/fastly/compute.wit fastly_compute/wsgi.py | $(BUILD_DIR)
 	@echo "Building $* example..."
 	rm -rf $(STUBS_DIR)
 	uv run componentize-py -d wit -w $(TARGET_WORLD) bindings $(STUBS_DIR)

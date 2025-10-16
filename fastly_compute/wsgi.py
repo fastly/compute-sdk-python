@@ -40,7 +40,7 @@ def serve_wsgi_request(
 
     def write(body_data: bytes) -> None:
         """Write response body data (deprecated WSGI mechanism)."""
-        http_body.write(response_body, body_data, http_body.WriteEnd.BACK)
+        http_body.write(response_body, body_data)
 
     def start_response(
         status: str, headers: list[tuple[str, str]], exc_info: Any | None = None
