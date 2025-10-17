@@ -27,6 +27,7 @@ jobs:
       uses: actions-rust-lang/setup-rust-toolchain@v1
       with:
         toolchain: '1.86.0'
+        target: wasm32-unknown-unknown
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
@@ -35,6 +36,8 @@ jobs:
       run: pip install uv
     - name: Install dependencies
       run: uv sync
+    - name: Install wasm-tools and wac
+      run: cargo install wasm-tools wac-cli
     - name: Install viceroy
       run: cargo install --git https://github.com/fastly/Viceroy.git --branch erik/python-sdk-2 viceroy
     - name: Install dependencies
