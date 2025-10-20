@@ -1,14 +1,12 @@
 """Tests for the Flask example application."""
 
-import pytest
-
 from fastly_compute.testing import ViceroyTestBase
 
 
 class TestFlaskApp(ViceroyTestBase):
     """Integration tests for the Flask example application."""
 
-    WASM_FILE = "build/flask-app.wasm"
+    WASM_FILE = "build/flask-app.composed.wasm"
 
     def test_hello_endpoint(self):
         """Test the hello endpoint returns expected content."""

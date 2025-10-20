@@ -1,0 +1,9 @@
+package fastly:python-wasiless; // TODO: Append "targets fastly:compute/service" as an additional check.
+
+// Instantiate wasiless to satisfy irrelevant WASI interfaces:
+let wasiless = new fastly:wasiless { ... };
+
+let app = new app:component { ...wasiless, ... };
+
+// Export only the HTTP handler, not the extraneous `exports` bundle:
+export app["fastly:compute/http-incoming"];

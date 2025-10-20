@@ -10,13 +10,24 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: forge-amd64-medium
     steps:
     - uses: actions/checkout@v4
-    - name: Set Up Rust Toolchain
+    - name: Get wasiless submodule
+      # Org-internal submodules are very tricky to check out.
+      env:
+        SSHK: ${{ secrets.WASILESS_REPO_READ_KEY }}
+      run: |
+        mkdir -p $HOME/.ssh
+        echo "$SSHK" > $HOME/.ssh/ssh.key
+        chmod 600 $HOME/.ssh/ssh.key
+        export GIT_SSH_COMMAND="ssh -i $HOME/.ssh/ssh.key"
+        git submodule update --init --recursive
+    - name: Set up Rust toolchain
       uses: actions-rust-lang/setup-rust-toolchain@v1
       with:
         toolchain: '1.86.0'
+        target: wasm32-unknown-unknown
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
@@ -25,8 +36,20 @@ jobs:
       run: pip install uv
     - name: Install dependencies
       run: uv sync
+    - name: Cache viceroy, wasm-tools, etc.
+      id: cache-cargo
+      uses: actions/cache@v4
+      with:
+        key: python-sdk-compatible-1
+        path: |
+            ~/.cargo/bin/
+    - name: Install wasm-tools and wac
+      if: steps.cache-cargo.outputs.cache-hit != 'true'
+      run: cargo install wasm-tools wac-cli
     - name: Install viceroy
-      run: cargo install --git https://github.com/fastly/Viceroy.git --branch sunfishcode/sync-wit viceroy
+      if: steps.cache-cargo.outputs.cache-hit != 'true'
+      # When you switch tags, update the cache key in the cache-cargo step.
+      run: cargo install --git https://github.com/fastly/Viceroy.git --tag erik/python-sdk-compatible-1 viceroy
     - name: Install dependencies
       run: uv sync --extra dev --extra test
     - name: Check formatting

@@ -1,5 +1,8 @@
 # Fastly Compute Python SDK
 
+# Default Viceroy location. Set VICEROY env var to change.
+VICEROY ?= viceroy
+
 # Configuration
 STUBS_DIR := stubs
 BUILD_DIR := build
@@ -10,20 +13,35 @@ EXAMPLES := wit-bottle flask-app
 
 # Default example for serve target
 EXAMPLE ?= wit-bottle
-WASM_FILE := $(BUILD_DIR)/$(EXAMPLE).wasm
+WASM_FILE := $(BUILD_DIR)/$(EXAMPLE).composed.wasm
+
+TARGET_WORLD := fastly:compute/service
 
 # Generate WASM file paths for all examples
 EXAMPLE_WASMS := $(foreach example,$(EXAMPLES),$(BUILD_DIR)/$(example).wasm)
 
+# Composed wasm for each example
+COMPOSED_WASMS := $(foreach example,$(EXAMPLES),$(BUILD_DIR)/$(example).composed.wasm)
+
+WASILESS_ROOT := vendor/wasiless
+WASILESS_WASM := $(WASILESS_ROOT)/wasiless.wasm
+
 # Default target builds all examples
-all: $(EXAMPLE_WASMS)
+all: $(COMPOSED_WASMS)
+
+$(BUILD_DIR)/%.composed.wasm: $(BUILD_DIR)/%.wasm $(WASILESS_WASM)
+	@echo "Composing $* example"
+	wac compose --dep fastly:wasiless=$(WASILESS_WASM) --dep app:component=$< -o $@ wrap_app_in_wasiless.wac
 
 # Pattern rule for building any example
-$(BUILD_DIR)/%.wasm: $(EXAMPLES_DIR)/%.py wit/viceroy.wit wit/deps/fastly/compute.wit | $(BUILD_DIR)
+$(BUILD_DIR)/%.wasm: $(EXAMPLES_DIR)/%.py wit/viceroy.wit wit/deps/fastly/compute.wit fastly_compute/wsgi.py | $(BUILD_DIR)
 	@echo "Building $* example..."
 	rm -rf $(STUBS_DIR)
-	uv run componentize-py -d wit -w viceroy bindings $(STUBS_DIR)
-	uv run componentize-py -d wit -w viceroy componentize $* -p $(EXAMPLES_DIR) -p . -o $@
+	uv run componentize-py -d wit -w $(TARGET_WORLD) bindings $(STUBS_DIR)
+	uv run componentize-py -d wit -w $(TARGET_WORLD) componentize $* -p $(EXAMPLES_DIR) -p . -o $@
+
+$(WASILESS_WASM):
+	 $(MAKE) -C $(WASILESS_ROOT) wasiless.wasm
 
 # Create build directory
 $(BUILD_DIR):
@@ -32,10 +50,10 @@ $(BUILD_DIR):
 # Serve the specified example (default: wit-bottle)
 serve: $(WASM_FILE)
 	@echo "Serving $(EXAMPLE) example on http://127.0.0.1:7676"
-	viceroy serve $(WASM_FILE)
+	$(VICEROY) serve $(WASM_FILE)
 
 # Test all examples (requires all WASM files to be built)
-test: $(EXAMPLE_WASMS)
+test: $(COMPOSED_WASMS)
 	uv run --extra test pytest
 
 # List available examples
@@ -87,5 +105,4 @@ help:
 	@echo ""
 	@echo "Available examples: $(EXAMPLES)"
 
-.PHONY: all serve test list-examples build-all clean lint lint-fix format format-check help
-
+.PHONY: all serve test list-examples build-all clean lint lint-fix format format-check help $(WASILESS_WASM)
