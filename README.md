@@ -4,12 +4,7 @@ Wasiless is a WebAssembly component that provides minimal or trapping implementa
 
 ## Build
 
-Build wasiless as a WASIp2 component as follows:
-
-``` shell
-cargo build --release
-wasm-tools component new target/wasm32-unknown-unknown/debug/wasiless.wasm -o componentized.wasm
-```
+Build wasiless as a WASIp2 component using `make`.
 
 ## Use
 
@@ -18,34 +13,13 @@ Here is an example composition of wasiless and a Python component (built using c
 ```
 package fastly:python-wasiless;
 
-// Instantiate wasiless, minimal or crashing implementations of irrelevant WASI interfaces:
-let wasiless = new fastly:wasiless {
-    ...
-};
+// Instantiate wasiless to satisfy irrelevant WASI interfaces:
+let wasiless = new fastly:wasiless { ... };
 
-// Instantiate the Python component. Pass in the 0.2.6 routines from wasiless,
-// even when Python wants a different version:
-let app = new app:component {
-  "wasi:cli/terminal-input@0.2.0": wasiless["wasi:cli/terminal-input@0.2.6"],
-  "wasi:cli/terminal-output@0.2.0": wasiless["wasi:cli/terminal-output@0.2.6"],
-  "wasi:cli/terminal-stdin@0.2.0": wasiless["wasi:cli/terminal-stdin@0.2.6"],
-  "wasi:cli/terminal-stdout@0.2.0": wasiless["wasi:cli/terminal-stdout@0.2.6"],
-  "wasi:cli/terminal-stderr@0.2.0": wasiless["wasi:cli/terminal-stderr@0.2.6"],
-  "wasi:filesystem/types@0.2.0": wasiless["wasi:filesystem/types@0.2.6"],
-  "wasi:filesystem/preopens@0.2.0": wasiless["wasi:filesystem/preopens@0.2.6"],
-  "wasi:sockets/network@0.2.0": wasiless["wasi:sockets/network@0.2.6"],
-  "wasi:sockets/instance-network@0.2.0": wasiless["wasi:sockets/instance-network@0.2.6"],
-  "wasi:sockets/udp@0.2.0": wasiless["wasi:sockets/udp@0.2.6"],
-  "wasi:sockets/udp-create-socket@0.2.0": wasiless["wasi:sockets/udp-create-socket@0.2.6"],
-  "wasi:sockets/tcp@0.2.0": wasiless["wasi:sockets/tcp@0.2.6"],
-  "wasi:sockets/tcp-create-socket@0.2.0": wasiless["wasi:sockets/tcp-create-socket@0.2.6"],
-  "wasi:sockets/ip-name-lookup@0.2.0": wasiless["wasi:sockets/ip-name-lookup@0.2.6"],
-  "wasi:random/insecure@0.2.0": wasiless["wasi:random/insecure@0.2.6"],
-  "wasi:random/insecure-seed@0.2.0": wasiless["wasi:random/insecure-seed@0.2.6"],
-  ...
-};
+// Instantiate the Python component:
+let app = new app:component { ...wasiless, ... };
 
-export app.exports;
+// Export only the HTTP handler, not the extraneous `exports` bundle:
 export app["fastly:compute/http-incoming"];
 ```
 
