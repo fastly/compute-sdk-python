@@ -1,0 +1,35 @@
+name: Make sure the build isn't broken
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: forge-amd64-medium
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Rust
+      uses: actions-rust-lang/setup-rust-toolchain@v1
+      with:
+        toolchain: '1.86.0'
+        target: wasm32-unknown-unknown
+        components: rustfmt
+    - name: Check formatting
+      run: cargo fmt --all -- --check
+    - name: Cache wasm-tools
+      id: cache-cargo
+      uses: actions/cache@v4
+      with:
+        key: tests-cargo-bin
+        path: |
+            ~/.cargo/bin/
+    - name: Install wasm-tools
+      if: steps.cache-cargo.outputs.cache-hit != 'true'
+      run: cargo install wasm-tools
+    - name: Make sure it builds
+      run: make
