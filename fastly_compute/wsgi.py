@@ -4,6 +4,10 @@ This module provides utilities for running WSGI applications on Fastly Compute
 by adapting between the Fastly WIT API and the WSGI specification.
 """
 
+# The IDNA encoding is used by werkzeug (used by flask and others doing wsgi); without
+# a top-level import componentize-py won't include the encoding in our final artifact
+# and we get runtime LookupErrors when werkzeug tries to use the codec.
+import encodings.idna  # noqa: F401
 import sys
 import traceback
 from collections.abc import Callable
