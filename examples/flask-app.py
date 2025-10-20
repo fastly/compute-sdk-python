@@ -1,4 +1,6 @@
 # Import and install WASI shims before importing Flask
+import sys
+
 from shims import install_shims
 
 install_shims()

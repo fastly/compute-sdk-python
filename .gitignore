@@ -1,7 +1,6 @@
 # Python/uv artifacts
 .venv/
 *.egg-info
-uv.lock
 
 /stubs/
 __pycache__
