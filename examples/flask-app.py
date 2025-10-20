@@ -1,7 +1,5 @@
 # Import and install WASI shims before importing Flask
-from shims import install_shims
-
-install_shims()
+import sys
 
 # Now we can import Flask and Fastly Compute modules
 from flask import Flask, request  # noqa: E402
@@ -31,6 +29,7 @@ def info():
         "vcpu_time_ms": vcpu_time,
         "request_method": request.environ.get("REQUEST_METHOD"),
         "path_info": request.environ.get("PATH_INFO"),
+        "python_version": sys.version,
     }
 
 
