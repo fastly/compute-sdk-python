@@ -46,6 +46,7 @@ select = [
 ]
 ignore = [
     "E501",  # line too long, handled by formatter
+    "UP031",  # % string formatting, minimally disruptive for stdlib-based HTML templating
 ]
 
 [tool.ruff.format]
