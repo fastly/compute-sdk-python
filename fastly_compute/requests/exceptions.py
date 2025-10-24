@@ -1,7 +1,4 @@
-"""
-Exceptions for fastly_compute.requests - compatible with requests library
-"""
-
+"""Exceptions for fastly_compute.requests - compatible with requests library."""
 
 
 class RequestException(Exception):

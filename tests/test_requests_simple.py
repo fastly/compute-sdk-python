@@ -1,7 +1,5 @@
 """Tests for the requests-simple example application."""
 
-import pytest
-
 from fastly_compute.test_server import LocalTestServer, LocalTestServerConfig
 from fastly_compute.testing import ViceroyTestBase
 

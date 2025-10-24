@@ -1,7 +1,5 @@
 """Tests for backend-simple.py example with local server backends."""
 
-import pytest
-
 from fastly_compute.test_server import LocalTestServer, LocalTestServerConfig
 from fastly_compute.testing import ViceroyTestBase
 

@@ -1,6 +1,4 @@
-"""
-FastlyResponse - A requests-compatible response object for Fastly Compute
-"""
+"""A requests-compatible response object for Fastly Compute."""
 
 import json
 from typing import Any

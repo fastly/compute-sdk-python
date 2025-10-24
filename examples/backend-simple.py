@@ -1,5 +1,4 @@
-"""
-Backend Simple Example
+"""Simple backend example.
 
 This example demonstrates using Fastly backends to make HTTP requests to external services
 using the raw WIT bindings. It shows both static and dynamic backend patterns.
@@ -19,7 +18,7 @@ from fastly_compute.wsgi import WsgiHttpIncoming
 
 @dataclass
 class SimpleResponse:
-    """Simple response container for backend requests"""
+    """Simple response container for backend requests."""
 
     status: int
     body: bytes
@@ -29,8 +28,7 @@ app = Bottle()
 
 
 def make_static_backend_request(backend_name: str, path: str) -> SimpleResponse:
-    """
-    Make a request using a static backend (pre-configured in viceroy.toml).
+    """Make a request using a static backend (pre-configured in viceroy.toml).
 
     Args:
         backend_name: Name of the static backend from configuration
@@ -82,8 +80,7 @@ def make_static_backend_request(backend_name: str, path: str) -> SimpleResponse:
 def make_dynamic_backend_request(
     target_url: str, backend_prefix: str = "dynamic"
 ) -> SimpleResponse:
-    """
-    Make a request using a dynamic backend (created at runtime).
+    """Make a request using a dynamic backend (created at runtime).
 
     Args:
         target_url: Full URL to request (e.g., "https://httpbin.org/get")
@@ -158,8 +155,7 @@ def make_dynamic_backend_request(
 
 
 def make_dynamic_post_request(target_url: str, post_data: dict) -> SimpleResponse:
-    """
-    Make a POST request using a dynamic backend with JSON data.
+    """Make a POST request using a dynamic backend with JSON data.
 
     Args:
         target_url: Full URL to POST to
@@ -232,7 +228,7 @@ def make_dynamic_post_request(target_url: str, post_data: dict) -> SimpleRespons
 
 @app.route("/static")
 def test_static_backend():
-    """Test static backend (requires backend named 'test-be' in viceroy.toml)"""
+    """Test static backend (requires backend named 'test-be' in viceroy.toml)."""
     try:
         response = make_static_backend_request("test-be", "/get")
 
@@ -254,15 +250,15 @@ def test_static_backend():
 
 @app.route("/dynamic")
 def test_dynamic_backend():
-    """Test dynamic backend to a public API"""
+    """Test dynamic backend to a public API."""
     from bottle import request
 
     # Get target from query parameter (required)
-    target = request.query.get('target')
+    target = request.query.get("target")
     if not target:
         return {
             "backend_type": "dynamic",
-            "error": "target query parameter is required (e.g., ?target=https://httpbin.org/get)"
+            "error": "target query parameter is required (e.g., ?target=https://httpbin.org/get)",
         }
 
     try:
@@ -290,16 +286,16 @@ def test_dynamic_backend():
 
 @app.route("/dynamic-post")
 def test_dynamic_post():
-    """Test dynamic backend POST"""
+    """Test dynamic backend POST."""
     from bottle import request
 
     # Get target from query parameter (required)
-    target = request.query.get('target')
+    target = request.query.get("target")
     if not target:
         return {
             "backend_type": "dynamic",
             "method": "POST",
-            "error": "target query parameter is required (e.g., ?target=https://httpbin.org/post)"
+            "error": "target query parameter is required (e.g., ?target=https://httpbin.org/post)",
         }
 
     vcpu_time = compute_runtime.get_vcpu_ms()

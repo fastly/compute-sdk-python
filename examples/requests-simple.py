@@ -1,5 +1,4 @@
-"""
-Simple Requests Demo - Example using fastly_compute.requests with Bottle
+"""Simple Requests Demo - Example using fastly_compute.requests with Bottle
 
 This example demonstrates the requests-compatible HTTP client for making
 backend requests in Fastly Compute using Bottle (which has fewer dependencies than Flask).
@@ -74,11 +73,11 @@ def dynamic_get():
     from bottle import request
 
     # Get target from query parameter (required)
-    target = request.query.get('target')
+    target = request.query.get("target")
     if not target:
         return {
             "demo": "dynamic-get",
-            "error": "target query parameter is required (e.g., ?target=https://http-me.fastly.dev/get)"
+            "error": "target query parameter is required (e.g., ?target=https://http-me.fastly.dev/get)",
         }
 
     try:
@@ -111,11 +110,11 @@ def dynamic_post():
     from bottle import request
 
     # Get target from query parameter (required)
-    target = request.query.get('target')
+    target = request.query.get("target")
     if not target:
         return {
             "demo": "dynamic-post",
-            "error": "target query parameter is required (e.g., ?target=https://http-me.fastly.dev/post)"
+            "error": "target query parameter is required (e.g., ?target=https://http-me.fastly.dev/post)",
         }
 
     try:

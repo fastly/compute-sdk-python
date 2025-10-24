@@ -1,5 +1,4 @@
-"""
-Local test server helper for backend testing.
+"""Local test server helper for backend testing.
 
 Provides a simple HTTP server that can act as a backend for viceroy testing.
 """
@@ -16,38 +15,39 @@ from urllib.parse import parse_qs, urlparse
 
 @dataclass
 class LocalTestServerConfig:
-    """Configuration for test server"""
+    """Configuration for test server."""
 
     host: str = "127.0.0.1"
     port: int = 0  # 0 = auto-assign port
     responses: dict[str, dict[str, Any]] = None
 
     def __post_init__(self):
+        """Initialize responses to empty dict if not provided."""
         if self.responses is None:
             self.responses = {}
 
 
 class TestRequestHandler(BaseHTTPRequestHandler):
-    """HTTP request handler for test server"""
+    """HTTP request handler for test server."""
 
     def do_GET(self):
-        """Handle GET requests"""
+        """Handle GET requests."""
         self._handle_request("GET")
 
     def do_POST(self):
-        """Handle POST requests"""
+        """Handle POST requests."""
         self._handle_request("POST")
 
     def do_PUT(self):
-        """Handle PUT requests"""
+        """Handle PUT requests."""
         self._handle_request("PUT")
 
     def do_DELETE(self):
-        """Handle DELETE requests"""
+        """Handle DELETE requests."""
         self._handle_request("DELETE")
 
     def _handle_request(self, method: str):
-        """Generic request handler"""
+        """Generic request handler."""
         # Parse request
         parsed_url = urlparse(self.path)
         path = parsed_url.path
@@ -115,22 +115,22 @@ class TestRequestHandler(BaseHTTPRequestHandler):
             self.wfile.write(str(response_body).encode("utf-8"))
 
     def log_message(self, format, *args):
-        """Override to reduce log noise in tests"""
+        """Override to reduce log noise in tests."""
         pass
 
 
 class LocalTestServer:
-    """Local HTTP server for backend testing"""
+    """Local HTTP server for backend testing."""
 
     def __init__(self, config: LocalTestServerConfig | None = None):
+        """Construct a new test server."""
         self.config = config or LocalTestServerConfig()
         self.server: HTTPServer | None = None
         self.thread: threading.Thread | None = None
         self._running = False
 
     def start(self) -> str:
-        """
-        Start the test server.
+        """Start the test server.
 
         Returns:
             The base URL of the started server (e.g., "http://127.0.0.1:12345")
@@ -161,7 +161,7 @@ class LocalTestServer:
         return base_url
 
     def stop(self):
-        """Stop the test server"""
+        """Stop the test server."""
         if not self._running:
             return
 
@@ -175,16 +175,16 @@ class LocalTestServer:
         self._running = False
 
     def __enter__(self):
-        """Context manager entry"""
+        """Context manager entry."""
         return self.start()
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        """Context manager exit"""
+        """Context manager exit."""
         self.stop()
 
     @property
     def base_url(self) -> str:
-        """Get the base URL of the running server"""
+        """Get the base URL of the running server."""
         if not self._running or not self.server:
             raise RuntimeError("Server is not running")
 
@@ -193,7 +193,7 @@ class LocalTestServer:
 
 
 def find_free_port() -> int:
-    """Find a free port on localhost"""
+    """Find a free port on localhost."""
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.bind(("", 0))
         port = s.getsockname()[1]
@@ -202,7 +202,7 @@ def find_free_port() -> int:
 
 # Convenience functions for common test server patterns
 def create_httpbin_server(host: str = "127.0.0.1", port: int = 0) -> LocalTestServer:
-    """Create a server that mimics httpbin.org behavior"""
+    """Create a server that mimics httpbin.org behavior."""
     config = LocalTestServerConfig(host=host, port=port)
     return LocalTestServer(config)
 
@@ -210,12 +210,12 @@ def create_httpbin_server(host: str = "127.0.0.1", port: int = 0) -> LocalTestSe
 def create_mock_server(
     responses: dict[str, dict[str, Any]], host: str = "127.0.0.1", port: int = 0
 ) -> LocalTestServer:
-    """
-    Create a server with predefined responses.
+    """Create a server with predefined responses.
 
     Args:
-        responses: Dict mapping paths to response configs
-                  e.g., {"/api/test": {"status": 200, "body": {"success": True}}}
+        responses: Dict mapping paths to response configs.
+        host: The host to bind to.
+        port: The port to bind to.
     """
     config = LocalTestServerConfig(host=host, port=port, responses=responses)
     return LocalTestServer(config)

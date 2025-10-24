@@ -154,6 +154,7 @@ class WsgiHttpIncoming(WitHttpIncoming):
         self.reuse_sandboxes_for_ms = reuse_sandboxes_for_ms
 
     def __call__(self):
+        """Return self to make the instance callable."""
         return self
 
     def handle(self, request: Any, body: Any) -> None:

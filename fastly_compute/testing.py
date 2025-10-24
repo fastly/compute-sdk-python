@@ -71,8 +71,7 @@ class ViceroyTestBase:
 
     @classmethod
     def _create_viceroy_config(cls, backends: dict[str, str] | None = None) -> str:
-        """
-        Create a temporary viceroy configuration file.
+        """Create a temporary viceroy configuration file.
 
         Args:
             backends: Dict mapping backend names to URLs
@@ -120,8 +119,7 @@ class ViceroyTestBase:
 
     @classmethod
     def setup_backends(cls, backends: dict[str, str]):
-        """
-        Set up backends for testing.
+        """Set up backends for testing.
 
         Call this in setUpClass or as a class-level setup.
 

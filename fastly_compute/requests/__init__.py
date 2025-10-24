@@ -1,5 +1,4 @@
-"""
-fastly_compute.requests - A requests-compatible HTTP client for Fastly Compute
+"""A requests-compatible HTTP client for Fastly Compute.
 
 This module provides a familiar requests-like API while leveraging Fastly's
 backend architecture and WIT bindings for optimal performance.
@@ -217,7 +216,7 @@ def request(
         # TODO: Investigate if Host header is actually required by the WIT spec
         # or if this is a viceroy-specific requirement
         if backend is not None:
-            # Static backend - use localhost as host  
+            # Static backend - use localhost as host
             wit_request.insert_header("Host", b"localhost")
         else:
             # Dynamic backend - extract host from original URL

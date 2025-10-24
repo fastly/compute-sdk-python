@@ -1,5 +1,4 @@
-"""
-Backend resolution logic for fastly_compute.requests
+"""Backend resolution logic for fastly_compute.requests.
 
 Handles the logic for determining whether to use static or dynamic backends
 based on URL patterns and backend availability.
