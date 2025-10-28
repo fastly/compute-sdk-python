@@ -19,7 +19,7 @@ app = Flask(__name__)
 # 45 crashes. Viceroy will pass us no more than 1936 bytes of the board. (Or
 # maybe the entire URL gets truncated at 1965b.) If you change this, change the
 # f"{i:010000b}" format string below to be the new value squared.
-WIDTH = HEIGHT = 100
+WIDTH = HEIGHT = 50
 
 
 def decompressed_board(compressed: str) -> str:
@@ -36,7 +36,7 @@ def decompressed_board(compressed: str) -> str:
     if compressed == "none":
         return "none"
     i = int.from_bytes(urlsafe_b64decode(compressed))
-    return f"{i:010000b}"
+    return f"{i:02500b}"
 
 
 @app.route("/board/<compressed_board>")
