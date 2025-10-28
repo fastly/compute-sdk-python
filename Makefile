@@ -9,10 +9,10 @@ BUILD_DIR := build
 EXAMPLES_DIR := examples
 
 # Define all available examples (add new ones here)
-EXAMPLES := wit-bottle flask-app game-of-life
+EXAMPLES := bottle-app flask-app game-of-life
 
 # Default example for serve target
-EXAMPLE ?= wit-bottle
+EXAMPLE ?= bottle-app
 WASM_FILE := $(BUILD_DIR)/$(EXAMPLE).composed.wasm
 
 TARGET_WORLD := fastly:compute/service
@@ -47,7 +47,7 @@ $(WASILESS_WASM):
 $(BUILD_DIR):
 	mkdir -p $(BUILD_DIR)
 
-# Serve the specified example (default: wit-bottle)
+# Serve the specified example (default: bottle-app)
 serve: $(WASM_FILE)
 	@echo "Serving $(EXAMPLE) example on http://127.0.0.1:7676"
 	$(VICEROY) serve $(WASM_FILE)
@@ -99,7 +99,7 @@ help:
 	@echo ""
 	@echo "Examples:"
 	@echo "  make                          # Build all examples"
-	@echo "  make serve                    # Serve wit-bottle example"
+	@echo "  make serve                    # Serve bottle-app example"
 	@echo "  make serve EXAMPLE=flask-app  # Serve flask-app example"
 	@echo "  make build/flask-app.wasm     # Build specific example"
 	@echo ""

@@ -4,7 +4,7 @@ This directory contains example applications demonstrating different approaches 
 
 ## Available Examples
 
-### `wit-bottle.py`
+### `bottle-app.py`
 - **Framework**: Bottle (lightweight WSGI framework)
 - **Features**: Basic routing, JSON responses, WIT API integration
 - **Use Case**: Simple services, proof-of-concept applications
@@ -22,13 +22,13 @@ A server-side implementation of Conway’s Game of Life, with a server round tri
 ### Build a Specific Example
 ```bash
 make build/flask-app.wasm     # Build Flask example
-make build/wit-bottle.wasm    # Build Bottle example
+make build/bottle-app.wasm    # Build Bottle example
 make build/game-of-life.wasm  # Build Conway's Game of Life example
 ```
 
 ### Serve an Example
 ```bash
-make serve                    # Serve default (wit-bottle)
+make serve                    # Serve default (bottle-app)
 make serve EXAMPLE=flask-app  # Serve Flask example
 ```
 
@@ -44,7 +44,7 @@ make list-examples
 
 ## Testing Examples
 
-The integration tests use the default example (wit-bottle). To test other examples:
+The integration tests use the default example (bottle-app). To test other examples:
 
 ```bash
 # Update the test to use a different example
