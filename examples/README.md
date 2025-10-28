@@ -14,12 +14,16 @@ This directory contains example applications demonstrating different approaches 
 - **Features**: Flask routing, request handling, error handling
 - **Use Case**: More complex applications, familiar Flask patterns
 
+### `game-of-life.py`
+A server-side implementation of Conway’s Game of Life, with a server round trip per frame. This demonstrates raw requests-per-second performance.
+
 ## Building and Running Examples
 
 ### Build a Specific Example
 ```bash
 make build/flask-app.wasm     # Build Flask example
 make build/wit-bottle.wasm    # Build Bottle example
+make build/game-of-life.wasm  # Build Conway's Game of Life example
 ```
 
 ### Serve an Example
