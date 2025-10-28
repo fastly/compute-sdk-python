@@ -13,6 +13,7 @@ import subprocess
 import threading
 import time
 from dataclasses import dataclass
+from os import environ
 from pathlib import Path
 
 import pytest
@@ -90,7 +91,14 @@ class ViceroyTestBase:
 
         # Start viceroy process
         process = subprocess.Popen(
-            ["viceroy", "serve", cls.WASM_FILE, "--addr", f"127.0.0.1:{port}", "-v"],
+            [
+                environ.get("VICEROY", "viceroy"),
+                "serve",
+                cls.WASM_FILE,
+                "--addr",
+                f"127.0.0.1:{port}",
+                "-v",
+            ],
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             text=True,
