@@ -50,7 +50,7 @@ class ViceroyTestBase:
     """
 
     REQUEST_TIMEOUT = 10
-    WASM_FILE = "build/wit-bottle.composed.wasm"  # Default to the main example
+    WASM_FILE = "build/bottle-app.composed.wasm"  # Default to the main example
     server: ViceroyServer = None  # Will be set by the fixture
 
     @staticmethod
