@@ -118,6 +118,7 @@ def root():
 <body>
     <svg style="width: 100%%" viewBox="0 0 %(viewbox_width)s %(viewbox_width)s" id="grid" xmlns="http://www.w3.org/2000/svg">
     </svg>
+    <p style="color: gray; font-weight: bold; font-family: sans-serif; text-align: right;"><span id="fps">…</span> <span style="font-size: 75%%">FPS</span></p>
     <script defer>
         const colors = {"0": "white",
                         "1": "#E44DA2",
@@ -127,6 +128,7 @@ def root():
         const max = %(width)s;
         let recent_boards = ["", "", "", "", "", "", ""];
         let boredom_counter = 0;
+        let fps = 0;
 
         // Draw a square grid of circles, and return a 2D array of them.
         function initGrid() {
@@ -205,6 +207,8 @@ def root():
                     grid[y][x].setAttribute("fill", colors[board[i++]]);
                 }
             }
+
+            fps += 1;
         }
 
         // If we've seen this board configuration a bunch of times recently,
@@ -234,9 +238,21 @@ def root():
             animationId = requestAnimationFrame(function() { startAnimation(grid) });
         }
 
+        function startFpsCounter() {
+            el = document.getElementById("fps");
+            const secs = 3;
+            function updateFpsReadout () {
+                el.textContent = Math.round(fps / secs);
+                fps = 0;
+                setTimeout(updateFpsReadout, secs * 1000);
+            }
+            setTimeout(updateFpsReadout, secs * 1000);
+        }
+
         function main() {
             let grid = initGrid();
             startAnimation(grid);
+            startFpsCounter();
         }
 
         main();
