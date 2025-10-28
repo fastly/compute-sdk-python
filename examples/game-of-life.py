@@ -1,3 +1,4 @@
+from base64 import urlsafe_b64decode
 from random import random
 
 from flask import Flask
@@ -16,14 +17,35 @@ app = Flask(__name__)
 
 # Board width and height. We assume a square board for now.
 # 45 crashes. Viceroy will pass us no more than 1936 bytes of the board. (Or
-# maybe the entire URL gets truncated at 1965b.)
-WIDTH = HEIGHT = 44
+# maybe the entire URL gets truncated at 1965b.) If you change this, change the
+# f"{i:010000b}" format string below to be the new value squared.
+WIDTH = HEIGHT = 100
 
 
-@app.route("/board/<cells>")
-def board(cells):
+def decompressed_board(compressed: str) -> str:
+    """Decompress the board representation sent from JS, returning a B&W board
+    string ("10011011"...).
+
+    :arg compressed: A urlsafe_b64encode()d representation of the bit-packed
+        black-and-white board. (We don't need color info in order to compute the
+        next board.)
+
+    This saves 83% space. RLE would save about 90% but would depend on the board
+    and would be slower to compute.
+    """
+    if compressed == "none":
+        return "none"
+    i = int.from_bytes(urlsafe_b64decode(compressed))
+    return f"{i:010000b}"
+
+
+@app.route("/board/<compressed_board>")
+def board(compressed_board: str):
     """Return the next frame of the Game Of Life, given the current one. If a ""
-    board is given, return a new random board."""
+    board is given, return a new random board.
+    """
+    cells = decompressed_board(compressed_board)
+
     # Random board on start:
     if cells == "none":
         return "".join("1" if random() < 0.1 else "0" for _ in range(HEIGHT * WIDTH))
@@ -101,7 +123,7 @@ def root():
                         "1": "#E44DA2",
                         "2": "#86E9C9",
                         "3": "#A577DF"};
-        let board = "empty";
+        let board = "none";
         const max = %(width)s;
         let recent_boards = ["", "", "", "", "", "", ""];
         let boredom_counter = 0;
@@ -126,10 +148,55 @@ def root():
             return grid;
         }
 
+        // Compress the board, shucking off color info and interpreting the
+        // remaining 1s and 0s as binary digits. Interpret as an int, and
+        // encode using URL-safe base64.
+        function compressedBoard(board) {
+            if (board == "none") {
+                return "none";
+            }
+
+            // Collapse to black-and-white:
+            let binary = board.replace(/2|3/g, "1");
+
+            // Pad to multiple of 8 bits if necessary:
+            binary = binary.padStart(Math.ceil(binary.length / 8) * 8, "0");
+
+            // Convert binary string to bytes:
+            const bytes = [];
+            for (let i = 0; i < binary.length; i += 8) {
+                const byte = binary.slice(i, i + 8);
+                bytes.push(parseInt(byte, 2));
+            }
+
+            // Convert bytes to URL-safe base64:
+            let ret = "";
+            const base64Chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
+
+            for (let i = 0; i < bytes.length; i += 3) {
+                // Get next 3 bytes:
+                const byte1 = bytes[i] || 0;
+                const byte2 = bytes[i + 1] || 0;
+                const byte3 = bytes[i + 2] || 0;
+
+                // Pack them into a 24-bit number:
+                const combined = (byte1 << 16) | (byte2 << 8) | byte3;
+
+                // Pull out four 6-bit values:
+                const char1 = base64Chars[(combined >> 18) & 0x3F];
+                const char2 = base64Chars[(combined >> 12) & 0x3F];
+                const char3 = i + 1 < bytes.length ? base64Chars[(combined >> 6) & 0x3F] : "=";
+                const char4 = i + 2 < bytes.length ? base64Chars[combined & 0x3F] : "=";
+
+                ret += char1 + char2 + char3 + char4;
+            }
+            return ret;
+        }
+
         async function updateGrid(grid) {
             // Fetch new grid:
             // These days, max querystring URL length is 65K in Firefox. Only Edge is shorter, at 2083.
-            board = await (await fetch("./board/" + board)).text();
+            board = await (await fetch("./board/" + compressedBoard(board))).text();
 
             // Draw it:
             let i = 0;
@@ -152,7 +219,7 @@ def root():
             recent_boards.shift();
             recent_boards.push(board);
             if (boredom_counter >= 10) {
-                board = "empty";
+                board = "none";
                 // Has to be at least 7 long to detect the union of 3-tick and
                 // 2-tick oscillators going at it:
                 recent_boards = ["", "", "", "", "", "", ""];
