@@ -16,7 +16,14 @@ from urllib.parse import urlparse
 
 from wit_world.exports import HttpIncoming as WitHttpIncoming
 from wit_world.imports import http_body, http_resp
+from wit_world.imports.http_downstream import (
+    NextRequestOptions,
+    await_request,
+    next_request,
+)
+from wit_world.imports.http_req import send
 from wit_world.imports.http_resp import send_downstream
+from wit_world.imports.types import Err, Error_OptionalNone
 
 
 def serve_wsgi_request(
@@ -128,18 +135,83 @@ class WsgiHttpIncoming(WitHttpIncoming):
         ```
     """
 
-    def __init__(self, wsgi_app: Callable, handle_errors: bool = False):
+    def __init__(
+        self,
+        wsgi_app: Callable,
+        handle_errors: bool = False,
+        reuse_sessions_for_ms: int = 0,
+    ):
+        """Construct.
+
+        :arg wsgi_app: The WSGI app to which to delegate requests
+        :arg handle_errors: If True, log any raised exception and return a
+            500-status response.
+        :arg reuse_sessions_for_ms: If non-0, keep the service instance alive
+            for this many milliseconds to potentially serve additional requests.
+        """
         self.wsgi_app = wsgi_app
         self.handle_errors = handle_errors
+        self.reuse_sessions_for_ms = reuse_sessions_for_ms
 
     def __call__(self):
         return self
 
     def handle(self, request: Any, body: Any) -> None:
-        """Handle incoming HTTP request by serving it through the WSGI app."""
+        """Handle incoming HTTP requests by serving them through the WSGI app."""
         serve_wsgi_request(
             request,
             body,
             self.wsgi_app,
             handle_errors=self.handle_errors,
         )
+
+        if not self.reuse_sessions_for_ms:
+            return
+
+        try:
+            # Drop (in the WIT sense) the `request` resource to get ready for
+            # another request. Otherwise, we crash.
+            #
+            # Here we abuse an arbitrary request-consuming function to trigger
+            # the drop. Glue code interposed by wasmtime's linker ensures that
+            # drop happens, but send() otherwise fails before doing anything.
+            send(request, body, "no such backend")
+
+            # TODO: Generate a proper drop_whatever() function for each
+            # "whatever" resource.
+            #
+            # Alternately, it might suffice for the runtime to drop() things
+            # that get GC'd (i.e. `del` or otherwise) by Python. If we put an
+            # idiomatic .close() or similar on, for example, a potentially large
+            # request body, we could implement it in terms of `del`.
+        except Err:
+            pass
+        else:
+            raise RuntimeError(
+                "Our use of send() to consume the previous request unexpectedly actually performed a send."
+            )
+
+        options = NextRequestOptions(timeout_ms=self.reuse_sessions_for_ms, extra=None)
+        while True:
+            pending_request = next_request(options)
+            try:
+                result = await_request(pending_request)
+            except Err as exc:
+                # TODO: Improve error design so we can catch only the exceptions
+                # we're really interested in, per Python's idiom. Rather than
+                # carting around a Result type that's Union[Ok[T], Err[E]], we
+                # should probably return T xor raise E.
+                if isinstance(exc.value, Error_OptionalNone):
+                    # There were no more requests within the timeout.
+                    break
+                else:
+                    # Something went wrong.
+                    raise
+            else:
+                request, body = result
+                serve_wsgi_request(
+                    request,
+                    body,
+                    self.wsgi_app,
+                    handle_errors=self.handle_errors,
+                )
