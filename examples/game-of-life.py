@@ -263,4 +263,4 @@ def root():
 
 
 if running_under_compute:
-    HttpIncoming = WsgiHttpIncoming(app)
+    HttpIncoming = WsgiHttpIncoming(app, reuse_sessions_for_ms=300)

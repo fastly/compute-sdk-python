@@ -6,16 +6,19 @@ This directory contains example applications demonstrating different approaches 
 
 ### `bottle-app.py`
 - **Framework**: Bottle (lightweight WSGI framework)
-- **Features**: Basic routing, JSON responses, WIT API integration
+- **Shows**: Basic routing, JSON responses, WIT API integration
 - **Use Case**: Simple services, proof-of-concept applications
 
 ### `flask-app.py`
 - **Framework**: Flask (popular Python web framework)
-- **Features**: Flask routing, request handling, error handling
+- **Shows**: Flask routing, request handling, error handling
 - **Use Case**: More complex applications, familiar Flask patterns
 
 ### `game-of-life.py`
-A server-side implementation of Conway’s Game of Life, with a server round trip per frame. This demonstrates raw requests-per-second performance.
+A server-side implementation of Conway’s Game of Life, with a server round trip per frame.
+
+- **Shows**: Raw requests-per-second performance; Fastly's session-reuse
+feature, which saves spin-up time in busy services
 
 ## Building and Running Examples
 
