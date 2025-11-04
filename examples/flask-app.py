@@ -1,11 +1,9 @@
-# Import and install WASI shims before importing Flask
 import sys
 
-# Now we can import Flask and Fastly Compute modules
-from flask import Flask, request  # noqa: E402
-from wit_world.imports import compute_runtime  # noqa: E402
+from flask import Flask, request
+from wit_world.imports import compute_runtime
 
-from fastly_compute.wsgi import WsgiHttpIncoming  # noqa: E402
+from fastly_compute.wsgi import WsgiHttpIncoming
 
 # Create Flask app
 app = Flask(__name__)
