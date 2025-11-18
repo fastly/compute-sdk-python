@@ -90,8 +90,8 @@ def make_dynamic_backend_request(
         SimpleResponse with status and raw body bytes
 
     Raises:
-        ValueError if URL is invalid
-        Exception if backend registration or request fails
+        ValueError: If URL is invalid
+        Exception: If backend registration or request fails
     """
     # Parse URL to get host for backend registration
     if not target_url.startswith(("http://", "https://")):
@@ -165,8 +165,8 @@ def make_dynamic_post_request(target_url: str, post_data: dict) -> SimpleRespons
         SimpleResponse with status and raw body bytes
 
     Raises:
-        ValueError if URL is invalid
-        Exception if backend registration or request fails
+        ValueError: If URL is invalid
+        Exception: If backend registration or request fails
     """
     # Parse URL similar to GET request
     if not target_url.startswith(("http://", "https://")):

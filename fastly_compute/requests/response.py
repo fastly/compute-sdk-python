@@ -5,6 +5,8 @@ from typing import Any
 
 from wit_world.imports import http_body
 
+from .exceptions import HTTPError
+
 
 class FastlyResponse:
     """A requests.Response-compatible response object.
@@ -148,8 +150,6 @@ class FastlyResponse:
         Raises:
             HTTPError: If response status indicates an error
         """
-        from .exceptions import HTTPError
-
         if not self.ok:
             raise HTTPError(
                 f"{self.status_code} Client Error: {self.reason} for url: {self.url}",

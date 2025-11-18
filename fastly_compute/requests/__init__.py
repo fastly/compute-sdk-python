@@ -21,6 +21,8 @@ import json as json_module
 import urllib.parse
 from typing import Any
 
+from wit_world.imports import http_body, http_req
+
 from .backend import BackendResolver
 from .exceptions import ConnectionError, HTTPError, RequestException, Timeout
 from .response import FastlyResponse
@@ -42,10 +44,7 @@ def get(
         headers: HTTP headers to send with the request
         backend: Static backend name (optional, will use dynamic backend if not provided)
         timeout: Request timeout in seconds
-        **kwargs: Additional arguments (for requests compatibility)
-
-    Returns:
-        FastlyResponse object
+        **kwargs: Additional arguments (for requests compatibility, ignored)
 
     Raises:
         RequestException: For general request errors
@@ -83,10 +82,7 @@ def post(
         headers: HTTP headers to send with the request
         backend: Static backend name (optional)
         timeout: Request timeout in seconds
-        **kwargs: Additional arguments
-
-    Returns:
-        FastlyResponse object
+        **kwargs: Additional arguments (for requests compatibility, ignored)
     """
     return request(
         "POST",
@@ -158,18 +154,12 @@ def request(
         headers: HTTP headers
         backend: Static backend name (if not provided, will use dynamic backend)
         timeout: Request timeout in seconds
-        **kwargs: Additional arguments
-
-    Returns:
-        FastlyResponse object
+        **kwargs: Additional arguments (for requests compatibility, ignored)
 
     Raises:
         RequestException: For general request errors
         ValueError: For invalid arguments
     """
-    # Import WIT modules
-    from wit_world.imports import http_body, http_req
-
     # Validate arguments
     if data is not None and json is not None:
         raise ValueError("Cannot specify both 'data' and 'json' parameters")

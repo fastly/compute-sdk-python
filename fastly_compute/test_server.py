@@ -116,7 +116,6 @@ class TestRequestHandler(BaseHTTPRequestHandler):
 
     def log_message(self, format, *args):
         """Override to reduce log noise in tests."""
-        pass
 
 
 class LocalTestServer:

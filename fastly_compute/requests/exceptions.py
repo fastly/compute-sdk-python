@@ -18,13 +18,9 @@ class RequestException(Exception):
 class ConnectionError(RequestException):
     """Exception for connection-related errors."""
 
-    pass
-
 
 class Timeout(RequestException):
     """Exception for timeout errors."""
-
-    pass
 
 
 class HTTPError(RequestException):
@@ -43,34 +39,22 @@ class HTTPError(RequestException):
 class TooManyRedirects(RequestException):
     """Exception for too many redirects."""
 
-    pass
-
 
 class InvalidURL(RequestException, ValueError):
     """Exception for invalid URLs."""
-
-    pass
 
 
 class InvalidHeader(RequestException, ValueError):
     """Exception for invalid headers."""
 
-    pass
-
 
 class ChunkedEncodingError(RequestException):
     """Exception for chunked encoding errors."""
-
-    pass
 
 
 class ContentDecodingError(RequestException):
     """Exception for content decoding errors."""
 
-    pass
-
 
 class StreamConsumedError(RequestException, TypeError):
     """Exception for attempting to read a consumed stream."""
-
-    pass
