@@ -4,7 +4,6 @@ Provides a simple HTTP server that can act as a backend for viceroy testing.
 """
 
 import json
-import socket
 import threading
 import time
 from dataclasses import dataclass
@@ -189,14 +188,6 @@ class LocalTestServer:
 
         host, port = self.server.server_address
         return f"http://{host}:{port}"
-
-
-def find_free_port() -> int:
-    """Find a free port on localhost."""
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.bind(("", 0))
-        port = s.getsockname()[1]
-    return port
 
 
 # Convenience functions for common test server patterns

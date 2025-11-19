@@ -3,8 +3,7 @@
 import json
 from typing import Any
 
-from wit_world.imports import http_body
-
+from ..utils import read_response_body
 from .exceptions import HTTPError
 
 
@@ -97,13 +96,7 @@ class FastlyResponse:
             content = self.content
 
             # Try to determine encoding from headers
-            encoding = "utf-8"  # Default encoding
-            content_type = self.headers.get("content-type", "")
-            if "charset=" in content_type:
-                try:
-                    encoding = content_type.split("charset=")[1].split(";")[0].strip()
-                except (IndexError, ValueError):
-                    encoding = "utf-8"
+            encoding = self._parse_charset() or "utf-8"
 
             try:
                 self._text = content.decode(encoding)
@@ -181,9 +174,8 @@ class FastlyResponse:
         }
         return status_phrases.get(self.status_code, "Unknown")
 
-    @property
-    def encoding(self) -> str | None:
-        """Response encoding."""
+    def _parse_charset(self) -> str | None:
+        """Parse charset from Content-Type header."""
         content_type = self.headers.get("content-type", "")
         if "charset=" in content_type:
             try:
@@ -192,22 +184,14 @@ class FastlyResponse:
                 pass
         return None
 
+    @property
+    def encoding(self) -> str | None:
+        """Response encoding."""
+        return self._parse_charset()
+
     def _read_body(self) -> bytes:
         """Read the complete response body from WIT."""
-        body_data = b""
-        chunk_size = 4096
-
-        try:
-            while True:
-                chunk = http_body.read(self._response_body, chunk_size)
-                if not chunk:
-                    break
-                body_data += chunk
-        except Exception:
-            # If reading fails, return what we have
-            pass
-
-        return body_data
+        return read_response_body(self._response_body)
 
     def __bool__(self) -> bool:
         """Boolean evaluation returns ok status."""

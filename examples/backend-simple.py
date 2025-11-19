@@ -13,6 +13,7 @@ from dataclasses import dataclass
 from bottle import Bottle
 from wit_world.imports import backend, compute_runtime, http_body, http_req
 
+from fastly_compute.utils import read_response_body
 from fastly_compute.wsgi import WsgiHttpIncoming
 
 
@@ -25,6 +26,59 @@ class SimpleResponse:
 
 
 app = Bottle()
+
+
+def _register_dynamic_backend(
+    target_url: str, backend_prefix: str = "dynamic"
+) -> tuple[str, str, str, str]:
+    """
+    Parse URL and register dynamic backend if needed.
+
+    Args:
+        target_url: Full URL to parse and register backend for
+        backend_prefix: Prefix for the backend name
+
+    Returns:
+        Tuple of (scheme, host, path, backend_name)
+
+    Raises:
+        ValueError: If URL is invalid
+        Exception: If backend registration fails
+    """
+    # Parse URL to get host for backend registration
+    if not target_url.startswith(("http://", "https://")):
+        raise ValueError("Dynamic backend requires full URL with scheme")
+
+    # Extract scheme and host
+    scheme = "https" if target_url.startswith("https://") else "http"
+    url_without_scheme = target_url[len(scheme + "://") :]
+    host_and_path = url_without_scheme.split("/", 1)
+    host = host_and_path[0]
+    path = "/" + (host_and_path[1] if len(host_and_path) > 1 else "")
+
+    # Create backend name (replace dots and colons for valid backend names)
+    backend_name = f"{backend_prefix}_{host.replace('.', '_').replace(':', '_')}"
+
+    # Register dynamic backend if it doesn't exist
+    if not backend.exists(backend_name):
+        # Create backend options
+        options = http_req.DynamicBackendOptions()
+
+        # Configure TLS if HTTPS
+        if scheme == "https":
+            options.use_tls(True)
+
+        # Set reasonable timeouts (in milliseconds)
+        options.connect_timeout(30000)  # 30 seconds
+        options.first_byte_timeout(60000)  # 60 seconds
+        options.between_bytes_timeout(10000)  # 10 seconds
+
+        # Register the backend
+        http_req.register_dynamic_backend(
+            prefix=backend_name, target=f"{scheme}://{host}", options=options
+        )
+
+    return scheme, host, path, backend_name
 
 
 def make_static_backend_request(backend_name: str, path: str) -> SimpleResponse:
@@ -66,13 +120,7 @@ def make_static_backend_request(backend_name: str, path: str) -> SimpleResponse:
     status = response.get_status()
 
     # Read response body
-    response_data = b""
-    chunk_size = 4096
-    while True:
-        chunk = http_body.read(response_body, chunk_size)
-        if not chunk:
-            break
-        response_data += chunk
+    response_data = read_response_body(response_body)
 
     return SimpleResponse(status=status, body=response_data)
 
@@ -93,38 +141,10 @@ def make_dynamic_backend_request(
         ValueError: If URL is invalid
         Exception: If backend registration or request fails
     """
-    # Parse URL to get host for backend registration
-    if not target_url.startswith(("http://", "https://")):
-        raise ValueError("Dynamic backend requires full URL with scheme")
-
-    # Extract scheme and host
-    scheme = "https" if target_url.startswith("https://") else "http"
-    url_without_scheme = target_url[len(scheme + "://") :]
-    host_and_path = url_without_scheme.split("/", 1)
-    host = host_and_path[0]
-    path = "/" + (host_and_path[1] if len(host_and_path) > 1 else "")
-
-    # Create backend name (replace dots and colons for valid backend names)
-    backend_name = f"{backend_prefix}_{host.replace('.', '_').replace(':', '_')}"
-
-    # Register dynamic backend if it doesn't exist
-    if not backend.exists(backend_name):
-        # Create backend options
-        options = http_req.DynamicBackendOptions()
-
-        # Configure TLS if HTTPS
-        if scheme == "https":
-            options.use_tls(True)
-
-        # Set reasonable timeouts (in milliseconds)
-        options.connect_timeout(30000)  # 30 seconds
-        options.first_byte_timeout(60000)  # 60 seconds
-        options.between_bytes_timeout(10000)  # 10 seconds
-
-        # Register the backend
-        http_req.register_dynamic_backend(
-            prefix=backend_name, target=f"{scheme}://{host}", options=options
-        )
+    # Parse URL and register backend
+    scheme, host, path, backend_name = _register_dynamic_backend(
+        target_url, backend_prefix
+    )
 
     # Create request
     request = http_req.Request.new()
@@ -143,13 +163,7 @@ def make_dynamic_backend_request(
     status = response.get_status()
 
     # Read response body
-    response_data = b""
-    chunk_size = 4096
-    while True:
-        chunk = http_body.read(response_body, chunk_size)
-        if not chunk:
-            break
-        response_data += chunk
+    response_data = read_response_body(response_body)
 
     return SimpleResponse(status=status, body=response_data)
 
@@ -168,30 +182,8 @@ def make_dynamic_post_request(target_url: str, post_data: dict) -> SimpleRespons
         ValueError: If URL is invalid
         Exception: If backend registration or request fails
     """
-    # Parse URL similar to GET request
-    if not target_url.startswith(("http://", "https://")):
-        raise ValueError("Dynamic backend requires full URL with scheme")
-
-    scheme = "https" if target_url.startswith("https://") else "http"
-    url_without_scheme = target_url[len(scheme + "://") :]
-    host_and_path = url_without_scheme.split("/", 1)
-    host = host_and_path[0]
-    path = "/" + (host_and_path[1] if len(host_and_path) > 1 else "")
-
-    backend_name = f"dynamic_{host.replace('.', '_').replace(':', '_')}"
-
-    # Register backend if needed (same as GET)
-    if not backend.exists(backend_name):
-        options = http_req.DynamicBackendOptions()
-        if scheme == "https":
-            options.use_tls(True)
-        options.connect_timeout(30000)
-        options.first_byte_timeout(60000)
-        options.between_bytes_timeout(10000)
-
-        http_req.register_dynamic_backend(
-            prefix=backend_name, target=f"{scheme}://{host}", options=options
-        )
+    # Parse URL and register backend
+    scheme, host, path, backend_name = _register_dynamic_backend(target_url)
 
     # Create POST request
     request = http_req.Request.new()
@@ -215,13 +207,7 @@ def make_dynamic_post_request(target_url: str, post_data: dict) -> SimpleRespons
     status = response.get_status()
 
     # Read response body
-    response_data = b""
-    chunk_size = 4096
-    while True:
-        chunk = http_body.read(response_body, chunk_size)
-        if not chunk:
-            break
-        response_data += chunk
+    response_data = read_response_body(response_body)
 
     return SimpleResponse(status=status, body=response_data)
 
