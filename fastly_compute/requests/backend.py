@@ -15,7 +15,7 @@ class BackendResolver:
 
     def __init__(self):
         """Initialize the backend resolver."""
-        self._dynamic_backends = set()  # Track registered dynamic backends
+        self._dynamic_backends: set[str] = set()  # Track registered dynamic backends
 
     def resolve(self, url: str, backend: str | None = None) -> tuple[str, str]:
         """Resolve backend name and final URL for a request.
@@ -47,12 +47,15 @@ class BackendResolver:
     def _resolve_static_backend(self, url: str, backend_name: str) -> tuple[str, str]:
         """Resolve a static backend request.
 
+        Given a backend name, ensure that backend exists, and turn the URL into a
+        path-only one if it is not already.
+
         Args:
             url: URL (can be path-only or full URL)
             backend_name: Name of the static backend
 
         Returns:
-            Tuple of (final_url, backend_name)
+            Tuple of (final_url, backend_name) where final_url is always a path-only URL
 
         Raises:
             ValueError: If static backend doesn't exist
