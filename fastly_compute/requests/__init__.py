@@ -48,11 +48,105 @@ import urllib.parse
 from typing import Any
 
 from wit_world.imports import http_body, http_req
+from wit_world.imports import types as wit_types
+from wit_world.types import Err as WitErr
 
 from .backend import BackendResolver
 from .exceptions import ConnectionError, HTTPError, RequestException, Timeout
 from .response import FastlyResponse
 from .timeout import TimeoutConfig
+
+# WIT error type mappings for detailed errors; the keys here are derived
+# from send-error-detail
+_WIT_ERROR_CODE_TO_REQUESTS_EXC = {
+    # Timeout errors
+    http_req.SendErrorDetail_DnsTimeout: Timeout,
+    http_req.SendErrorDetail_DnsTimeout: Timeout,
+    http_req.SendErrorDetail_ConnectionTimeout: Timeout,
+    http_req.SendErrorDetail_HttpResponseTimeout: Timeout,
+    # Connection errors
+    http_req.SendErrorDetail_ConnectionRefused: ConnectionError,
+    http_req.SendErrorDetail_ConnectionTerminated: ConnectionError,
+    http_req.SendErrorDetail_DestinationNotFound: ConnectionError,
+    http_req.SendErrorDetail_DestinationUnavailable: ConnectionError,
+    http_req.SendErrorDetail_DestinationIpUnroutable: ConnectionError,
+    http_req.SendErrorDetail_DnsError: ConnectionError,
+    http_req.SendErrorDetail_TlsCertificateError: ConnectionError,
+    http_req.SendErrorDetail_TlsConfigurationError: ConnectionError,
+    http_req.SendErrorDetail_TlsAlertReceived: ConnectionError,
+    http_req.SendErrorDetail_TlsProtocolError: ConnectionError,
+    http_req.SendErrorDetail_ConnectionLimitReached: ConnectionError,
+    # HTTP protocol errors
+    http_req.SendErrorDetail_HttpIncompleteResponse: HTTPError,
+    http_req.SendErrorDetail_HttpResponseHeaderSectionTooLarge: HTTPError,
+    http_req.SendErrorDetail_HttpResponseBodyTooLarge: HTTPError,
+    http_req.SendErrorDetail_HttpUpgradeFailed: HTTPError,
+    http_req.SendErrorDetail_HttpProtocolError: HTTPError,
+    http_req.SendErrorDetail_HttpResponseStatusInvalid: HTTPError,
+    # Request/backend errors (default to RequestException)
+    http_req.SendErrorDetail_HttpRequestCacheKeyInvalid: RequestException,
+    http_req.SendErrorDetail_HttpRequestUriInvalid: RequestException,
+    http_req.SendErrorDetail_InternalError: RequestException,
+}
+
+# WIT base error type mappings for generic errors (current viceroy)
+_BASE_ERROR_MAPPINGS = {
+    wit_types.Error_HttpInvalid: HTTPError,
+    wit_types.Error_HttpUser: HTTPError,
+    wit_types.Error_HttpIncomplete: HTTPError,
+    wit_types.Error_HttpHeadTooLarge: HTTPError,
+    wit_types.Error_HttpInvalidStatus: HTTPError,
+    wit_types.Error_CannotRead: ConnectionError,
+    # All others (Error_GenericError, Error_InvalidArgument, etc.) default to RequestException
+}
+
+
+def _map_wit_error(err: WitErr, operation: str) -> None:
+    """Map a WIT error to a requests exception.
+
+    Args:
+        err: WIT Err exception containing ErrorWithDetail
+        operation: Description of what operation failed
+
+    Raises:
+        Appropriate exception (Timeout, ConnectionError, HTTPError, RequestException)
+        with full exception chain preserved via 'from err'
+    """
+    # TODO: many of the requests exceptions allow for storage of the request/response
+    # that lead to the error; plumb those through in the future depending on the type.
+
+    # Create base error message
+    message = f"{operation}: "
+
+    # sanity check -- this isn't expected but map the base case to a
+    # generic exception
+    if not hasattr(err.value, "detail") and not hasattr(err.value, "error"):
+        message += f"unexpected error structure: {err}"
+        return RequestException(message)
+
+        error_with_detail = err.value
+
+    # Try detailed error classification first (future production case)
+    if error_with_detail.detail is not None:
+        send_error_type = type(error_with_detail.detail)
+        message += send_error_type.__name__
+
+        # Look up exception type from detailed error mapping
+        # TODO - there's some additional info on some of these types that could
+        # be extracted.  It may be enough that we just keep the underlying exception
+        # but that is TBD.
+        exception_class = _WIT_ERROR_CODE_TO_REQUESTS_EXC.get(
+            send_error_type, RequestException
+        )
+        return exception_class(message)
+
+    # No detailed error - classify based on base error type
+    base_error_type = type(error_with_detail.error)
+    message += base_error_type.__name__
+    exception_class = _BASE_ERROR_MAPPINGS.get(base_error_type, RequestException)
+
+    return exception_class(message)
+
 
 # Export main components for public API
 __all__ = [
@@ -242,12 +336,16 @@ def request(
     # Initialize resolver
     resolver = BackendResolver()
 
+    # Resolve backend and final URL
     try:
-        # Resolve backend and final URL
         final_url, backend_name = resolver.resolve(url, backend, resolved_timeout)
+    except ValueError as e:
+        # Backend resolution errors (invalid URLs, missing backends, etc.)
+        raise RequestException(f"Backend resolution failed: {e}") from e
 
-        # Add query parameters if provided
-        if params:
+    # Add query parameters if provided
+    if params:
+        try:
             # Parse existing query parameters
             parsed_url = urllib.parse.urlparse(final_url)
             query_params = urllib.parse.parse_qs(parsed_url.query)
@@ -271,33 +369,39 @@ def request(
                     parsed_url.fragment,
                 )
             )
+        except (ValueError, TypeError) as e:
+            raise RequestException(f"Invalid query parameters: {e}") from e
 
-        # Create WIT request
+    # Create WIT request
+    try:
         wit_request = http_req.Request.new()
         wit_request.set_method(method.upper())
         wit_request.set_uri(final_url)
+    except Exception as e:
+        raise RequestException(f"Failed to create WIT request: {e}") from e
 
-        # Set Host header (may be required by viceroy, but let's test without it)
-        # TODO: Investigate if Host header is actually required by the WIT spec
-        # or if this is a viceroy-specific requirement
+    # Set headers
+    try:
+        # TODO: See https://github.com/fastly/Viceroy/pull/549; what is
+        # present here is a temporary workaround for viceroy differing
+        # in its handling than XQD.
         if backend is not None:
-            # Static backend - use localhost as host
-            wit_request.insert_header("Host", b"localhost")
-        else:
-            # Dynamic backend - extract host from original URL
-            parsed_url = urllib.parse.urlparse(url)
-            host = parsed_url.netloc.encode("utf-8")
-            wit_request.insert_header("Host", host)
+            wit_request.insert_header("Host", b"dummy")
 
-        # Set default headers
+        # TODO: verify against other Compute SDKs
         wit_request.insert_header("User-Agent", b"FastlyCompute-Requests/1.0")
 
         # Add custom headers
         if headers:
             for name, value in headers.items():
                 wit_request.insert_header(name, value.encode("utf-8"))
+    except (ValueError, UnicodeError) as e:
+        raise RequestException(f"Invalid headers: {e}") from e
+    except Exception as e:
+        raise RequestException(f"Failed to set request headers: {e}") from e
 
-        # Prepare request body
+    # Prepare request body
+    try:
         request_body = http_body.new()
 
         if json is not None:
@@ -321,27 +425,28 @@ def request(
                 http_body.write(request_body, data_bytes, http_body.WriteEnd.BACK)
             else:
                 raise ValueError(f"Unsupported data type: {type(data)}")
+    except (TypeError, ValueError, UnicodeError) as e:
+        raise RequestException(f"Invalid request body: {e}") from e
+    except Exception as e:
+        raise RequestException(f"Failed to prepare request body: {e}") from e
 
-        # Send request
+    # Send the request
+    try:
         wit_response, response_body = http_req.send(
             wit_request, request_body, backend_name
         )
-
-        # Wrap in FastlyResponse
-        return FastlyResponse(wit_response, response_body, final_url)
-
+    except WitErr as e:
+        # WIT-level errors during request execution - use proper error classification
+        raise _map_wit_error(e, "Request execution failed") from e
     except Exception as e:
-        # TODO: revisit finer-grained exception handling and top-level
-        #       WIT exception mapping.
+        # Unexpected non-WIT exception (should be rare)
+        raise RequestException(f"Unexpected error during request execution: {e}") from e
 
-        # Map WIT errors to requests-compatible exceptions
-        error_msg = str(e).lower()
-        if "timeout" in error_msg:
-            raise Timeout(str(e)) from e
-        elif "connection" in error_msg or "network" in error_msg:
-            raise ConnectionError(str(e)) from e
-        else:
-            raise RequestException(str(e)) from e
+    # Wrap in FastlyResponse
+    try:
+        return FastlyResponse(wit_response, response_body, final_url)
+    except Exception as e:
+        raise RequestException(f"Failed to create response object: {e}") from e
 
 
 # Export main API
