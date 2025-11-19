@@ -1,13 +1,13 @@
-"""Tests for the requests-simple example application."""
+"""Tests for the backend-requests example application."""
 
 from fastly_compute.test_server import LocalTestServer
 from fastly_compute.testing import ViceroyTestBase
 
 
 class TestRequestsSimple(ViceroyTestBase):
-    """Integration tests for the requests-simple example."""
+    """Integration tests for the backend-requests example."""
 
-    WASM_FILE = "build/requests-simple.composed.wasm"
+    WASM_FILE = "build/backend-requests.composed.wasm"
 
     @classmethod
     def setup_class(cls):

@@ -9,7 +9,7 @@ BUILD_DIR := build
 EXAMPLES_DIR := examples
 
 # Define all available examples (add new ones here)
-EXAMPLES := bottle-app flask-app requests-simple game-of-life
+EXAMPLES := bottle-app flask-app backend-requests game-of-life
 
 # Default example for serve target
 EXAMPLE ?= bottle-app
