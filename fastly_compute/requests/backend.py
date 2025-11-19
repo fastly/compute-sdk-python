@@ -5,9 +5,13 @@ based on URL patterns and backend availability.
 """
 
 import urllib.parse
+from typing import TYPE_CHECKING
 
 from wit_world.imports import backend as wit_backend
 from wit_world.imports import http_req
+
+if TYPE_CHECKING:
+    from .timeout import TimeoutConfig
 
 
 class BackendResolver:
@@ -17,12 +21,18 @@ class BackendResolver:
         """Initialize the backend resolver."""
         self._dynamic_backends: set[str] = set()  # Track registered dynamic backends
 
-    def resolve(self, url: str, backend: str | None = None) -> tuple[str, str]:
+    def resolve(
+        self,
+        url: str,
+        backend: str | None = None,
+        timeout_config: "TimeoutConfig" | None = None,
+    ) -> tuple[str, str]:
         """Resolve backend name and final URL for a request.
 
         Args:
             url: The URL to request (can be path-only or full URL)
             backend: Optional static backend name
+            timeout_config: Optional timeout configuration for dynamic backends
 
         Returns:
             Tuple of (final_url, backend_name)
@@ -36,7 +46,11 @@ class BackendResolver:
 
         # If URL looks like a full URL, use dynamic backend pattern
         if self._is_full_url(url):
-            return self._resolve_dynamic_backend(url)
+            if timeout_config is None:
+                from .timeout import TimeoutConfig
+
+                timeout_config = TimeoutConfig()
+            return self._resolve_dynamic_backend(url, timeout_config)
 
         # Path-only URL without explicit backend - this is an error
         raise ValueError(
@@ -79,11 +93,14 @@ class BackendResolver:
 
         return final_url, backend_name
 
-    def _resolve_dynamic_backend(self, url: str) -> tuple[str, str]:
+    def _resolve_dynamic_backend(
+        self, url: str, timeout_config: "TimeoutConfig"
+    ) -> tuple[str, str]:
         """Resolve a dynamic backend request.
 
         Args:
             url: Full URL (must include scheme and host)
+            timeout_config: Timeout configuration for the backend
 
         Returns:
             Tuple of (final_url, backend_name)
@@ -105,7 +122,9 @@ class BackendResolver:
 
         # Register dynamic backend if not already registered
         if backend_name not in self._dynamic_backends:
-            self._register_dynamic_backend(backend_name, parsed.scheme, host)
+            self._register_dynamic_backend(
+                backend_name, parsed.scheme, host, timeout_config
+            )
             self._dynamic_backends.add(backend_name)
 
         # For dynamic backends, we use the path portion as the URL
@@ -118,7 +137,7 @@ class BackendResolver:
         return final_url, backend_name
 
     def _register_dynamic_backend(
-        self, backend_name: str, scheme: str, host: str
+        self, backend_name: str, scheme: str, host: str, timeout_config: "TimeoutConfig"
     ) -> None:
         """Register a new dynamic backend.
 
@@ -126,6 +145,7 @@ class BackendResolver:
             backend_name: Name for the dynamic backend
             scheme: URL scheme (http or https)
             host: Target host
+            timeout_config: Timeout configuration for the backend
 
         Raises:
             Exception: If backend registration fails
@@ -137,10 +157,10 @@ class BackendResolver:
         if scheme == "https":
             options.use_tls(True)
 
-        # Set reasonable timeouts (in milliseconds)
-        options.connect_timeout(30000)  # 30 seconds
-        options.first_byte_timeout(60000)  # 60 seconds
-        options.between_bytes_timeout(10000)  # 10 seconds
+        # Set timeouts from configuration (convert to milliseconds)
+        options.connect_timeout(timeout_config.connect_ms)
+        options.first_byte_timeout(timeout_config.first_byte_ms)
+        options.between_bytes_timeout(timeout_config.between_bytes_ms)
 
         # Register the backend
         target = f"{scheme}://{host}"

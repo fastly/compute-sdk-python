@@ -3,7 +3,7 @@
 This module provides a familiar requests-like API while leveraging Fastly's
 backend architecture and WIT bindings for optimal performance.
 
-Usage:
+Basic Usage:
     import fastly_compute.requests as requests
 
     # Static backend (pre-configured)
@@ -15,6 +15,32 @@ Usage:
     # POST with JSON
     response = requests.post("https://http-me.fastly.dev/post",
                            json={"key": "value"})
+
+Fastly-Specific Features:
+    from fastly_compute.requests import TimeoutConfig
+
+    # Granular timeout control (not available in standard requests)
+    timeout_config = TimeoutConfig(
+        connect=5.0,          # 5s to establish connection
+        first_byte=30.0,      # 30s to receive first byte
+        between_bytes=2.0     # 2s max between bytes
+    )
+    response = requests.get(
+        "https://api.example.com/data",
+        timeout_config=timeout_config
+    )
+
+    # Backend-specific features
+    response = requests.get(
+        "/api/endpoint",
+        backend="my-backend"          # Use specific static backend
+    )
+
+Compatibility Notes:
+    Most parameters are compatible with the standard requests library.
+    Fastly-specific parameters (timeout_config, backend) will cause TypeErrors
+    if used with the standard requests library. Use the standard timeout
+    parameter for cross-platform compatibility.
 """
 
 import json as json_module
@@ -26,6 +52,28 @@ from wit_world.imports import http_body, http_req
 from .backend import BackendResolver
 from .exceptions import ConnectionError, HTTPError, RequestException, Timeout
 from .response import FastlyResponse
+from .timeout import TimeoutConfig
+
+# Export main components for public API
+__all__ = [
+    # Core request functions
+    "get",
+    "post",
+    "put",
+    "delete",
+    "head",
+    "options",
+    "request",
+    # Response class
+    "FastlyResponse",
+    # Timeout configuration
+    "TimeoutConfig",
+    # Exceptions
+    "RequestException",
+    "ConnectionError",
+    "HTTPError",
+    "Timeout",
+]
 
 
 def get(
@@ -33,7 +81,8 @@ def get(
     params: dict[str, Any] | None = None,
     headers: dict[str, str] | None = None,
     backend: str | None = None,
-    timeout: int | None = None,
+    timeout: None | float | tuple = None,
+    timeout_config: TimeoutConfig | None = None,
     **kwargs,
 ) -> FastlyResponse:
     """Send a GET request.
@@ -43,13 +92,22 @@ def get(
         params: Query parameters to append to the URL
         headers: HTTP headers to send with the request
         backend: Static backend name (optional, will use dynamic backend if not provided)
-        timeout: Request timeout in seconds
+        timeout: Request timeout in seconds (requests-compatible). Can be:
+            - float: Single timeout for all phases
+            - (connect, read): Tuple for connect and read timeouts
+        timeout_config: **Fastly-only** Advanced timeout configuration with granular control
+            over connect_timeout, first_byte_timeout, and between_bytes_timeout
         **kwargs: Additional arguments (for requests compatibility, ignored)
+
+    Note:
+        The timeout_config parameter is Fastly-specific and will cause a TypeError
+        if used with the standard requests library. Use timeout for cross-platform compatibility.
 
     Raises:
         RequestException: For general request errors
         ConnectionError: For connection-related errors
         Timeout: For timeout errors
+        ValueError: If both timeout and timeout_config are specified
     """
     return request(
         "GET",
@@ -58,6 +116,7 @@ def get(
         headers=headers,
         backend=backend,
         timeout=timeout,
+        timeout_config=timeout_config,
         **kwargs,
     )
 
@@ -69,7 +128,8 @@ def post(
     params: dict[str, Any] | None = None,
     headers: dict[str, str] | None = None,
     backend: str | None = None,
-    timeout: int | None = None,
+    timeout: None | float | tuple = None,
+    timeout_config: TimeoutConfig | None = None,
     **kwargs,
 ) -> FastlyResponse:
     """Send a POST request.
@@ -81,7 +141,8 @@ def post(
         params: Query parameters to append to the URL
         headers: HTTP headers to send with the request
         backend: Static backend name (optional)
-        timeout: Request timeout in seconds
+        timeout: Request timeout in seconds (requests-compatible)
+        timeout_config: **Fastly-only** Advanced timeout configuration
         **kwargs: Additional arguments (for requests compatibility, ignored)
     """
     return request(
@@ -93,6 +154,7 @@ def post(
         headers=headers,
         backend=backend,
         timeout=timeout,
+        timeout_config=timeout_config,
         **kwargs,
     )
 
@@ -140,7 +202,8 @@ def request(
     json: dict[str, Any] | None = None,
     headers: dict[str, str] | None = None,
     backend: str | None = None,
-    timeout: int | None = None,
+    timeout: None | float | tuple = None,
+    timeout_config: TimeoutConfig | None = None,
     **kwargs,
 ) -> FastlyResponse:
     """Send an HTTP request.
@@ -153,7 +216,8 @@ def request(
         json: JSON data for the request body (mutually exclusive with data)
         headers: HTTP headers
         backend: Static backend name (if not provided, will use dynamic backend)
-        timeout: Request timeout in seconds
+        timeout: Request timeout in seconds (requests-compatible)
+        timeout_config: **Fastly-only** Advanced timeout configuration
         **kwargs: Additional arguments (for requests compatibility, ignored)
 
     Raises:
@@ -164,12 +228,23 @@ def request(
     if data is not None and json is not None:
         raise ValueError("Cannot specify both 'data' and 'json' parameters")
 
+    if timeout is not None and timeout_config is not None:
+        raise ValueError(
+            "Cannot specify both 'timeout' and 'timeout_config' parameters"
+        )
+
+    # Resolve timeout configuration
+    if timeout_config is not None:
+        resolved_timeout = timeout_config
+    else:
+        resolved_timeout = TimeoutConfig.from_requests_timeout(timeout)
+
     # Initialize resolver
     resolver = BackendResolver()
 
     try:
         # Resolve backend and final URL
-        final_url, backend_name = resolver.resolve(url, backend)
+        final_url, backend_name = resolver.resolve(url, backend, resolved_timeout)
 
         # Add query parameters if provided
         if params:
