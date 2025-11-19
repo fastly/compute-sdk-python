@@ -139,19 +139,19 @@ class WsgiHttpIncoming(WitHttpIncoming):
         self,
         wsgi_app: Callable,
         handle_errors: bool = False,
-        reuse_sessions_for_ms: int = 0,
+        reuse_sandboxes_for_ms: int = 0,
     ):
         """Construct.
 
         :arg wsgi_app: The WSGI app to which to delegate requests
         :arg handle_errors: If True, log any raised exception and return a
             500-status response.
-        :arg reuse_sessions_for_ms: If non-0, keep the service instance alive
-            for this many milliseconds to potentially serve additional requests.
+        :arg reuse_sandboxes_for_ms: If non-0, keep the sandbox alive for this
+            many milliseconds to potentially serve additional requests.
         """
         self.wsgi_app = wsgi_app
         self.handle_errors = handle_errors
-        self.reuse_sessions_for_ms = reuse_sessions_for_ms
+        self.reuse_sandboxes_for_ms = reuse_sandboxes_for_ms
 
     def __call__(self):
         return self
@@ -165,7 +165,7 @@ class WsgiHttpIncoming(WitHttpIncoming):
             handle_errors=self.handle_errors,
         )
 
-        if not self.reuse_sessions_for_ms:
+        if not self.reuse_sandboxes_for_ms:
             return
 
         try:
@@ -191,7 +191,7 @@ class WsgiHttpIncoming(WitHttpIncoming):
                 "Our use of send() to consume the previous request unexpectedly actually performed a send."
             )
 
-        options = NextRequestOptions(timeout_ms=self.reuse_sessions_for_ms, extra=None)
+        options = NextRequestOptions(timeout_ms=self.reuse_sandboxes_for_ms, extra=None)
         while True:
             pending_request = next_request(options)
             try:
