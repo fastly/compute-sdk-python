@@ -1,6 +1,6 @@
 """Tests for the requests-simple example application."""
 
-from fastly_compute.test_server import LocalTestServer, LocalTestServerConfig
+from fastly_compute.test_server import LocalTestServer
 from fastly_compute.testing import ViceroyTestBase
 
 
@@ -49,20 +49,18 @@ class TestRequestsSimple(ViceroyTestBase):
         }
 
         # Set up mock server
-        config = LocalTestServerConfig(
+        cls.test_server = LocalTestServer(
             host="127.0.0.1", port=0, responses=mock_responses
         )
-        cls.test_server = LocalTestServer(config)
         cls.test_server_url = cls.test_server.start()
 
         # Configure test-be backend for static backend tests
-        cls.setup_backends({"test-be": cls.test_server_url})
+        cls.set_up_backends({"test-be": cls.test_server_url})
 
     @classmethod
     def teardown_class(cls):
         """Clean up test server."""
-        if hasattr(cls, "test_server"):
-            cls.test_server.stop()
+        cls.test_server.stop()
 
     def test_static_get_request(self):
         """Test static backend GET request."""

@@ -6,24 +6,9 @@ Provides a simple HTTP server that can act as a backend for viceroy testing.
 import json
 import threading
 import time
-from dataclasses import dataclass
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from typing import Any
 from urllib.parse import parse_qs, urlparse
-
-
-@dataclass
-class LocalTestServerConfig:
-    """Configuration for test server."""
-
-    host: str = "127.0.0.1"
-    port: int = 0  # 0 = auto-assign port
-    responses: dict[str, dict[str, Any]] = None
-
-    def __post_init__(self):
-        """Initialize responses to empty dict if not provided."""
-        if self.responses is None:
-            self.responses = {}
 
 
 class TestRequestHandler(BaseHTTPRequestHandler):
@@ -118,14 +103,35 @@ class TestRequestHandler(BaseHTTPRequestHandler):
 
 
 class LocalTestServer:
-    """Local HTTP server for backend testing."""
+    """Local HTTP server for backend testing.
 
-    def __init__(self, config: LocalTestServerConfig | None = None):
-        """Construct a new test server."""
-        self.config = config or LocalTestServerConfig()
+    This server can be used to mock external backends during testing.
+    It supports both httpbin-style behavior and custom response patterns.
+    """
+
+    def __init__(
+        self,
+        host: str = "127.0.0.1",
+        port: int = 0,
+        responses: dict[str, dict[str, Any]] | None = None,
+    ):
+        """Initialize the test server.
+
+        Args:
+            host: The host interface to bind to (default: "127.0.0.1")
+            port: The port to bind to (default: 0 for auto-assignment)
+            responses: Optional dict mapping paths to response configs.
+                      Each response config can contain:
+                      - "status": HTTP status code (default: 200)
+                      - "headers": Dict of HTTP headers
+                      - "body": Response body (dict will be JSON-encoded)
+                      Example: {"/api/test": {"status": 200, "body": {"success": True}}}
+        """
+        self.host = host
+        self.port = port
+        self.responses = responses or {}
         self.server: HTTPServer | None = None
         self.thread: threading.Thread | None = None
-        self._running = False
 
     def start(self) -> str:
         """Start the test server.
@@ -133,25 +139,22 @@ class LocalTestServer:
         Returns:
             The base URL of the started server (e.g., "http://127.0.0.1:12345")
         """
-        if self._running:
+        if self.server is not None:
             raise RuntimeError("Server is already running")
 
         # Create server
-        self.server = HTTPServer(
-            (self.config.host, self.config.port), TestRequestHandler
-        )
+        self.server = HTTPServer((self.host, self.port), TestRequestHandler)
 
         # Set responses on server for handler access
-        self.server.responses = self.config.responses
+        self.server.responses = self.responses
 
         # Get actual port (important when port=0 for auto-assignment)
         actual_port = self.server.server_address[1]
-        base_url = f"http://{self.config.host}:{actual_port}"
+        base_url = f"http://{self.host}:{actual_port}"
 
         # Start server in background thread
         self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
         self.thread.start()
-        self._running = True
 
         # Wait a bit for server to be ready
         time.sleep(0.1)
@@ -160,17 +163,16 @@ class LocalTestServer:
 
     def stop(self):
         """Stop the test server."""
-        if not self._running:
+        if self.server is None:
             return
 
-        if self.server:
-            self.server.shutdown()
-            self.server.server_close()
+        self.server.shutdown()
+        self.server.server_close()
+        self.server = None
 
         if self.thread and self.thread.is_alive():
             self.thread.join(timeout=1.0)
-
-        self._running = False
+            self.thread = None
 
     def __enter__(self):
         """Context manager entry."""
@@ -183,29 +185,8 @@ class LocalTestServer:
     @property
     def base_url(self) -> str:
         """Get the base URL of the running server."""
-        if not self._running or not self.server:
+        if self.server is None:
             raise RuntimeError("Server is not running")
 
         host, port = self.server.server_address
         return f"http://{host}:{port}"
-
-
-# Convenience functions for common test server patterns
-def create_httpbin_server(host: str = "127.0.0.1", port: int = 0) -> LocalTestServer:
-    """Create a server that mimics httpbin.org behavior."""
-    config = LocalTestServerConfig(host=host, port=port)
-    return LocalTestServer(config)
-
-
-def create_mock_server(
-    responses: dict[str, dict[str, Any]], host: str = "127.0.0.1", port: int = 0
-) -> LocalTestServer:
-    """Create a server with predefined responses.
-
-    Args:
-        responses: Dict mapping paths to response configs.
-        host: The host to bind to.
-        port: The port to bind to.
-    """
-    config = LocalTestServerConfig(host=host, port=port, responses=responses)
-    return LocalTestServer(config)

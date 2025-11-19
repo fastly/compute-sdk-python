@@ -1,6 +1,6 @@
 """Tests for backend-simple.py example with local server backends."""
 
-from fastly_compute.test_server import LocalTestServer, LocalTestServerConfig
+from fastly_compute.test_server import LocalTestServer
 from fastly_compute.testing import ViceroyTestBase
 
 
@@ -13,19 +13,16 @@ class TestBackendSimple(ViceroyTestBase):
     def setup_class(cls):
         """Set up local test servers and configure backends."""
         # Create a local test server that mimics httpbin
-        cls.test_server = LocalTestServer(
-            LocalTestServerConfig(host="127.0.0.1", port=0)
-        )
+        cls.test_server = LocalTestServer(host="127.0.0.1", port=0)
         cls.test_server_url = cls.test_server.start()
 
         # Configure the backend for viceroy
-        cls.setup_backends({"test-be": cls.test_server_url})
+        cls.set_up_backends({"test-be": cls.test_server_url})
 
     @classmethod
     def teardown_class(cls):
         """Clean up test servers."""
-        if hasattr(cls, "test_server"):
-            cls.test_server.stop()
+        cls.test_server.stop()
 
     def test_static_backend_request(self):
         """Test static backend request to local test server."""
@@ -128,20 +125,18 @@ class TestBackendSimpleWithMockResponses(ViceroyTestBase):
         }
 
         # Start mock server
-        config = LocalTestServerConfig(
+        cls.mock_server = LocalTestServer(
             host="127.0.0.1", port=0, responses=mock_responses
         )
-        cls.mock_server = LocalTestServer(config)
         cls.mock_server_url = cls.mock_server.start()
 
         # Configure backend
-        cls.setup_backends({"test-be": cls.mock_server_url})
+        cls.set_up_backends({"test-be": cls.mock_server_url})
 
     @classmethod
     def teardown_class(cls):
         """Clean up mock server."""
-        if hasattr(cls, "mock_server"):
-            cls.mock_server.stop()
+        cls.mock_server.stop()
 
     def test_static_backend_with_mock_response(self):
         """Test static backend with controlled mock response."""

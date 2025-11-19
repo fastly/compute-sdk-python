@@ -15,7 +15,6 @@ import tempfile
 import threading
 import time
 from dataclasses import dataclass
-from os import environ
 from pathlib import Path
 
 import pytest
@@ -118,7 +117,7 @@ class ViceroyTestBase:
         return temp_path
 
     @classmethod
-    def setup_backends(cls, backends: dict[str, str]):
+    def set_up_backends(cls, backends: dict[str, str]):
         """Set up backends for testing.
 
         Call this in setUpClass or as a class-level setup.
