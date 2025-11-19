@@ -58,6 +58,10 @@ serve: $(WASM_FILE)
 test: $(COMPOSED_WASMS)
 	VICEROY=$(VICEROY) uv run --extra test pytest
 
+# Update snapshots for snapshot tests
+test-update-snapshots: $(COMPOSED_WASMS)
+	VICEROY=$(VICEROY) uv run --extra test pytest --snapshot-update
+
 # List available examples
 list-examples:
 	@echo "Available examples:"
@@ -91,6 +95,7 @@ help:
 	@echo "  all                 Build all examples"
 	@echo "  serve [EXAMPLE=name] Serve example (default: $(EXAMPLE))"
 	@echo "  test                Run integration tests (builds all examples)"
+	@echo "  test-update-snapshots Update snapshot test baselines"
 	@echo "  build-all           Build all examples (alias for 'all')"
 	@echo "  list-examples       List available examples"
 	@echo "  clean               Clean build artifacts"
@@ -107,4 +112,4 @@ help:
 	@echo ""
 	@echo "Available examples: $(EXAMPLES)"
 
-.PHONY: all serve test list-examples build-all clean lint lint-fix format format-check help $(WASILESS_WASM)
+.PHONY: all serve test test-update-snapshots list-examples build-all clean lint lint-fix format format-check help $(WASILESS_WASM)

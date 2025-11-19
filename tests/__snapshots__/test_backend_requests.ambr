@@ -1,0 +1,77 @@
+# serializer version: 1
+# name: TestRequestsSimple.test_dynamic_get_no_target
+  dict({
+    'demo': 'dynamic-get',
+    'error': 'target query parameter is required (e.g., ?target=https://http-me.fastly.dev/get)',
+  })
+# ---
+# name: TestRequestsSimple.test_dynamic_get_request
+  dict({
+    'demo': 'dynamic-get',
+    'error': "module 'wit_world.imports.http_req' has no attribute 'DynamicBackendOptions'",
+    'error_type': 'AttributeError',
+  })
+# ---
+# name: TestRequestsSimple.test_dynamic_post_no_target
+  dict({
+    'demo': 'dynamic-post',
+    'error': 'target query parameter is required (e.g., ?target=https://http-me.fastly.dev/post)',
+  })
+# ---
+# name: TestRequestsSimple.test_dynamic_post_request
+  dict({
+    'demo': 'dynamic-post',
+    'error': "module 'wit_world.imports.http_req' has no attribute 'DynamicBackendOptions'",
+    'error_type': 'AttributeError',
+  })
+# ---
+# name: TestRequestsSimple.test_error_handling
+  dict({
+    'demo': 'error-demo',
+    'test_results': list([
+      dict({
+        'error': "Backend resolution failed: Static backend 'nonexistent-backend' does not exist",
+        'error_type': 'RequestException',
+        'status': 'expected_error',
+        'test': 'invalid-static-backend',
+      }),
+      dict({
+        'error': "Backend resolution failed: Path-only URL requires explicit 'backend' parameter. Either provide backend='backend-name' or use full URL like 'https://example.comnot-a-url'",
+        'error_type': 'RequestException',
+        'status': 'expected_error',
+        'test': 'invalid-url-format',
+      }),
+    ]),
+  })
+# ---
+# name: TestRequestsSimple.test_static_get_request
+  dict({
+    'backend_name': 'test-be',
+    'backend_type': 'static',
+    'content_length': 185,
+    'demo': 'static-get',
+    'headers_count': 3,
+    'response_preview': '''
+      {
+        "args": {},
+        "headers": {
+          "User-Agent": "FastlyCompute-Requests/1.0",
+          "Host": "localhost"
+        },
+        "method": "GET",
+        "origin": "127.0.0.1",
+        "url": "http://localhost/get"
+      }
+    ''',
+    'status_code': 200,
+    'success': True,
+    'url': '/get',
+  })
+# ---
+# name: TestRequestsSimple.test_static_post_request
+  dict({
+    'demo': 'static-post',
+    'error': "Failed to prepare request body: module 'wit_world.imports.http_body' has no attribute 'WriteEnd'",
+    'error_type': 'RequestException',
+  })
+# ---
