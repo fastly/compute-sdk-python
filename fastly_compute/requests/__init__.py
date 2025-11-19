@@ -169,7 +169,7 @@ def request(
 
     try:
         # Resolve backend and final URL
-        backend_name, final_url = resolver.resolve(url, backend)
+        final_url, backend_name = resolver.resolve(url, backend)
 
         # Add query parameters if provided
         if params:

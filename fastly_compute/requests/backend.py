@@ -25,7 +25,7 @@ class BackendResolver:
             backend: Optional static backend name
 
         Returns:
-            Tuple of (backend_name, final_url)
+            Tuple of (final_url, backend_name)
 
         Raises:
             ValueError: If backend resolution fails
@@ -52,7 +52,7 @@ class BackendResolver:
             backend_name: Name of the static backend
 
         Returns:
-            Tuple of (backend_name, final_url)
+            Tuple of (final_url, backend_name)
 
         Raises:
             ValueError: If static backend doesn't exist
@@ -74,7 +74,7 @@ class BackendResolver:
             # Already a path, use as-is (ensure it starts with /)
             final_url = url if url.startswith("/") else "/" + url
 
-        return backend_name, final_url
+        return final_url, backend_name
 
     def _resolve_dynamic_backend(self, url: str) -> tuple[str, str]:
         """Resolve a dynamic backend request.
@@ -83,7 +83,7 @@ class BackendResolver:
             url: Full URL (must include scheme and host)
 
         Returns:
-            Tuple of (backend_name, final_url)
+            Tuple of (final_url, backend_name)
 
         Raises:
             ValueError: If URL is invalid for dynamic backend
@@ -112,7 +112,7 @@ class BackendResolver:
         if parsed.fragment:
             final_url += "#" + parsed.fragment
 
-        return backend_name, final_url
+        return final_url, backend_name
 
     def _register_dynamic_backend(
         self, backend_name: str, scheme: str, host: str
