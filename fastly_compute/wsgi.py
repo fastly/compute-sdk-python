@@ -23,7 +23,7 @@ from wit_world.imports.http_downstream import (
 )
 from wit_world.imports.http_req import send
 from wit_world.imports.http_resp import send_downstream
-from wit_world.imports.types import Err, Error_OptionalNone
+from wit_world.imports.types import Err, Error_CannotRead
 
 
 def serve_wsgi_request(
@@ -201,7 +201,7 @@ class WsgiHttpIncoming(WitHttpIncoming):
                 # we're really interested in, per Python's idiom. Rather than
                 # carting around a Result type that's Union[Ok[T], Err[E]], we
                 # should probably return T xor raise E.
-                if isinstance(exc.value, Error_OptionalNone):
+                if isinstance(exc.value, Error_CannotRead):
                     # There were no more requests within the timeout.
                     break
                 else:
