@@ -40,7 +40,7 @@ jobs:
       id: cache-cargo
       uses: actions/cache@v4
       with:
-        key: python-sdk-compatible-1
+        key: python-sdk-compatible-2
         path: |
             ~/.cargo/bin/
     - name: Install wasm-tools and wac
@@ -49,7 +49,7 @@ jobs:
     - name: Install viceroy
       if: steps.cache-cargo.outputs.cache-hit != 'true'
       # When you switch tags, update the cache key in the cache-cargo step.
-      run: cargo install --git https://github.com/fastly/Viceroy.git --tag erik/python-sdk-compatible-1 viceroy
+      run: cargo install --git https://github.com/fastly/Viceroy.git --tag erik/python-sdk-compatible-2 viceroy
     - name: Install dependencies
       run: uv sync --extra dev --extra test
     - name: Check formatting
