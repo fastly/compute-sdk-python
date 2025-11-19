@@ -9,6 +9,7 @@ Dynamic backends are created programmatically at runtime.
 
 import json
 from dataclasses import dataclass
+from urllib.parse import urlparse
 
 from bottle import Bottle
 from wit_world.imports import backend, compute_runtime, http_body, http_req
@@ -45,16 +46,15 @@ def _register_dynamic_backend(
         ValueError: If URL is invalid
         Exception: If backend registration fails
     """
-    # Parse URL to get host for backend registration
-    if not target_url.startswith(("http://", "https://")):
-        raise ValueError("Dynamic backend requires full URL with scheme")
+    # Parse URL using stdlib urllib.parse
+    parsed = urlparse(target_url)
 
-    # Extract scheme and host
-    scheme = "https" if target_url.startswith("https://") else "http"
-    url_without_scheme = target_url[len(scheme + "://") :]
-    host_and_path = url_without_scheme.split("/", 1)
-    host = host_and_path[0]
-    path = "/" + (host_and_path[1] if len(host_and_path) > 1 else "")
+    if not parsed.scheme or not parsed.netloc:
+        raise ValueError("Dynamic backend requires full URL with scheme and host")
+
+    scheme = parsed.scheme
+    host = parsed.netloc
+    path = parsed.path or "/"
 
     # Create backend name (replace dots and colons for valid backend names)
     backend_name = f"{backend_prefix}_{host.replace('.', '_').replace(':', '_')}"
