@@ -208,6 +208,8 @@ class WsgiHttpIncoming(WitHttpIncoming):
                     # Something went wrong.
                     raise
             else:
+                if not result:
+                    break
                 request, body = result
                 serve_wsgi_request(
                     request,

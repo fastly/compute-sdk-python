@@ -43,9 +43,8 @@ def decompressed_board(compressed: str) -> str:
 
 @app.route("/board/<compressed_board>")
 def board(compressed_board: str):
-    """Return the next frame of the Game Of Life, given the current one. If a ""
-    board is given, return a new random board.
-    """
+    """Return the next frame of the Game Of Life, given the current one. If "none"
+    is given instead, return a new random board."""
     cells = decompressed_board(compressed_board)
 
     # Random board on start:
