@@ -15,16 +15,18 @@ else:
 app = Flask(__name__)
 
 
-# Board width and height. We assume a square board for now.
-# 45 crashes. Viceroy will pass us no more than 1936 bytes of the board. (Or
-# maybe the entire URL gets truncated at 1965b.) If you change this, change the
-# f"{i:010000b}" format string below to be the new value squared.
+# Board width and height. We assume a square board for now. If you change this,
+# change the f"{i:010000b}" format string below to be the new value squared.
 WIDTH = HEIGHT = 50
 
 
 def decompressed_board(compressed: str) -> str:
     """Decompress the board representation sent from JS, returning a B&W board
     string ("10011011"...).
+
+    Viceroy will pass us no more than 1936 bytes of the board. (Or maybe the
+    entire URL gets truncated at 1965b.) This overcomes that (for the board
+    sizes we're interested in).
 
     :arg compressed: A urlsafe_b64encode()d representation of the bit-packed
         black-and-white board. (We don't need color info in order to compute the
