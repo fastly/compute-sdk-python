@@ -1,9 +1,9 @@
-"""Tests for the Fastly Compute Python service (app.wasm functionality)."""
-
 from fastly_compute.testing import ViceroyTestBase
 
 
-class TestFastlyComputeApp(ViceroyTestBase):
+class TestBottleApp(ViceroyTestBase):
+    """Tests for the Bottle framework example"""
+
     def test_hello_endpoint(self):
         """Test the hello endpoint returns expected content."""
         response = self.get("/hello/test")
