@@ -36,14 +36,15 @@ class TestGameOfLife(ViceroyTestBase):
         """Make sure attempting to issue multiple requests to a single sandbox doesn't crash.
 
         This does not test whether a single sandbox actually served multiple
-        requests; 2 sandboxes could have served 1 request each.
+        requests, though it tries to provoke that. Still, 2 sandboxes could have
+        served 1 request each.
         """
         response = self.get("/board/none")
         assert response.status_code == 200
         response = self.get("/board/none")
         assert response.status_code == 200
 
-        # The error about failed sandbox reuse comes *after* the request has
-        # succeeded. And it seems to take forever to show up.
-        sleep(4)  # 2 is not enough. I am sad.
+        # Reports about crashers in the post-response code come *after* the
+        # request has succeeded. And it seems to take awhile to show up.
+        sleep(0.5)  # .3 is not enough.
         assert "WebAssembly trapped" not in "\n".join(self.server.output_lines)
