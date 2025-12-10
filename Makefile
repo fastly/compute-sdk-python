@@ -69,8 +69,9 @@ clean:
 	rm -rf $(BUILD_DIR) $(STUBS_DIR)
 
 # Development tools
-lint:
+lint: $(EXAMPLE_WASMS)
 	uv run --extra dev ruff check .
+	uv run --extra dev --extra test pyrefly check .
 
 lint-fix:
 	uv run --extra dev ruff check --fix .
