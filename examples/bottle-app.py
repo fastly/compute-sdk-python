@@ -27,6 +27,7 @@ def info():
         "vcpu_time_ms": vcpu_time,
         "request_method": request.environ.get("REQUEST_METHOD"),
         "path_info": request.environ.get("PATH_INFO"),
+        "request_headers": dict(request.headers),
     }
 
 

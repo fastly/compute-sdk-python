@@ -17,7 +17,7 @@ class TestFlaskApp(ViceroyTestBase):
 
     def test_info_endpoint(self):
         """Test the info endpoint returns expected JSON with WIT data."""
-        response = self.get("/info")
+        response = self.get("/info", headers={"Test-Header": "test-value"})
 
         assert response.status_code == 200
         assert response.headers.get("content-type", "").startswith("application/json")
@@ -32,6 +32,7 @@ class TestFlaskApp(ViceroyTestBase):
         # Check WIT API data
         assert "vcpu_time_ms" in data
         assert isinstance(data["vcpu_time_ms"], int)
+        assert data["request_headers"]["Test-Header"] == "test-value"
 
     def test_error_endpoint_handling(self):
         """Test that the error endpoint returns 500."""
