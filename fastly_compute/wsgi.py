@@ -86,6 +86,49 @@ def serve_wsgi_request(
         "HTTP_HOST": url.netloc or "localhost",
     }
 
+    # Add incoming HTTP headers to environ (WSGI spec requires HTTP_ prefix)
+    # Use cursor-based iteration to read all header names
+    cursor = 0
+    while True:
+        header_names_str, next_cursor = req.get_header_names(
+            max_len=8192, cursor=cursor
+        )
+        if not header_names_str:
+            break
+
+        # Header names are NUL-separated
+        header_names_split = (
+            header_names_str.rstrip("\0").split("\0") if header_names_str else []
+        )
+
+        for header_name in header_names_split:
+            if not header_name:
+                continue
+
+            # Get the header value
+            header_value_bytes = req.get_header_value(header_name, max_len=8192)
+            if header_value_bytes is None:
+                continue
+
+            # See https://peps.python.org/pep-3333/ - ISO-8859-1 encoding
+            # should be used for bytes values across this boundary.
+            header_value_str = header_value_bytes.decode("iso-8859-1")
+
+            # Special handling for Content-Type and Content-Length (no HTTP_ prefix)
+            if header_name.lower() == "content-type":
+                environ["CONTENT_TYPE"] = header_value_str
+            elif header_name.lower() == "content-length":
+                environ["CONTENT_LENGTH"] = header_value_str
+            else:
+                # Convert to WSGI format: HTTP_ prefix, uppercase, hyphens to underscores
+                wsgi_key = "HTTP_" + header_name.upper().replace("-", "_")
+                environ[wsgi_key] = header_value_str
+
+        # If there are more headers, continue with next cursor
+        if next_cursor is None:
+            break
+        cursor = next_cursor
+
     try:
         # Call the WSGI app and collect response body chunks
         for body_chunk in app(environ, start_response):

@@ -57,6 +57,8 @@ class TestBottleApp(ViceroyTestBase):
         headers = {"X-Custom-Header": "test-value"}
         response = self.get("/info", headers=headers)
         assert response.status_code == 200
+        data = response.json()
+        assert data["request_headers"]["X-Custom-Header"] == "test-value"
 
     def test_error_endpoint_handling(self):
         """Test that the error endpoint returns 500 and triggers viceroy output display."""

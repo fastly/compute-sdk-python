@@ -28,6 +28,7 @@ def info():
         "request_method": request.environ.get("REQUEST_METHOD"),
         "path_info": request.environ.get("PATH_INFO"),
         "python_version": sys.version,
+        "request_headers": dict(request.headers),
     }
 
 
