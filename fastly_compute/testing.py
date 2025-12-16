@@ -159,7 +159,7 @@ class ViceroyTestBase:
             )
 
         server = ViceroyServer(
-            process=process, base_url=base_url, output_lines=list(output_lines)
+            process=process, base_url=base_url, output_lines=output_lines
         )
 
         # Set the server as a class attribute so methods can access it
