@@ -52,7 +52,12 @@ class ViceroyTestBase:
 
     REQUEST_TIMEOUT = 10
     WASM_FILE = "build/bottle-app.composed.wasm"  # Default to the main example
-    server: ViceroyServer = None  # Will be set by the fixture
+    _server: ViceroyServer | None = None  # Will be set by the fixture
+
+    @property
+    def server(self) -> ViceroyServer:
+        assert self._server is not None
+        return self._server
 
     @staticmethod
     def _find_free_port() -> int:
@@ -64,7 +69,7 @@ class ViceroyTestBase:
 
     @pytest.fixture(scope="class", autouse=True)
     @classmethod
-    def viceroy_server(cls) -> ViceroyServer:
+    def viceroy_server(cls):
         """Start viceroy server for the duration of the test class.
 
         Note: This assumes the WASM file already exists. Use your build system
@@ -85,7 +90,7 @@ class ViceroyTestBase:
         # Find an available port
         port = cls._find_free_port()
         base_url = f"http://127.0.0.1:{port}"
-        output_lines = []  # Capture all output for debugging
+        output_lines: list[str] = []  # Capture all output for debugging
         output_lock = threading.Lock()
         stop_capture = threading.Event()
 
@@ -107,6 +112,7 @@ class ViceroyTestBase:
         # Start background thread to continuously capture output
         def capture_output_thread():
             """Continuously capture viceroy output throughout test execution."""
+            assert process.stdout is not None, "stdout should be PIPE"
             while not stop_capture.is_set():
                 line = process.stdout.readline()
                 if not line:  # EOF
@@ -157,7 +163,7 @@ class ViceroyTestBase:
         )
 
         # Set the server as a class attribute so methods can access it
-        cls.server = server
+        cls._server = server
 
         yield server
 
@@ -181,11 +187,7 @@ class ViceroyTestBase:
         Returns:
             requests.Response: The HTTP response
         """
-        timeout = kwargs.pop("timeout", self.REQUEST_TIMEOUT)
-        response = requests.get(
-            f"{self.server.base_url}{path}", timeout=timeout, **kwargs
-        )
-        return response
+        return self.request("GET", path, **kwargs)
 
     def post(self, path: str, **kwargs) -> requests.Response:
         """Make a POST request to the viceroy server.
@@ -197,11 +199,7 @@ class ViceroyTestBase:
         Returns:
             requests.Response: The HTTP response
         """
-        timeout = kwargs.pop("timeout", self.REQUEST_TIMEOUT)
-        response = requests.post(
-            f"{self.server.base_url}{path}", timeout=timeout, **kwargs
-        )
-        return response
+        return self.request("POST", path, **kwargs)
 
     def request(self, method: str, path: str, **kwargs) -> requests.Response:
         """Make an HTTP request to the viceroy server.

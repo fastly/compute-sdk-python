@@ -7,6 +7,7 @@ VICEROY ?= viceroy
 STUBS_DIR := stubs
 BUILD_DIR := build
 EXAMPLES_DIR := examples
+COMPUTE_WIT := wit/deps/fastly/compute.wit
 
 # Define all available examples (add new ones here)
 EXAMPLES := bottle-app flask-app game-of-life
@@ -29,15 +30,17 @@ WASILESS_WASM := $(WASILESS_ROOT)/wasiless.wasm
 # Default target builds all examples
 all: $(COMPOSED_WASMS)
 
+$(STUBS_DIR): $(COMPUTE_WIT)
+	rm -rf $(STUBS_DIR)
+	uv run componentize-py -d wit -w $(TARGET_WORLD) bindings $(STUBS_DIR)
+
 $(BUILD_DIR)/%.composed.wasm: $(BUILD_DIR)/%.wasm $(WASILESS_WASM)
 	@echo "Composing $* example"
 	wac compose --dep fastly:wasiless=$(WASILESS_WASM) --dep app:component=$< -o $@ wrap_app_in_wasiless.wac
 
 # Pattern rule for building any example
-$(BUILD_DIR)/%.wasm: $(EXAMPLES_DIR)/%.py wit/viceroy.wit wit/deps/fastly/compute.wit fastly_compute/wsgi.py | $(BUILD_DIR)
+$(BUILD_DIR)/%.wasm: $(EXAMPLES_DIR)/%.py wit/viceroy.wit wit/deps/fastly/compute.wit fastly_compute/wsgi.py | $(BUILD_DIR) $(STUBS_DIR)
 	@echo "Building $* example..."
-	rm -rf $(STUBS_DIR)
-	uv run componentize-py -d wit -w $(TARGET_WORLD) bindings $(STUBS_DIR)
 	uv run componentize-py -d wit -w $(TARGET_WORLD) componentize $* -p $(EXAMPLES_DIR) -p . -o $@
 
 $(WASILESS_WASM):
@@ -69,8 +72,9 @@ clean:
 	rm -rf $(BUILD_DIR) $(STUBS_DIR)
 
 # Development tools
-lint:
+lint: | $(STUBS_DIR)
 	uv run --extra dev ruff check .
+	uv run --extra dev --extra test pyrefly check .
 
 lint-fix:
 	uv run --extra dev ruff check --fix .

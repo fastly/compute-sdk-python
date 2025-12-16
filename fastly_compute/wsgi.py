@@ -152,7 +152,7 @@ def serve_wsgi_request(
         error_response.set_status(500)
         error_response.append_header("content-type", b"text/plain")
         error_message = f"Internal Server Error: {e}"
-        http_body.write(error_body, error_message.encode(), http_body.WriteEnd.BACK)
+        http_body.write(error_body, error_message.encode())
         send_downstream(error_response, error_body)
 
 

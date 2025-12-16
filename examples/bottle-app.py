@@ -1,4 +1,6 @@
-from bottle import Bottle
+import typing
+
+from bottle import Bottle, request
 from wit_world.imports import compute_runtime
 
 from fastly_compute.wsgi import WsgiHttpIncoming
@@ -15,10 +17,12 @@ def hello(name):
 @app.route("/info")
 def info():
     """Return JSON with request information we can test against"""
-    from bottle import request
-
     # Get some runtime info we can test
     vcpu_time = compute_runtime.get_vcpu_ms()
+
+    # type checker doesn't quite understand bottle's DictProperty
+    # so we need to give it a hint.
+    headers = typing.cast(typing.Mapping[str, str], request.headers)
 
     return {
         "service": "fastly-compute-python",
@@ -27,7 +31,7 @@ def info():
         "vcpu_time_ms": vcpu_time,
         "request_method": request.environ.get("REQUEST_METHOD"),
         "path_info": request.environ.get("PATH_INFO"),
-        "request_headers": dict(request.headers),
+        "request_headers": dict(headers),
     }
 
 
