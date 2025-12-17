@@ -6,4 +6,4 @@ let wasiless = new fastly:wasiless { ... };
 let app = new app:component { ...wasiless, ... };
 
 // Export only the HTTP handler, not the extraneous `exports` bundle:
-export app["fastly:compute/http-incoming"];
+export app["fastly:compute/http-incoming@0.0.0-prerelease.0"];

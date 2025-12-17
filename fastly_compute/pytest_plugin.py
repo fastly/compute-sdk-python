@@ -26,6 +26,6 @@ def pytest_runtest_makereport(item, call):
                     file=sys.stderr,
                 )
                 # Show last 15 lines of output
-                for line in server.output_lines[-15:]:
+                for line in server.output_lines[-50:]:
                     print(f"  {line}", file=sys.stderr)
                 print("=== End viceroy output ===", file=sys.stderr)

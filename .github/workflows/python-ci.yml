@@ -8,6 +8,9 @@ on:
     branches:
       - main
 
+env:
+  VICEROY_TAG: v0.16.2
+
 jobs:
   build:
     runs-on: forge-amd64-medium
@@ -40,7 +43,7 @@ jobs:
       id: cache-cargo
       uses: actions/cache@v4
       with:
-        key: python-sdk-compatible-2
+        key: "viceroy-$VICEROY_TAG"
         path: |
             ~/.cargo/bin/
     - name: Install wasm-tools and wac
@@ -48,8 +51,7 @@ jobs:
       run: cargo install wasm-tools wac-cli
     - name: Install viceroy
       if: steps.cache-cargo.outputs.cache-hit != 'true'
-      # When you switch tags, update the cache key in the cache-cargo step.
-      run: cargo install --git https://github.com/fastly/Viceroy.git --tag erik/python-sdk-compatible-2 viceroy
+      run: cargo install --git https://github.com/fastly/Viceroy.git --tag "$VICEROY_TAG" viceroy
     - name: Install dependencies
       run: uv sync --extra dev --extra test
     - name: Check formatting
