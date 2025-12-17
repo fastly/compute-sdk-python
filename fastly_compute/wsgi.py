@@ -21,7 +21,6 @@ from wit_world.imports.http_downstream import (
     await_request,
     next_request,
 )
-from wit_world.imports.http_req import send
 from wit_world.imports.http_resp import send_downstream
 from wit_world.imports.types import Err, Error_CannotRead
 
@@ -201,38 +200,16 @@ class WsgiHttpIncoming(WitHttpIncoming):
 
     def handle(self, request: Any, body: Any) -> None:
         """Handle incoming HTTP requests by serving them through the WSGI app."""
-        serve_wsgi_request(
-            request,
-            body,
-            self.wsgi_app,
-            handle_errors=self.handle_errors,
-        )
+        with request:  # Ensure dropping of request resource before trying to get another one. This dodges a crash.
+            serve_wsgi_request(
+                request,
+                body,
+                self.wsgi_app,
+                handle_errors=self.handle_errors,
+            )
 
         if not self.reuse_sandboxes_for_ms:
             return
-
-        try:
-            # Drop (in the WIT sense) the `request` resource to get ready for
-            # another request. Otherwise, we crash.
-            #
-            # Here we abuse an arbitrary request-consuming function to trigger
-            # the drop. Glue code interposed by wasmtime's linker ensures that
-            # drop happens, but send() otherwise fails before doing anything.
-            send(request, body, "no such backend")
-
-            # TODO: Generate a proper drop_whatever() function for each
-            # "whatever" resource.
-            #
-            # Alternately, it might suffice for the runtime to drop() things
-            # that get GC'd (i.e. `del` or otherwise) by Python. If we put an
-            # idiomatic .close() or similar on, for example, a potentially large
-            # request body, we could implement it in terms of `del`.
-        except Err:
-            pass
-        else:
-            raise RuntimeError(
-                "Our use of send() to consume the previous request unexpectedly actually performed a send."
-            )
 
         options = NextRequestOptions(timeout_ms=self.reuse_sandboxes_for_ms, extra=None)
         while True:
@@ -254,9 +231,10 @@ class WsgiHttpIncoming(WitHttpIncoming):
                 if not result:
                     break
                 request, body = result
-                serve_wsgi_request(
-                    request,
-                    body,
-                    self.wsgi_app,
-                    handle_errors=self.handle_errors,
-                )
+                with request:
+                    serve_wsgi_request(
+                        request,
+                        body,
+                        self.wsgi_app,
+                        handle_errors=self.handle_errors,
+                    )
