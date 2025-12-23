@@ -196,6 +196,12 @@ class WsgiHttpIncoming(WitHttpIncoming):
         self.reuse_sandboxes_for_ms = reuse_sandboxes_for_ms
 
     def __call__(self):
+        """Return self to make the instance callable.
+
+        This method makes the instance callable, which is required by the WSGI
+        specification. WSGI expects the application to be a callable that returns
+        itself when invoked without arguments.
+        """
         return self
 
     def handle(self, request: Any, body: Any) -> None:
