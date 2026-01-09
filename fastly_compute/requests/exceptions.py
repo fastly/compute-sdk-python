@@ -16,6 +16,28 @@ from wit_world.imports import types as wit_types
 from wit_world.imports.http_req import SendErrorDetail
 
 
+def _map_error_to_exception(
+    error: object,
+    mapping: MappingProxyType,
+    operation: str,
+    fallback_cls: type[RequestException],
+) -> RequestException:
+    """Map WIT error to appropriate RequestException subclass.
+
+    Args:
+        error: The WIT error object to map
+        mapping: Mapping from error types to exception classes
+        operation: Description of operation that failed
+        fallback_cls: Exception class to use if no mapping found
+
+    Returns:
+        Appropriate RequestException subclass instance
+    """
+    error_type = type(error)
+    exc_cls = mapping.get(error_type, fallback_cls)
+    return exc_cls(f"{operation}: {error_type.__name__}")
+
+
 class RequestException(IOError):
     """Base exception for all requests-related errors."""
 
@@ -54,16 +76,20 @@ class RequestException(IOError):
         # Try detailed error classification first; this is not guaranteed
         # to be present in all cases.
         if error_with_detail.detail is not None:
-            send_error_type = type(error_with_detail.detail)
-            requests_exc_type = WIT_SEND_ERROR_DETAIL_MAPPING.get(send_error_type, cls)
-            return requests_exc_type(f"{operation}: {send_error_type.__name__}")
+            return _map_error_to_exception(
+                error_with_detail.detail,
+                WIT_SEND_ERROR_DETAIL_MAPPING,
+                operation,
+                cls,
+            )
 
         # No detailed error - classify based on base error type
-        base_error_type = type(error_with_detail.error)
-        requests_exc_type: type[RequestException] = WIT_ERROR_MAPPINGS.get(
-            base_error_type, cls
+        return _map_error_to_exception(
+            error_with_detail.error,
+            WIT_ERROR_MAPPINGS,
+            operation,
+            cls,
         )
-        return requests_exc_type(f"{operation}: {base_error_type.__name__}")
 
     @classmethod
     def from_wit_error(
@@ -78,10 +104,12 @@ class RequestException(IOError):
         Returns:
             Appropriate RequestException subclass instance
         """
-        error_type = type(err.value)
-        exception_class = WIT_ERROR_MAPPINGS.get(error_type, cls)
-        message = f"Operation {operation} failed: {error_type.__name__}"
-        return exception_class(message)
+        return _map_error_to_exception(
+            err.value,
+            WIT_ERROR_MAPPINGS,
+            f"Operation {operation} failed",
+            cls,
+        )
 
 
 class ConnectionError(RequestException):
