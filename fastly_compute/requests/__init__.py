@@ -7,7 +7,7 @@ Basic Usage:
     import fastly_compute.requests as requests
 
     # Static backend (pre-configured)
-    response = requests.get("/api/users", backend="api-backend")
+    response = requests.get("/api/users", fastly_backend="api-backend")
 
     # Dynamic backend (external URLs)
     response = requests.get("https://http-me.fastly.dev/get")
@@ -27,18 +27,18 @@ Fastly-Specific Features:
     )
     response = requests.get(
         "https://api.example.com/data",
-        timeout_config=timeout_config
+        fastly_timeout=timeout_config
     )
 
     # Backend-specific features
     response = requests.get(
         "/api/endpoint",
-        backend="my-backend"          # Use specific static backend
+        fastly_backend="my-backend"          # Use specific static backend
     )
 
 Compatibility Notes:
     Most parameters are compatible with the standard requests library.
-    Fastly-specific parameters (timeout_config, backend) will cause TypeErrors
+    Fastly-specific parameters (fastly_timeout, fastly_backend) will cause TypeErrors
     if used with the standard requests library. Use the standard timeout
     parameter for cross-platform compatibility.
 """
@@ -71,9 +71,9 @@ class RequestKwargs(TypedDict, total=False):
     json: Any | None
     params: dict[str, Any]
     headers: dict[str, str]
-    backend: str
+    fastly_backend: str
     timeout: None | float | tuple[float, float]
-    timeout_config: TimeoutConfig
+    fastly_timeout: TimeoutConfig
 
 
 # Export main components for public API
@@ -109,23 +109,23 @@ def get(
         url: URL for the request. Can be a path (for static backends) or full URL (for dynamic)
         params: Query parameters to append to the URL
         headers: HTTP headers to send with the request
-        backend: Static backend name (optional, will use dynamic backend if not provided)
+        fastly_backend: Static backend name (optional, will use dynamic backend if not provided)
         timeout: Request timeout in seconds (requests-compatible). Can be:
             - float: Single timeout for all phases
             - (connect, read): Tuple for connect and read timeouts
-        timeout_config: **Fastly-only** Advanced timeout configuration with granular control
+        fastly_timeout: **Fastly-only** Advanced timeout configuration with granular control
             over connect_timeout, first_byte_timeout, and between_bytes_timeout
         **kwargs: Additional arguments (for requests compatibility, ignored)
 
     Note:
-        The timeout_config parameter is Fastly-specific and will cause a TypeError
+        The fastly_timeout parameter is Fastly-specific and will cause a TypeError
         if used with the standard requests library. Use timeout for cross-platform compatibility.
 
     Raises:
         RequestException: For general request errors
         ConnectionError: For connection-related errors
         Timeout: For timeout errors
-        ValueError: If both timeout and timeout_config are specified
+        ValueError: If both timeout and fastly_timeout are specified
     """
     return request("GET", url, **kwargs)
 
@@ -142,9 +142,9 @@ def post(
         json: JSON data to send in the body (mutually exclusive with data)
         params: Query parameters to append to the URL
         headers: HTTP headers to send with the request
-        backend: Static backend name (optional)
+        fastly_backend: Static backend name (optional)
         timeout: Request timeout in seconds (requests-compatible)
-        timeout_config: **Fastly-only** Advanced timeout configuration
+        fastly_timeout: **Fastly-only** Advanced timeout configuration
         **kwargs: Additional arguments (for requests compatibility, ignored)
     """
     return request("POST", url, **kwargs)
@@ -197,9 +197,9 @@ def request(
     data: str | bytes | dict[str, Any] | None = None,
     json: dict[str, Any] | None = None,
     headers: dict[str, str] | None = None,
-    backend: str | None = None,
+    fastly_backend: str | None = None,
     timeout: None | float | tuple[float, float] = None,
-    timeout_config: TimeoutConfig | None = None,
+    fastly_timeout: TimeoutConfig | None = None,
     **_kwargs: Any,
 ) -> FastlyResponse:
     """Send an HTTP request.
@@ -211,9 +211,9 @@ def request(
         data: Form data for the request body
         json: JSON data for the request body (mutually exclusive with data)
         headers: HTTP headers
-        backend: Static backend name (if not provided, will use dynamic backend)
+        fastly_backend: Static backend name (if not provided, will use dynamic backend)
         timeout: Request timeout in seconds (requests-compatible)
-        timeout_config: **Fastly-only** Advanced timeout configuration
+        fastly_timeout: **Fastly-only** Advanced timeout configuration
         **kwargs: Additional arguments (for requests compatibility, ignored)
 
     Raises:
@@ -224,19 +224,19 @@ def request(
     if data is not None and json is not None:
         raise ValueError("Cannot specify both 'data' and 'json' parameters")
 
-    if timeout is not None and timeout_config is not None:
+    if timeout is not None and fastly_timeout is not None:
         raise ValueError(
-            "Cannot specify both 'timeout' and 'timeout_config' parameters"
+            "Cannot specify both 'timeout' and 'fastly_timeout' parameters"
         )
 
     # Resolve timeout configuration
-    if timeout_config is not None:
-        timeout_config = timeout_config
+    if fastly_timeout is not None:
+        fastly_timeout = fastly_timeout
     else:
-        timeout_config = TimeoutConfig.from_requests_timeout(timeout)
+        fastly_timeout = TimeoutConfig.from_requests_timeout(timeout)
 
     try:
-        resolution = resolve_backend(url, backend, timeout_config)
+        resolution = resolve_backend(url, fastly_backend, fastly_timeout)
     except RequestException:
         # Let RequestException subclasses (MissingSchema, etc.) pass through unchanged
         raise
@@ -278,7 +278,7 @@ def request(
         #   - The netloc for this request OR
         #   - The netloc from the registered backend
         headers = headers if headers is not None else {}
-        if backend is not None:
+        if fastly_backend is not None:
             host_header = headers.pop("Host", url_parsed.netloc)
             wit_request.insert_header("Host", host_header.encode("utf-8"))
 

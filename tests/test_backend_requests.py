@@ -127,7 +127,10 @@ class TestRequestsSimple(BackendRequestsTestBase):
     def test_static_get_request(self, snapshot):
         response = self.get(
             "/proxy/get",
-            params={"url": "https://http-me.fastly.dev/json", "backend": "test-be"},
+            params={
+                "url": "https://http-me.fastly.dev/json",
+                "fastly_backend": "test-be",
+            },
         )
         data = self.assert_success(response)
         assert data == snapshot
@@ -137,7 +140,7 @@ class TestRequestsSimple(BackendRequestsTestBase):
             "/proxy/post",
             params={
                 "url": "https://http-me.fastly.dev/post",
-                "backend": "test-be",
+                "fastly_backend": "test-be",
                 "json": '{"message": "Hello from Fastly Compute!", "demo": "static-post"}',
             },
         )
@@ -180,7 +183,10 @@ class TestRequestsSimple(BackendRequestsTestBase):
     def test_invalid_backend(self):
         response = self.get(
             "/proxy/get",
-            params={"url": "http://http-me.fastly.dev", "backend": "does-not-exist"},
+            params={
+                "url": "http://http-me.fastly.dev",
+                "fastly_backend": "does-not-exist",
+            },
         )
         _result = self.assert_error(
             response,
@@ -248,7 +254,7 @@ class TestRequestsCompatibility(BackendRequestsTestBase):
             "/proxy/get",
             params={
                 "url": f"{self.test_server_url}/json",
-                "backend": "test-be",
+                "fastly_backend": "test-be",
             },
         )
 
@@ -266,7 +272,7 @@ class TestRequestsCompatibility(BackendRequestsTestBase):
             "/proxy/get",
             params={
                 "url": f"{self.test_server_url}/text",
-                "backend": "test-be",
+                "fastly_backend": "test-be",
             },
         )
 
@@ -285,7 +291,7 @@ class TestRequestsCompatibility(BackendRequestsTestBase):
             "/proxy/get",
             params={
                 "url": f"{self.test_server_url}/headers",
-                "backend": "test-be",
+                "fastly_backend": "test-be",
             },
         )
 
@@ -304,7 +310,7 @@ class TestRequestsCompatibility(BackendRequestsTestBase):
             "/proxy/get",
             params={
                 "url": f"{self.test_server_url}/status/404",
-                "backend": "test-be",
+                "fastly_backend": "test-be",
             },
         )
 
@@ -476,7 +482,7 @@ class TestRequestErrorHandling(BackendRequestsTestBase):
     def test_invalid_backend_name(self):
         """Test that invalid static backend names return proper errors."""
         response = self.get(
-            "/proxy/get?url=http://example.com&backend=nonexistent-backend"
+            "/proxy/get?url=http://example.com&fastly_backend=nonexistent-backend"
         )
         result = self.assert_error(response, "does not exist")
         # Should raise RequestException for backend resolution failures
@@ -505,7 +511,9 @@ class TestRequestErrorHandling(BackendRequestsTestBase):
         # Use the test backend which will return proper responses
         # Note: path-only URLs with static backends cause Viceroy to panic
         # at src/upstream.rs:280 with InvalidUri, so we use a full URL
-        response = self.get("/proxy/get?url=http://httpbin.org/get&backend=test-be")
+        response = self.get(
+            "/proxy/get?url=http://httpbin.org/get&fastly_backend=test-be"
+        )
         assert response.status_code == 200
         data = response.json()
         # Should handle response gracefully
@@ -580,7 +588,9 @@ class TestBackendResolution(BackendRequestsTestBase):
         """Test static backend with a path in the URL."""
         # When using static backend, the URL can be just a path
         # The test backend should handle this
-        response = self.get("/proxy/get?url=http://httpbin.org/get&backend=test-be-1")
+        response = self.get(
+            "/proxy/get?url=http://httpbin.org/get&fastly_backend=test-be-1"
+        )
         assert response.status_code == 200
         data = response.json()
         # Should either succeed or have an error, but not crash

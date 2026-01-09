@@ -33,14 +33,14 @@ class BackendResolution:
 
 def resolve_backend(
     url: str,
-    backend: str | None = None,
+    fastly_backend: str | None = None,
     timeout_config: TimeoutConfig | None = None,
 ) -> BackendResolution:
     """Resolve backend name and final URL for a request.
 
     Args:
         url: The URL to request (can be path-only or full URL)
-        backend: Optional static backend name
+        fastly_backend: Optional static backend name
         timeout_config: Optional timeout configuration for dynamic backends
 
     Returns:
@@ -53,14 +53,16 @@ def resolve_backend(
     parsed = urllib.parse.urlparse(url)
 
     backend_obj: wit_backend.Backend
-    if backend is not None:
+    if fastly_backend is not None:
         # Check if backend exists by trying to open it
         try:
-            backend_obj = wit_backend.Backend.open(backend)
+            backend_obj = wit_backend.Backend.open(fastly_backend)
         except Err as e:
             # Check if this is an OpenError (backend not found)
             if isinstance(e.value, OpenError):
-                raise ValueError(f"Static backend '{backend}' does not exist") from e
+                raise ValueError(
+                    f"Static backend '{fastly_backend}' does not exist"
+                ) from e
             # Re-raise if it's a different error
             raise
     else:

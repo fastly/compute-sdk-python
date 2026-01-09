@@ -6,8 +6,8 @@
 # ---
 # name: TestRequestsSimple.test_dynamic_get_request
   dict({
-    'backend': None,
     'content_length': 0,
+    'fastly_backend': None,
     'headers_count': 5,
     'method': 'get',
     'response_preview': '',
@@ -18,8 +18,8 @@
 # ---
 # name: TestRequestsSimple.test_dynamic_post_request
   dict({
-    'backend': None,
     'content_length': 0,
+    'fastly_backend': None,
     'headers_count': 5,
     'method': 'post',
     'response_preview': '',
@@ -30,8 +30,8 @@
 # ---
 # name: TestRequestsSimple.test_static_get_request
   dict({
-    'backend': 'test-be',
     'content_length': 363,
+    'fastly_backend': 'test-be',
     'headers_count': 3,
     'method': 'get',
     'response_preview': '''
@@ -51,8 +51,8 @@
 # ---
 # name: TestRequestsSimple.test_static_post_request
   dict({
-    'backend': 'test-be',
     'content_length': 259,
+    'fastly_backend': 'test-be',
     'headers_count': 3,
     'method': 'post',
     'response_preview': '''

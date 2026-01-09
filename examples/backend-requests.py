@@ -36,7 +36,7 @@ def _proxy_request(method: str, url: str, **kwargs) -> dict[str, Any]:
     return {
         "method": method,
         "url": url,
-        "backend": kwargs.get("backend"),
+        "fastly_backend": kwargs.get("fastly_backend"),
         "status_code": response.status_code,
         "success": response.ok,
         "headers_count": len(response.headers),
@@ -64,7 +64,7 @@ def proxy(method: str):
     if not url:
         return {"error": "url query parameter is required"}
 
-    backend = query.get("backend")
+    backend = query.get("fastly_backend")
     json_param = query.get("json")
 
     # Reconstitute JSON parameter if present
@@ -81,7 +81,7 @@ def proxy(method: str):
             headers[k] = v
 
     return _proxy_request(
-        method, url=url, backend=backend, json=json_data, headers=headers
+        method, url=url, fastly_backend=backend, json=json_data, headers=headers
     )
 
 
