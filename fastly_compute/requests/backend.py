@@ -38,8 +38,12 @@ def resolve_backend(
 ) -> BackendResolution:
     """Resolve backend name and final URL for a request.
 
+    If a `fastly_backend` is provided, we'll attempt to lookup that static
+    backend, otherwise a dynamic backend will be registered and/or
+    used based on the netloc of the url.
+
     Args:
-        url: The URL to request (can be path-only or full URL)
+        url: The URL to request (must be full with scheme and netloc for dynamic backends)
         fastly_backend: Optional static backend name
         timeout_config: Optional timeout configuration for dynamic backends
 
@@ -51,8 +55,9 @@ def resolve_backend(
         MissingSchema: If URL is missing scheme (subclass of RequestException)
     """
     parsed = urllib.parse.urlparse(url)
-
     backend_obj: wit_backend.Backend
+
+    # static backend
     if fastly_backend is not None:
         # Check if backend exists by trying to open it
         try:
@@ -66,14 +71,14 @@ def resolve_backend(
             # Re-raise if it's a different error
             raise
     else:
+        # dynamic backend
         if not parsed.scheme or not parsed.netloc:
             raise MissingSchema(
-                f"Invalid URL {url!r}: No scheme supplied. "
-                f"Perhaps you meant https://{url}?"
+                f"Invalid URL {url!r}: No scheme supplied. Perhaps you meant https://{url}?"
             )
 
         # Register dynamic backend if not already registered
-        backend_name = _sanitize_backend_name(parsed)
+        backend_name = parsed.netloc.lower()
         timeout_config = timeout_config or TimeoutConfig()
         if backend_name not in _dynamic_backends:
             backend_obj = _register_dynamic_backend(
@@ -81,14 +86,9 @@ def resolve_backend(
             )
             _dynamic_backends.add(backend_name)
         else:
-            # Open the already-registered backend
             backend_obj = wit_backend.Backend.open(backend_name)
 
-        if parsed.netloc == "":
-            host = backend_obj.get_host(1024)
-            parsed = parsed._replace(netloc=host)
-
-    return BackendResolution(url_parsed=parsed, backend=backend_obj)
+    return BackendResolution(parsed, backend_obj)
 
 
 def _register_dynamic_backend(
@@ -116,24 +116,3 @@ def _register_dynamic_backend(
         )
     except Err as e:
         raise RequestException.from_wit_error(e, "register_dynamic_backend") from e
-
-
-def _sanitize_backend_name(parsed: urllib.parse.ParseResult) -> str:
-    # Replace dots, colons, and other special chars with underscores
-    # Keep only alphanumeric chars and underscores
-    sanitized = ""
-    for char in parsed.netloc.lower():
-        if char.isalnum():
-            sanitized += char
-        elif char in ".-:":
-            sanitized += "_"
-
-    # Remove multiple consecutive underscores if present
-    while "__" in sanitized:
-        sanitized = sanitized.replace("__", "_")
-
-    # Remove leading/trailing underscores
-    sanitized = sanitized.strip("_")
-    assert sanitized, "Generated an errant empty backend name!"
-
-    return sanitized
