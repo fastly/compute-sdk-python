@@ -123,21 +123,6 @@ class Timeout(RequestException):
 class HTTPError(RequestException):
     """Exception for HTTP error responses (4xx, 5xx status codes)."""
 
-    def __init__(
-        self,
-        message: str,
-        response: FastlyResponse | None = None,
-        request: http_req.Request | None = None,
-    ) -> None:
-        """Initialize HTTPError.
-
-        Args:
-            message: Error message
-            response: Response object that caused the error
-            request: Request object that caused the error
-        """
-        super().__init__(message, response, request)
-
 
 class TooManyRedirects(RequestException):
     """Exception for too many redirects."""
@@ -146,40 +131,13 @@ class TooManyRedirects(RequestException):
 class InvalidURL(RequestException, ValueError):
     """Exception for invalid URLs."""
 
-    def __init__(
-        self,
-        message: str,
-        response: FastlyResponse | None = None,
-        request: http_req.Request | None = None,
-    ) -> None:
-        """Initialize InvalidURL."""
-        super().__init__(message, response, request)
-
 
 class MissingSchema(RequestException, ValueError):
     """Exception for URLs missing a schema (http://, https://, etc.)."""
 
-    def __init__(
-        self,
-        message: str,
-        response: FastlyResponse | None = None,
-        request: http_req.Request | None = None,
-    ) -> None:
-        """Initialize MissingSchema."""
-        super().__init__(message, response, request)
-
 
 class InvalidHeader(RequestException, ValueError):
     """Exception for invalid headers."""
-
-    def __init__(
-        self,
-        message: str,
-        response: FastlyResponse | None = None,
-        request: http_req.Request | None = None,
-    ) -> None:
-        """Initialize InvalidHeader."""
-        super().__init__(message, response, request)
 
 
 class ChunkedEncodingError(RequestException):
@@ -192,15 +150,6 @@ class ContentDecodingError(RequestException):
 
 class StreamConsumedError(RequestException, TypeError):
     """Exception for attempting to read a consumed stream."""
-
-    def __init__(
-        self,
-        message: str,
-        response: FastlyResponse | None = None,
-        request: http_req.Request | None = None,
-    ) -> None:
-        """Initialize StreamConsumedError."""
-        super().__init__(message, response, request)
 
 
 # WIT error detail mappings for http_req errors
