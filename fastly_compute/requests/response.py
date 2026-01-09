@@ -57,36 +57,27 @@ class FastlyResponse:
 
             # Read all headers using WIT API
             while True:
-                try:
-                    header_names, next_cursor = self._wit_response.get_header_names(
-                        4096, cursor
-                    )
-                    if not header_names:
-                        break
-
-                    # Split header names (they're null-separated)
-                    names = header_names.split("\0")[:-1]  # Remove empty last element
-
-                    for name in names:
-                        if name:  # Skip empty names
-                            try:
-                                value = self._wit_response.get_header_value(name, 4096)
-                                if value:
-                                    # Convert to string and store with lowercase key for case-insensitive access
-                                    self._headers[name.lower()] = value.decode(
-                                        "utf-8", errors="replace"
-                                    )
-                            except Exception:
-                                # Skip headers that can't be read
-                                pass
-
-                    if not next_cursor:
-                        break
-                    cursor = next_cursor
-
-                except Exception:
-                    # If header reading fails, break out of loop
+                header_names, next_cursor = self._wit_response.get_header_names(
+                    4096, cursor
+                )
+                if not header_names:
                     break
+
+                # Split header names (they're null-separated)
+                names = header_names.split("\0")[:-1]  # Remove empty last element
+
+                for name in names:
+                    if name:  # Skip empty names
+                        value = self._wit_response.get_header_value(name, 4096)
+                        if value:
+                            # Convert to string and store with lowercase key for case-insensitive access
+                            self._headers[name.lower()] = value.decode(
+                                "utf-8", errors="replace"
+                            )
+
+                if not next_cursor:
+                    break
+                cursor = next_cursor
 
         return self._headers
 
