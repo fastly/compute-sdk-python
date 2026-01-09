@@ -281,7 +281,7 @@ def request(
         # Add custom headers
         for name, value in headers.items():
             wit_request.insert_header(name, value.encode("utf-8"))
-    except (ValueError, UnicodeError) as e:
+    except ValueError as e:
         raise RequestException(f"Invalid headers: {e}") from e
     except Err as e:
         raise RequestException.from_wit_error(e, "set_request_headers") from e
@@ -295,7 +295,7 @@ def request(
     try:
         if json is not None:
             # JSON data - use the json module, not the parameter
-            json_str = json_module.dumps(json) if not isinstance(json, str) else json
+            json_str = json if isinstance(json, str) else json_module.dumps(json)
             json_bytes = json_str.encode("utf-8")
             wit_request.insert_header("Content-Type", b"application/json")
             _http_body_write_all(request_body, json_bytes)

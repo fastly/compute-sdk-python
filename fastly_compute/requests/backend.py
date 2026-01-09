@@ -38,9 +38,12 @@ def resolve_backend(
 ) -> BackendResolution:
     """Resolve backend name and final URL for a request.
 
-    If a `fastly_backend` is provided, we'll attempt to lookup that static
-    backend, otherwise a dynamic backend will be registered and/or
-    used based on the netloc of the url.
+    This function determines which Fastly backend to use for a request:
+    - If `fastly_backend` is provided, attempts to open that pre-configured static backend
+    - Otherwise, registers/reuses a dynamic backend based on the URL's netloc
+
+    Static backends must already be configured in the Fastly service.
+    Dynamic backends are automatically registered on first use and cached for reuse.
 
     Args:
         url: The URL to request (must be full with scheme and netloc for dynamic backends)
