@@ -68,7 +68,7 @@ class RequestKwargs(TypedDict, total=False):
     """Common keyword arguments for all request methods."""
 
     data: str | bytes | dict[str, Any] | None
-    json: Any | None
+    json: Any
     params: dict[str, Any]
     headers: dict[str, str]
     fastly_backend: str
