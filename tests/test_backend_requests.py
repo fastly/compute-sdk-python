@@ -122,6 +122,7 @@ class TestRequestsSimple(BackendRequestsTestBase):
 
     @classmethod
     def teardown_class(cls):
+        """Clean up test server."""
         cls.test_server.stop()
 
     def test_static_get_request(self, snapshot):

@@ -157,8 +157,8 @@ class LocalTestServer:
         self.host = host
         self.port = port
         self.responses = responses or {}
-        self.server: HTTPServer | None = None
-        self.thread: threading.Thread | None = None
+        self._server: HTTPServer | None = None
+        self._thread: threading.Thread | None = None
 
     def start(self) -> str:
         """Start the test server.
@@ -166,23 +166,23 @@ class LocalTestServer:
         Returns:
             The base URL of the started server (e.g., "http://127.0.0.1:12345")
         """
-        if self.server is not None:
+        if self._server is not None:
             raise RuntimeError("Server is already running")
 
         # Create a handler class with our responses configured
         handler_class = make_test_request_handler(self.responses)
 
         # Create server
-        self.server = HTTPServer((self.host, self.port), handler_class)
+        self._server = HTTPServer((self.host, self.port), handler_class)
 
         # Get actual port (important when port=0 for auto-assignment)
         # server_address returns (host, port) for IPv4, or (host, port, flowinfo, scopeid) for IPv6
-        actual_port = self.server.server_address[1]  # Port is always at index 1
+        actual_port = self._server.server_address[1]  # Port is always at index 1
         base_url = f"http://{self.host}:{actual_port}"
 
         # Start server in background thread
-        self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
-        self.thread.start()
+        self._thread = threading.Thread(target=self._server.serve_forever, daemon=True)
+        self._thread.start()
 
         # Wait a bit for server to be ready
         time.sleep(0.1)
@@ -191,16 +191,16 @@ class LocalTestServer:
 
     def stop(self):
         """Stop the test server."""
-        if self.server is None:
+        if self._server is None:
             return
 
-        self.server.shutdown()
-        self.server.server_close()
-        self.server = None
+        self._server.shutdown()
+        self._server.server_close()
+        self._server = None
 
-        if self.thread and self.thread.is_alive():
-            self.thread.join(timeout=1.0)
-            self.thread = None
+        if self._thread and self._thread.is_alive():
+            self._thread.join(timeout=1.0)
+            self._thread = None
 
     def __enter__(self):
         """Context manager entry."""
@@ -213,9 +213,9 @@ class LocalTestServer:
     @property
     def base_url(self) -> str:
         """Get the base URL of the running server."""
-        if self.server is None:
+        if self._server is None:
             raise RuntimeError("Server is not running")
 
         # Port is always at index 1 regardless of address family
-        port = self.server.server_address[1]
+        port = self._server.server_address[1]
         return f"http://{self.host}:{port}"
