@@ -3,23 +3,23 @@
 This module provides a familiar requests-like API while leveraging Fastly's
 backend architecture and WIT bindings for optimal performance.
 
-Basic Usage:
+Usage::
     import fastly_compute.requests as requests
+    from fastly_compute.requests import TimeoutConfig
 
     # Static backend (pre-configured)
     response = requests.get("/api/users", fastly_backend="api-backend")
+    # or, providing full URL (will still use backend configuration)
+    response = requests.get("https://example.com/api/users", fastly_backend="api-backend")
 
-    # Dynamic backend (external URLs)
+    # Dynamic backend (looks like normal requests usage)
     response = requests.get("https://http-me.fastly.dev/get")
 
     # POST with JSON
     response = requests.post("https://http-me.fastly.dev/post",
                            json={"key": "value"})
 
-Fastly-Specific Features:
-    from fastly_compute.requests import TimeoutConfig
-
-    # Granular timeout control (not available in standard requests)
+    # Granular timeout control (Fastly-specific)
     timeout_config = TimeoutConfig(
         connect=5.0,          # 5s to establish connection
         first_byte=30.0,      # 30s to receive first byte
@@ -28,12 +28,6 @@ Fastly-Specific Features:
     response = requests.get(
         "https://api.example.com/data",
         fastly_timeout=timeout_config
-    )
-
-    # Backend-specific features
-    response = requests.get(
-        "/api/endpoint",
-        fastly_backend="my-backend"          # Use specific static backend
     )
 
 Compatibility Notes:
