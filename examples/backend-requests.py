@@ -3,7 +3,6 @@
 import json
 import traceback
 import typing
-from io import StringIO
 from typing import Any
 
 from bottle import Bottle, request
@@ -21,12 +20,10 @@ def _map_error(e: Exception):
         e: The exception that occurred
         demo: The demo/endpoint name for this error
     """
-    exc_print = StringIO()
-    traceback.print_exc(file=exc_print)
     return {
         "error": repr(e),
         "error_type": type(e).__name__,
-        "tb": exc_print.getvalue(),
+        "tb": traceback.format_exc(),
     }
 
 
@@ -39,7 +36,7 @@ def _proxy_request(method: str, url: str, **kwargs) -> dict[str, Any]:
     return {
         "method": method,
         "url": url,
-        "backend": kwargs.get("backend", None),
+        "backend": kwargs.get("backend"),
         "status_code": response.status_code,
         "success": response.ok,
         "headers_count": len(response.headers),
@@ -67,8 +64,8 @@ def proxy(method: str):
     if not url:
         return {"error": "url query parameter is required"}
 
-    backend = query.get("backend", None)
-    json_param = query.get("json", None)
+    backend = query.get("backend")
+    json_param = query.get("json")
 
     # Reconstitute JSON parameter if present
     json_data = None
