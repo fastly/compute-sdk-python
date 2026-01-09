@@ -230,20 +230,10 @@ def request(
         )
 
     # Resolve timeout configuration
-    if fastly_timeout is not None:
-        fastly_timeout = fastly_timeout
-    else:
+    if fastly_timeout is None:
         fastly_timeout = TimeoutConfig.from_requests_timeout(timeout)
 
-    try:
-        resolution = resolve_backend(url, fastly_backend, fastly_timeout)
-    except RequestException:
-        # Let RequestException subclasses (MissingSchema, etc.) pass through unchanged
-        raise
-    except ValueError as e:
-        # Other ValueError cases (e.g., backend not found)
-        raise RequestException(f"Backend resolution failed: {e}") from e
-
+    resolution = resolve_backend(url, fastly_backend, fastly_timeout)
     url_parsed = resolution.url_parsed
 
     # Add query parameters if provided
@@ -289,9 +279,8 @@ def request(
             wit_request.insert_header("User-Agent", b"FastlyCompute-Requests/1.0")
 
         # Add custom headers
-        if headers:
-            for name, value in headers.items():
-                wit_request.insert_header(name, value.encode("utf-8"))
+        for name, value in headers.items():
+            wit_request.insert_header(name, value.encode("utf-8"))
     except (ValueError, UnicodeError) as e:
         raise RequestException(f"Invalid headers: {e}") from e
     except Err as e:

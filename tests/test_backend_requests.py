@@ -190,7 +190,7 @@ class TestRequestsSimple(BackendRequestsTestBase):
         )
         _result = self.assert_error(
             response,
-            "Backend resolution failed: Static backend 'does-not-exist' does not exist",
+            "Static backend 'does-not-exist' does not exist",
         )
 
 

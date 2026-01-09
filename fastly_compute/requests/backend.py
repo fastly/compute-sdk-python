@@ -48,7 +48,7 @@ def resolve_backend(
 
     Raises:
         RequestException: If backend resolution fails
-        ValueError: If inputs are malformed
+        MissingSchema: If URL is missing scheme (subclass of RequestException)
     """
     parsed = urllib.parse.urlparse(url)
 
@@ -60,7 +60,7 @@ def resolve_backend(
         except Err as e:
             # Check if this is an OpenError (backend not found)
             if isinstance(e.value, OpenError):
-                raise ValueError(
+                raise RequestException(
                     f"Static backend '{fastly_backend}' does not exist"
                 ) from e
             # Re-raise if it's a different error
