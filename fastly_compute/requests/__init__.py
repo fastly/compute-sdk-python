@@ -41,7 +41,7 @@ import json as json_module
 import urllib.parse
 from typing import Any, TypedDict, Unpack
 
-from wit_world.imports import async_io, http_body, http_req
+from wit_world.imports import http_body, http_req
 from wit_world.types import Err
 
 from fastly_compute.requests.backend import resolve_backend
@@ -178,12 +178,6 @@ def options(url: str, **kwargs: Unpack[RequestKwargs]) -> FastlyResponse:
     return request("OPTIONS", url, **kwargs)
 
 
-def _http_body_write_all(body: async_io.Pollable, buf: bytes):
-    written = 0
-    while written < len(buf):
-        written += http_body.write(body, buf)
-
-
 def request(
     method: str,
     url: str,
@@ -251,70 +245,48 @@ def request(
         raise RequestException.from_wit_error(e, "create_req") from e
 
     # Set headers
-    try:
-        # TODO: See https://github.com/fastly/Viceroy/pull/549; what is
-        # present here is a temporary workaround for viceroy differing
-        # in its handling than XQD.
-        #
-        # We'll always set a host header in the following order here:
-        # - If the header is set explicitly, use that
-        # - Use the netloc on the parsed url which comes from:
-        #   - The netloc for this request OR
-        #   - The netloc from the registered backend
-        headers = headers if headers is not None else {}
-        if fastly_backend is not None:
-            host_header = headers.pop("Host", url_parsed.netloc)
-            wit_request.insert_header("Host", host_header.encode("utf-8"))
+    headers = headers if headers is not None else {}
+    if fastly_backend is not None:
+        host_header = headers.pop("Host", url_parsed.netloc)
+        wit_request.insert_header("Host", host_header.encode("utf-8"))
 
-        # Set default User-Agent only if not provided
-        # Check for both exact case and lowercase variants
-        has_user_agent = any(name.lower() == "user-agent" for name in headers.keys())
-        if not has_user_agent:
-            wit_request.insert_header("User-Agent", b"FastlyCompute-Requests/1.0")
+    body: bytes | None = None
+    if json is not None:
+        # JSON data - use the json module, not the parameter
+        json_str = json if isinstance(json, str) else json_module.dumps(json)
+        body = json_str.encode("utf-8")
+        headers.setdefault("Content-Type", "application/json")
+    elif data is None:
+        pass
+    elif isinstance(data, dict):
+        # Form data
+        headers.setdefault("Content-Type", "application/x-www-form-urlencoded")
+        body = urllib.parse.urlencode(data).encode("utf-8")
+    else:
+        # str | bytes
+        body = data.encode("utf-8") if isinstance(data, str) else data
 
-        # Add custom headers
-        for name, value in headers.items():
+    # Add headers
+    for name, value in headers.items():
+        try:
             wit_request.insert_header(name, value.encode("utf-8"))
-    except ValueError as e:
-        raise RequestException(f"Invalid headers: {e}") from e
-    except Err as e:
-        raise RequestException.from_wit_error(e, "set_request_headers") from e
+        except Err as e:
+            raise RequestException.from_wit_error(e, "insert_header") from e
 
     # Prepare request body
-    try:
-        request_body = http_body.new()
-    except Err as e:
-        raise RequestException.from_wit_error(e, "http_body.new") from e
-
-    try:
-        if json is not None:
-            # JSON data - use the json module, not the parameter
-            json_str = json if isinstance(json, str) else json_module.dumps(json)
-            json_bytes = json_str.encode("utf-8")
-            wit_request.insert_header("Content-Type", b"application/json")
-            _http_body_write_all(request_body, json_bytes)
-        elif data is None:
-            pass
-        elif isinstance(data, dict):
-            # Form data
-            form_data = urllib.parse.urlencode(data).encode("utf-8")
-            wit_request.insert_header(
-                "Content-Type", b"application/x-www-form-urlencoded"
-            )
-            _http_body_write_all(request_body, form_data)
-        else:
-            # str | bytes
-            data_bytes = data.encode("utf-8") if isinstance(data, str) else data
-            _http_body_write_all(request_body, data_bytes)
-    except (TypeError, ValueError, UnicodeError) as e:
-        raise RequestException(f"Invalid request body: {e}") from e
-    except Err as e:
-        raise RequestException.from_wit_error(e, "write_body") from e
+    wit_body = http_body.new()
+    if body:
+        try:
+            written = 0
+            while written < len(body):
+                written += http_body.write(wit_body, body)
+        except Err as e:
+            raise RequestException.from_wit_error(e, "http_body.write") from e
 
     # Send the request
     try:
         wit_response, response_body = http_req.send(
-            wit_request, request_body, resolution.backend
+            wit_request, wit_body, resolution.backend
         )
     except Err as e:
         # WIT-level errors during request execution - use proper error classification
