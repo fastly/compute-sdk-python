@@ -75,7 +75,11 @@ build-all: all
 
 # Clean build artifacts
 clean:
-	rm -rf $(BUILD_DIR) $(STUBS_DIR)
+	rm -rf $(BUILD_DIR) $(STUBS_DIR) fastly_compute/wit
+
+# Code Generation
+codegen: $(STUBS_DIR)
+	uv run python3 tools/codegen.py
 
 # Development tools
 lint: | $(STUBS_DIR)
