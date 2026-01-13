@@ -10,13 +10,15 @@ EXAMPLES_DIR := examples
 COMPUTE_WIT := wit/deps/fastly/compute.wit
 
 # Define all available examples (add new ones here)
-EXAMPLES := bottle-app flask-app game-of-life
+EXAMPLES := bottle-app flask-app backend-requests game-of-life
 
 # Default example for serve target
 EXAMPLE ?= bottle-app
 WASM_FILE := $(BUILD_DIR)/$(EXAMPLE).composed.wasm
 
 TARGET_WORLD := fastly:compute/service
+
+VICEROY ?= viceroy
 
 # Generate WASM file paths for all examples
 EXAMPLE_WASMS := $(foreach example,$(EXAMPLES),$(BUILD_DIR)/$(example).wasm)
@@ -57,7 +59,11 @@ serve: $(WASM_FILE)
 
 # Test all examples (requires all WASM files to be built)
 test: $(COMPOSED_WASMS)
-	uv run --extra test pytest
+	VICEROY=$(VICEROY) uv run --extra test pytest
+
+# Update snapshots for snapshot tests
+test-update-snapshots: $(COMPOSED_WASMS)
+	VICEROY=$(VICEROY) uv run --extra test pytest --snapshot-update
 
 # List available examples
 list-examples:
@@ -93,6 +99,7 @@ help:
 	@echo "  all                 Build all examples"
 	@echo "  serve [EXAMPLE=name] Serve example (default: $(EXAMPLE))"
 	@echo "  test                Run integration tests (builds all examples)"
+	@echo "  test-update-snapshots Update snapshot test baselines"
 	@echo "  build-all           Build all examples (alias for 'all')"
 	@echo "  list-examples       List available examples"
 	@echo "  clean               Clean build artifacts"
@@ -109,4 +116,4 @@ help:
 	@echo ""
 	@echo "Available examples: $(EXAMPLES)"
 
-.PHONY: all serve test list-examples build-all clean lint lint-fix format format-check help $(WASILESS_WASM)
+.PHONY: all serve test test-update-snapshots list-examples build-all clean lint lint-fix format format-check help $(WASILESS_WASM)

@@ -1,0 +1,10 @@
+# Fastly service configuration
+name = "my-compute-service"
+description = "Example Fastly Compute service"
+authors = ["paul.osborne@fastly.com"]
+language = "python"
+
+[local_server]
+[local_server.backends]
+[local_server.backends.httpbin]
+url = "http://httpbin.org/"

@@ -1,0 +1,76 @@
+# serializer version: 1
+# name: TestRequestsSimple.test_dynamic_get_no_url
+  dict({
+    'error': 'url query parameter is required',
+  })
+# ---
+# name: TestRequestsSimple.test_dynamic_get_request
+  dict({
+    'content_length': 0,
+    'fastly_backend': None,
+    'headers_count': 5,
+    'method': 'get',
+    'response_preview': '',
+    'status_code': 200,
+    'success': True,
+    'url': 'https://http-me.fastly.dev/get',
+  })
+# ---
+# name: TestRequestsSimple.test_dynamic_post_request
+  dict({
+    'content_length': 0,
+    'fastly_backend': None,
+    'headers_count': 5,
+    'method': 'post',
+    'response_preview': '',
+    'status_code': 200,
+    'success': True,
+    'url': 'https://http-me.fastly.dev/post',
+  })
+# ---
+# name: TestRequestsSimple.test_static_get_request
+  dict({
+    'content_length': 363,
+    'fastly_backend': 'test-be',
+    'headers_count': 3,
+    'method': 'get',
+    'response_preview': '''
+      {
+        "args": {},
+        "headers": {
+          "host": "http-me.fastly.dev",
+          "content-type": "",
+          "connection": "keep-alive",
+          "user-agent": "python-requests/2.32.5",
+          "accept-encoding": "gzip, defla...
+    ''',
+    'status_code': 200,
+    'success': True,
+    'url': 'https://http-me.fastly.dev/json',
+  })
+# ---
+# name: TestRequestsSimple.test_static_post_request
+  dict({
+    'content_length': 259,
+    'fastly_backend': 'test-be',
+    'headers_count': 3,
+    'method': 'post',
+    'response_preview': '''
+      {
+        "args": {},
+        "data": "",
+        "files": {},
+        "form": {},
+        "headers": {
+          "User-Agent": "FastlyCompute-Requests/1.0",
+          "Content-Type": "application/json"
+        },
+        "json": {},
+        "method": "POST",
+      ...
+    ''',
+    'status_code': 200,
+    'success': True,
+    'url': 'https://http-me.fastly.dev/post',
+  })
+# ---
