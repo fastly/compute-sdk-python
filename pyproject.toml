@@ -48,6 +48,8 @@ select = [
 ignore = [
     "E501",  # line too long, handled by formatter
     "UP031",  # % string formatting, minimally disruptive for stdlib-based HTML templating
+    "D415",  # Don't require punctuation at the end of a docstring summary: sometimes they are noun phrases, not sentences.
+    "D205",  # This spuriously complains about line-wrapped single-sentence docstring summaries. Sometimes 80 chars isn't enough.
 ]
 
 [tool.ruff.format]

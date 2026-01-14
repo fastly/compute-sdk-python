@@ -1,3 +1,5 @@
+"""Top-level exceptions emitted by the Fastly API"""
+
 from collections.abc import Callable, Mapping
 from functools import wraps
 from typing import Any
