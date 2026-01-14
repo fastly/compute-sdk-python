@@ -62,8 +62,10 @@ def nice_exceptions(
                 return func(*args, **kwargs)
             except Err as e:
                 error_value = e.value
-                idiomatic_class = nice_classes.get(type(error_value))
-                raise (idiomatic_class or UnexpectedFastlyError)(error_value) from e
+                idiomatic_class = nice_classes.get(
+                    type(error_value), UnexpectedFastlyError
+                )
+                raise idiomatic_class(error_value) from e
 
         return wrapper
 
