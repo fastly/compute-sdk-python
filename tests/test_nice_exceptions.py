@@ -4,10 +4,12 @@ decorator makes WIT's ``result``-driven errors more Pythonic."""
 import sys
 from pathlib import Path
 
+from pytest import raises
+
 # Bring in stubs for local testing:
 sys.path.append(str(Path(__file__).parent.parent / "stubs"))
 
-from wit_world.imports.types import Error_BufferLen
+from wit_world.imports.types import Error_BufferLen, OpenError
 from wit_world.types import Err
 
 from fastly_compute.exceptions import (
@@ -85,3 +87,36 @@ def test_variant():
         raise_variant()
     except BufferTooShortError as e:
         assert e.length == 64
+
+
+def test_enum():
+    """Show how we can also map individual enum cases to exception classes."""
+
+    class InvalidSyntaxError(FastlyError):
+        pass
+
+    class NotFoundError(FastlyError):
+        pass
+
+    enum_map = {
+        OpenError.INVALID_SYNTAX: InvalidSyntaxError,
+        OpenError.NOT_FOUND: NotFoundError,
+    }
+
+    @nice_exceptions(enum_map)
+    def raise_one_enum() -> Err:
+        raise Err(value=OpenError.INVALID_SYNTAX)
+
+    @nice_exceptions(enum_map)
+    def raise_other_enum() -> Err:
+        raise Err(value=OpenError.NOT_FOUND)
+
+    try:
+        raise_one_enum()
+    except InvalidSyntaxError as e:
+        assert len(e.args) == 0, (
+            "Exceptions raised based on enum members should receive no constructor args."
+        )
+
+    with raises(NotFoundError):
+        raise_other_enum()
