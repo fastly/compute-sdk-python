@@ -10,7 +10,7 @@ from wit_world.imports.types import Err
 class FastlyError(Exception):
     """Abstract base class for all errors raised by Fastly APIs
 
-    This allows catching all errors eminating from Fastly APIs at once.
+    This allows catching all errors emanating from Fastly APIs at once.
     """
 
 
@@ -45,7 +45,8 @@ def nice_exceptions(
         as a constructor argument. If the value's type is not found in the map,
         wrap it in an ``UnexpectedFastlyError``.
 
-    Goals: Be idiomatic. Be reasonably efficient. Be readable as documentation. In that order.
+    Goals: Be idiomatic. Be reasonably efficient. Be readable as documentation.
+    In that order.
 
     """
     # Someday, if we need more flexibility than class-by-class mapping, we can

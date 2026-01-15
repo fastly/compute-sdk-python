@@ -18,6 +18,13 @@ from fastly_compute.exceptions import (
 
 
 class BufferTooShortError(FastlyError):
+    # A "nice" version of a WIT exception takes the WIT error as the sole arg of
+    # its constructor. While it would make the exception class more
+    # constructable by customer code if we took, for example, simply an int here
+    # and added a from_wit_error() class method, this would complicate the
+    # calling contract of nice_exceptions() for "escape-hatch" callables which
+    # conditionally choose exception mappings. It remains to be seen if we ever
+    # need those.
     def __init__(self, wit_error: Error_BufferLen):
         self.length = wit_error.value
 
