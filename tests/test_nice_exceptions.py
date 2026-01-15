@@ -1,4 +1,4 @@
-"""Show (and test) some motivating examples of how the ``nice_exceptions``
+"""Show (and test) some motivating examples of how the ``remap_wit_errors``
 decorator makes WIT's ``result``-driven errors more Pythonic."""
 
 import sys
@@ -15,7 +15,7 @@ from wit_world.types import Err
 from fastly_compute.exceptions import (
     FastlyError,
     UnexpectedFastlyError,
-    nice_exceptions,
+    remap_wit_errors,
 )
 
 
@@ -24,7 +24,7 @@ class BufferTooShortError(FastlyError):
     # its constructor. While it would make the exception class more
     # constructable by customer code if we took, for example, simply an int here
     # and added a from_wit_error() class method, this would complicate the
-    # calling contract of nice_exceptions() for "escape-hatch" callables which
+    # calling contract of remap_wit_errors() for "escape-hatch" callables which
     # conditionally choose exception mappings. It remains to be seen if we ever
     # need those.
     def __init__(self, wit_error: Error_BufferLen):
@@ -44,7 +44,7 @@ class NegativeHeightError(FastlyError):
 def test_primitive():
     """Show that a primitive type can be mapped to a meaningful exception."""
 
-    @nice_exceptions({int: NegativeHeightError})
+    @remap_wit_errors({int: NegativeHeightError})
     def raise_int() -> Err:
         """Raise a primitive value, which is expected and gets wrapped in a descriptive exception."""
         raise Err(value=-3)
@@ -64,7 +64,7 @@ def test_unexpected():
     someday.
     """
 
-    @nice_exceptions()
+    @remap_wit_errors()
     def raise_int_by_surprise() -> Err:
         """Raise a primitive value, which is a type we didn't expect."""
         raise Err(value=-3)
@@ -78,7 +78,7 @@ def test_unexpected():
 def test_variant():
     """Show how a WIT variant case can be concisely mapped into a more idiomatic exception."""
 
-    @nice_exceptions({Error_BufferLen: BufferTooShortError})
+    @remap_wit_errors({Error_BufferLen: BufferTooShortError})
     def raise_variant() -> Err:
         """Raise an Err whose value is a case of our generic ``error`` variant."""
         raise Err(value=Error_BufferLen(64))
@@ -103,11 +103,11 @@ def test_enum():
         OpenError.NOT_FOUND: NotFoundError,
     }
 
-    @nice_exceptions(enum_map)
+    @remap_wit_errors(enum_map)
     def raise_one_enum() -> Err:
         raise Err(value=OpenError.INVALID_SYNTAX)
 
-    @nice_exceptions(enum_map)
+    @remap_wit_errors(enum_map)
     def raise_other_enum() -> Err:
         raise Err(value=OpenError.NOT_FOUND)
 

@@ -32,8 +32,8 @@ class UnexpectedFastlyError(FastlyError):
 
 
 # TODO: Move to somewhere more private once it becomes clear where.
-def nice_exceptions(
-    nice_classes: Mapping[Any, type[FastlyError]] | None = None,
+def remap_wit_errors(
+    idiomatic_exceptions: Mapping[Any, type[FastlyError]] | None = None,
 ) -> Callable:
     """Raise more idiomatic exceptions from a function that returns a WIT ``result``.
 
@@ -41,10 +41,10 @@ def nice_exceptions(
     componentize-py. Convert that to a more descriptive exception that can be
     selectively caught.
 
-    :arg nice_classes: A map of the types of WIT-level ``Err.value``s to more
-        informative exception classes. These classes receive the ``Err.value``
-        as a constructor argument. If the value's type is not found in the map,
-        wrap it in an ``UnexpectedFastlyError``.
+    :arg idiomatic_exceptions: A map of the types of WIT-level ``Err.value``s to
+        more informative exception classes. These classes receive the
+        ``Err.value`` as a constructor argument. If the value's type is not
+        found in the map, wrap it in an ``UnexpectedFastlyError``.
 
         Enum members may also be used as mapping keys. Exceptions raised based
         on these receive no constructor arguments, since the values of enum
@@ -58,8 +58,8 @@ def nice_exceptions(
     # take a fallback callable that can do further thinking. Also, only the type
     # signature keeps you from passing along an arbitrary callable that can
     # emit, say, different exception classes for even and odd ints.
-    if nice_classes is None:
-        nice_classes = {}
+    if idiomatic_exceptions is None:
+        idiomatic_exceptions = {}
 
     def decorator(func: Callable) -> Callable:
         @wraps(func)
@@ -77,8 +77,10 @@ def nice_exceptions(
                 else:
                     key = type(error_value)
                     exc_args = (error_value,)
-                idiomatic_class = nice_classes.get(key, UnexpectedFastlyError)
-                raise idiomatic_class(*exc_args) from e
+                idiomatic_exception = idiomatic_exceptions.get(
+                    key, UnexpectedFastlyError
+                )
+                raise idiomatic_exception(*exc_args) from e
 
         return wrapper
 
