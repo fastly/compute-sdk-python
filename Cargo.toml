@@ -1,0 +1,7 @@
+[workspace]
+members = [
+    "crates/fastly-compute-py",
+    "crates/wasiless",
+]
+exclude = ["crates/componentize-py"]
+resolver = "2"

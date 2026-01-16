@@ -41,8 +41,8 @@ import json as json_module
 import urllib.parse
 from typing import Any, TypedDict, Unpack
 
+from componentize_py_types import Err
 from wit_world.imports import http_body, http_req
-from wit_world.types import Err
 
 from fastly_compute.requests.backend import resolve_backend
 

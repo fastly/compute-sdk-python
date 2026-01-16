@@ -1,0 +1,15 @@
+[project]
+name = "bottle-app-example"
+version = "0.1.0"
+description = "Fastly Compute example using Bottle framework"
+requires-python = ">=3.12"
+dependencies = [
+    "bottle>=0.12.25",
+    "fastly-compute",
+]
+
+[tool.uv.sources]
+fastly-compute = { path = "../../", editable = true }
+
+[tool.fastly-compute]
+entry = "bottle-app"

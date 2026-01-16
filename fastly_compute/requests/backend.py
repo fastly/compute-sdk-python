@@ -10,9 +10,9 @@ import urllib.parse
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
+from componentize_py_types import Err
 from wit_world.imports import backend as wit_backend
 from wit_world.imports.types import OpenError
-from wit_world.types import Err
 
 from .exceptions import MissingSchema, RequestException
 

@@ -34,17 +34,33 @@ make test                   # Run integration tests
 
 ## Development
 
+### Build Tool Development
+
+The `fastly-compute-py` build tool is written in Rust. By default, the Makefile uses `cargo run` (DEV_MODE=1), which means:
+- **No installation needed** - the tool runs directly via cargo
+- **Always up-to-date** - changes to Rust code are automatically picked up
+- **Fast incremental builds** - cargo handles recompilation efficiently
+
+Simply edit the Rust code in `crates/fastly-compute-py/` and run `make` - that's it!
+
+**Alternative: Using the Python Entry Point**
+
+To test the installed `fastly-compute-py` command (how end users will invoke it):
+```bash
+make DEV_MODE=0   # Uses `uv run fastly-compute-py` instead of `cargo run`
+```
+
 ### Code Quality
 ```bash
-make format         # Format code
-make lint           # Run linter
-make lint-fix       # Auto-fix linting issues
+make format         # Format code (Python + Rust)
+make lint           # Run linter (Python + Rust)
+make lint-fix       # Auto-fix linting issues (Python + Rust)
 ```
 
 ### Building Examples
 ```bash
 make build/my-app.wasm      # Build specific example
-make clean                  # Clean build artifacts
+make clean                  # Clean all build artifacts
 ```
 
 ## Status
@@ -62,7 +78,6 @@ Currently demonstrates:
   some](https://github.com/dicej/wasi-wheels/releases/), and the changes needed
   aren't extensive.
 
-## Prerequisites
+## Contributing
 
-1. [Install `uv`](https://docs.astral.sh/uv/getting-started/installation/)
-2. Install [Viceroy](https://github.com/fastly/Viceroy) with component support
+See [CONTRIBUTING.md](CONTRIBUTING.md).

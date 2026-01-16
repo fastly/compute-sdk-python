@@ -1,7 +1,7 @@
 """Utility functions for fastly_compute package."""
 
+from componentize_py_types import Err
 from wit_world.imports import async_io, http_body
-from wit_world.types import Err
 
 from fastly_compute.requests.exceptions import RequestException
 

@@ -3,6 +3,24 @@
 # Default Viceroy location. Set VICEROY env var to change.
 VICEROY ?= viceroy
 
+# Build tool configuration
+# For development: Use cargo run (always up-to-date, no install needed)
+# For production: Use installed binary via `uv run fastly-compute-py`
+DEV_MODE ?= 1
+
+# Rust crate path
+FASTLY_COMPUTE_PY_MANIFEST := $(abspath crates/fastly-compute-py/Cargo.toml)
+FASTLY_COMPUTE_PY_BIN := target/release/fastly_compute_py_build
+
+# Select build tool based on DEV_MODE
+ifeq ($(DEV_MODE),1)
+    # Development mode: use cargo run (always current)
+    FASTLY_COMPUTE_PY := uv run cargo run --release --manifest-path $(FASTLY_COMPUTE_PY_MANIFEST) --no-default-features --features binary --
+else
+    # Production mode: use installed Python entry point
+    FASTLY_COMPUTE_PY := uv run fastly-compute-py
+endif
+
 # Configuration
 STUBS_DIR := stubs
 BUILD_DIR := build
@@ -13,7 +31,7 @@ COMPUTE_WIT := wit/deps/fastly/compute.wit
 EXAMPLES := bottle-app flask-app backend-requests game-of-life
 
 # Default example for serve target
-EXAMPLE ?= bottle-app
+EXAMPLE ?= bottle_app
 WASM_FILE := $(BUILD_DIR)/$(EXAMPLE).composed.wasm
 
 TARGET_WORLD := fastly:compute/service
@@ -26,27 +44,18 @@ EXAMPLE_WASMS := $(foreach example,$(EXAMPLES),$(BUILD_DIR)/$(example).wasm)
 # Composed wasm for each example
 COMPOSED_WASMS := $(foreach example,$(EXAMPLES),$(BUILD_DIR)/$(example).composed.wasm)
 
-WASILESS_ROOT := vendor/wasiless
-WASILESS_WASM := $(WASILESS_ROOT)/wasiless.wasm
-
 # Default target builds all examples
 all: $(COMPOSED_WASMS)
 
 $(STUBS_DIR): $(COMPUTE_WIT)
-	rm -rf $(STUBS_DIR)
-	uv run componentize-py -d wit -w $(TARGET_WORLD) bindings $(STUBS_DIR)
+	uv run componentize-py -d wit --world-module wit_world -w $(TARGET_WORLD) bindings $(STUBS_DIR)
 
-$(BUILD_DIR)/%.composed.wasm: $(BUILD_DIR)/%.wasm $(WASILESS_WASM)
-	@echo "Composing $* example"
-	wac compose --dep fastly:wasiless=$(WASILESS_WASM) --dep app:component=$< -o $@ wrap_app_in_wasiless.wac
-
-# Pattern rule for building any example
-$(BUILD_DIR)/%.wasm: $(EXAMPLES_DIR)/%.py wit/viceroy.wit wit/deps/fastly/compute.wit fastly_compute/wsgi.py | $(BUILD_DIR) $(STUBS_DIR)
-	@echo "Building $* example..."
-	uv run componentize-py -d wit -w $(TARGET_WORLD) componentize $* -p $(EXAMPLES_DIR) -p . -o $@
-
-$(WASILESS_WASM):
-	 $(MAKE) -C $(WASILESS_ROOT) wasiless.wasm
+# Build our composed wasm using fastly-compute-py build
+$(BUILD_DIR)/%.composed.wasm: wit/viceroy.wit wit/deps/fastly/compute.wit fastly_compute/wsgi.py | $(BUILD_DIR) $(STUBS_DIR)
+	@echo "Building $* example with fastly-compute-py..."
+	@test -d $(EXAMPLES_DIR)/$* || (echo "Error: Example directory $(EXAMPLES_DIR)/$* not found" && exit 1)
+	@test -f $(EXAMPLES_DIR)/$*/$*.py || (echo "Error: Example file $(EXAMPLES_DIR)/$*/$*.py not found" && exit 1)
+	cd $(EXAMPLES_DIR)/$* && $(FASTLY_COMPUTE_PY) build --output ../../$@
 
 # Create build directory
 $(BUILD_DIR):
@@ -70,43 +79,65 @@ list-examples:
 	@echo "Available examples:"
 	@for example in $(EXAMPLES); do echo "  $$example"; done
 
-# Build all examples (alias for 'all')
-build-all: all
-
 # Clean build artifacts
 clean:
 	rm -rf $(BUILD_DIR) $(STUBS_DIR)
+	cd crates/fastly-compute-py && cargo clean
 
 # Development tools
 lint: | $(STUBS_DIR)
+	@echo "Linting Python code..."
 	uv run --extra dev ruff check .
 	uv run --extra dev --extra test pyrefly check .
+	@echo "Linting Rust code..."
+	cd crates/fastly-compute-py && cargo clippy -- -D warnings
 
 lint-fix:
+	@echo "Fixing Python code..."
 	uv run --extra dev ruff check --fix .
+	@echo "Fixing Rust code..."
+	cd crates/fastly-compute-py && cargo clippy --fix --allow-dirty --allow-staged
 
 format:
+	@echo "Formatting Python code..."
 	uv run --extra dev ruff format .
+	@echo "Formatting Rust code..."
+	cd crates/fastly-compute-py && cargo fmt
 
 format-check:
+	@echo "Checking Python formatting..."
 	uv run --extra dev ruff format --check .
+	@echo "Checking Rust formatting..."
+	cd crates/fastly-compute-py && cargo fmt --check
 
 # Help target
 help:
 	@echo "Fastly Compute Python SDK"
 	@echo ""
+	@echo "Build Tool Mode:"
+	@echo "  DEV_MODE=1 (default): Uses 'cargo run' - always current, no install needed"
+	@echo "  DEV_MODE=0:           Uses installed 'fastly-compute-py' Python entry point"
+	@echo ""
 	@echo "Targets:"
-	@echo "  all                 Build all examples"
-	@echo "  serve [EXAMPLE=name] Serve example (default: $(EXAMPLE))"
-	@echo "  test                Run integration tests (builds all examples)"
-	@echo "  test-update-snapshots Update snapshot test baselines"
-	@echo "  build-all           Build all examples (alias for 'all')"
-	@echo "  list-examples       List available examples"
-	@echo "  clean               Clean build artifacts"
-	@echo "  lint                Run linter"
-	@echo "  lint-fix            Run linter with auto-fix"
-	@echo "  format              Format code"
-	@echo "  format-check        Check code formatting"
+	@echo "  all                     Build all examples"
+	@echo "  serve [EXAMPLE=name]    Serve example (default: $(EXAMPLE))"
+	@echo "  test                    Run integration tests (builds all examples)"
+	@echo "  test-update-snapshots   Update snapshot test baselines"
+	@echo "  build-all               Build all examples (alias for 'all')"
+	@echo "  list-examples           List available examples"
+	@echo "  clean                   Clean all build artifacts (including Rust)"
+	@echo "  lint                    Run linter (Python + Rust)"
+	@echo "  lint-fix                Run linter with auto-fix (Python + Rust)"
+	@echo "  format                  Format code (Python + Rust)"
+	@echo "  format-check            Check code formatting (Python + Rust)"
+	@echo ""
+	@echo "Development Workflow:"
+	@echo "  The build tool is invoked via 'cargo run' by default (DEV_MODE=1)."
+	@echo "  Changes to Rust code are automatically picked up on next build."
+	@echo "  No need to explicitly rebuild the tool!"
+	@echo ""
+	@echo "  To use the installed Python entry point instead:"
+	@echo "    make DEV_MODE=0           # Build with installed fastly-compute-py"
 	@echo ""
 	@echo "Examples:"
 	@echo "  make                          # Build all examples"
@@ -116,4 +147,4 @@ help:
 	@echo ""
 	@echo "Available examples: $(EXAMPLES)"
 
-.PHONY: all serve test test-update-snapshots list-examples build-all clean lint lint-fix format format-check help $(WASILESS_WASM)
+.PHONY: all serve test test-update-snapshots list-examples build-all clean lint lint-fix format format-check help
