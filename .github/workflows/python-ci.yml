@@ -37,8 +37,6 @@ jobs:
         python-version: '3.12'
     - name: Install uv
       run: pip install uv
-    - name: Install dependencies
-      run: uv sync
     - name: Cache viceroy, wasm-tools, etc.
       id: cache-cargo
       uses: actions/cache@v4
