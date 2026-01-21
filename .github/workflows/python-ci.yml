@@ -1,12 +1,11 @@
 name: Python CI
 
 on:
-  push:
-    branches:
-      - main
+  push:  # Runs on pushes to all branches
   pull_request:
     branches:
       - main
+  workflow_dispatch:  # Allows manual triggering from GitHub Actions UI
 
 env:
   VICEROY_TAG: v0.16.3
