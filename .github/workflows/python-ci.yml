@@ -29,27 +29,73 @@ jobs:
     - name: Set up Rust toolchain
       uses: actions-rust-lang/setup-rust-toolchain@v1
       with:
-        toolchain: 1.92.0,nightly
+        toolchain: 1.92.0
         target: wasm32-unknown-unknown
+        # Disable the built-in cargo cache - we'll use a more sophisticated setup below
+        cache: false
+    - name: Set up nightly Rust toolchain with rust-src
+      run: |
+        rustup toolchain install nightly --component rust-src
+        rustup target add wasm32-wasip1 --toolchain nightly
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
         python-version: '3.12'
     - name: Install uv
       run: pip install uv
-    - name: Cache viceroy, wasm-tools, etc.
-      id: cache-cargo
+    
+    # Cache cargo binaries (viceroy, wasm-tools, etc.)
+    - name: Cache cargo binaries
+      id: cache-cargo-bins
       uses: actions/cache@v4
       with:
-        key: "viceroy-$VICEROY_TAG"
+        key: cargo-bins-${{ runner.os }}-${{ env.VICEROY_TAG }}
         path: |
-            ~/.cargo/bin/
+            ~/.cargo/bin/viceroy*
+            ~/.cargo/bin/wasm-tools*
+            ~/.cargo/bin/wac*
     - name: Install wasm-tools and wac
-      if: steps.cache-cargo.outputs.cache-hit != 'true'
+      if: steps.cache-cargo-bins.outputs.cache-hit != 'true'
       run: cargo install wasm-tools wac-cli
     - name: Install viceroy
-      if: steps.cache-cargo.outputs.cache-hit != 'true'
+      if: steps.cache-cargo-bins.outputs.cache-hit != 'true'
       run: cargo install --git https://github.com/fastly/Viceroy.git --tag "$VICEROY_TAG" viceroy
+    
+    # Cache Rust dependencies and build artifacts
+    - name: Cache Rust dependencies
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cargo/registry/index/
+          ~/.cargo/registry/cache/
+          ~/.cargo/git/db/
+          target/
+        key: cargo-deps-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          cargo-deps-${{ runner.os }}-
+    
+    # Cache componentize-py CPython build (this is the slow part!)
+    # The CPython build is deterministic based on the componentize-py version
+    # componentize-py will download WASI SDK automatically if not found at /opt/wasi-sdk
+    - name: Cache componentize-py CPython build
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cargo/git/checkouts/componentize-py-*/*/cpython/builddir/
+          target/*/build/componentize-py-*/out/
+        key: componentize-py-cpython-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}-v2
+        restore-keys: |
+          componentize-py-cpython-${{ runner.os }}-
+    
+    # Setup sccache for C/C++ compilation caching (speeds up CPython build)
+    - name: Run sccache-cache
+      uses: mozilla-actions/sccache-action@v0.0.8
+    - name: Configure sccache
+      run: |
+        echo "SCCACHE_GHA_ENABLED=true" >> $GITHUB_ENV
+        echo "RUSTC_WRAPPER=sccache" >> $GITHUB_ENV
+        echo "CC=sccache clang" >> $GITHUB_ENV
+        echo "CXX=sccache clang++" >> $GITHUB_ENV
     - name: Install dependencies
       run: uv sync --extra dev --extra test
     - name: Check formatting
