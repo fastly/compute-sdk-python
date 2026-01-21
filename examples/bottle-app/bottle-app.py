@@ -5,8 +5,6 @@ from wit_world.imports import compute_runtime
 
 from fastly_compute.wsgi import WsgiHttpIncoming
 
-print("DEBUG: bottle_app initialized")
-
 # Enable a bit more debug logging from the framework.
 app = Bottle()
 
@@ -45,4 +43,4 @@ def error():
 
 # Create the HTTP handler using the shared WSGI infrastructure
 # Use basic environ for Bottle (doesn't need enhanced WSGI variables like Flask)
-HttpIncoming = WsgiHttpIncoming(app, handle_errors=True)
+HttpIncoming = WsgiHttpIncoming(app)
