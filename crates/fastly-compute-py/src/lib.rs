@@ -1,5 +1,4 @@
 use anyhow::{Context, Result};
-use clap::Parser;
 use indexmap::IndexMap;
 use std::collections::HashMap;
 use std::env;
@@ -17,6 +16,11 @@ pub mod config;
 pub mod site_packages;
 
 use cli::Cli;
+
+#[cfg(feature = "pyo3")]
+use clap::Parser;
+
+#[cfg(feature = "pyo3")]
 use pyo3::prelude::*;
 
 use crate::config::ConfigBuilder;
@@ -96,6 +100,8 @@ pub fn run_main(cli: &Cli) -> Result<()> {
     Ok(())
 }
 
+// Python bindings - only compiled when building the Python extension module
+#[cfg(feature = "pyo3")]
 #[pyfunction]
 fn run_main_py(args: Vec<String>) -> PyResult<()> {
     let cli = Cli::parse_from(args);
@@ -105,6 +111,7 @@ fn run_main_py(args: Vec<String>) -> PyResult<()> {
     })
 }
 
+#[cfg(feature = "pyo3")]
 #[pymodule]
 fn _fastly_compute_py(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(run_main_py, m)?)?;

@@ -12,8 +12,8 @@ path = "src/main.rs"
 
 [features]
 default = ["extension-module"]
-extension-module = ["pyo3/extension-module"]
-binary = ["pyo3/auto-initialize"]
+extension-module = ["pyo3/extension-module", "pyo3"]
+binary = []  # Binary feature doesn't need pyo3
 
 [dependencies]
 clap = { version = "4", features = ["derive"] }
@@ -26,7 +26,7 @@ wit-component = "0.244"
 tempfile = "3"
 componentize-py = { git = "https://github.com/bytecodealliance/componentize-py" }
 futures = { version = "0.3", default-features = false, features = ["executor"] }
-pyo3 = { version = "0.27.2" }
+pyo3 = { version = "0.27.2", optional = true }
 serde = { version = "1.0", features = ["derive"] }
 toml = "0.8"
 log = "0.4"
