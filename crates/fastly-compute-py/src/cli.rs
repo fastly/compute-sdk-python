@@ -3,6 +3,7 @@ use std::path::PathBuf;
 
 #[derive(Parser)]
 #[command(name = "fastly-compute-py")]
+#[command(version)]
 #[command(about = "Build Python applications for Fastly Compute", long_about = None)]
 #[command(after_help = "LOGGING:\n  \
     By default, only fastly-compute-py logs are shown.\n  \

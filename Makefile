@@ -86,6 +86,8 @@ clean:
 
 # Development tools
 lint: | $(STUBS_DIR)
+	@echo "Checking version synchronization..."
+	uv run python scripts/check_version_sync.py
 	@echo "Linting Python code..."
 	uv run --extra dev ruff check .
 	uv run --extra dev --extra test pyrefly check
