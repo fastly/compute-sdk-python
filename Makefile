@@ -88,7 +88,7 @@ clean:
 lint: | $(STUBS_DIR)
 	@echo "Linting Python code..."
 	uv run --extra dev ruff check .
-	uv run --extra dev --extra test pyrefly check .
+	uv run --extra dev --extra test pyrefly check
 	@echo "Linting Rust code..."
 	cd crates/fastly-compute-py && cargo clippy -- -D warnings
 

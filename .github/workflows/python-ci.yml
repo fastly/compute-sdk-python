@@ -97,7 +97,7 @@ jobs:
         echo "CC=sccache clang" >> $GITHUB_ENV
         echo "CXX=sccache clang++" >> $GITHUB_ENV
     - name: Install dependencies
-      run: uv sync --extra dev --extra test
+      run: uv sync --extra dev --extra test --extra examples
     - name: Check formatting
       run: make format-check
     - name: Run linting

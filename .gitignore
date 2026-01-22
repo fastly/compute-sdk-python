@@ -12,3 +12,4 @@ bin/
 # Rust
 target/
 *.so
+target/
