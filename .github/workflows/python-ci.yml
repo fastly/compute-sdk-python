@@ -73,7 +73,7 @@ jobs:
         key: cargo-deps-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
         restore-keys: |
           cargo-deps-${{ runner.os }}-
-    
+
     # Cache componentize-py CPython build (this is the slow part!)
     # The CPython build is deterministic based on the componentize-py version
     # componentize-py will download WASI SDK automatically if not found at /opt/wasi-sdk
@@ -86,7 +86,7 @@ jobs:
         key: componentize-py-cpython-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}-v2
         restore-keys: |
           componentize-py-cpython-${{ runner.os }}-
-    
+
     # Setup sccache for C/C++ compilation caching (speeds up CPython build)
     - name: Run sccache-cache
       uses: mozilla-actions/sccache-action@v0.0.8
@@ -96,11 +96,22 @@ jobs:
         echo "RUSTC_WRAPPER=sccache" >> $GITHUB_ENV
         echo "CC=sccache clang" >> $GITHUB_ENV
         echo "CXX=sccache clang++" >> $GITHUB_ENV
-    - name: Install dependencies
+
+    # Build the Rust native extension; this would be triggered by `uv sync` but
+    # separated out here as it can take quite awhile depending on what is
+    # cached.
+    - name: Build native extension
+      run: uv run maturin develop --release
+
+    # Install Python dependencies (fast now that native extension is built)
+    - name: Install Python dependencies
       run: uv sync --extra dev --extra test --extra examples
+
+    # Finally, do our final checks
     - name: Check formatting
       run: make format-check
     - name: Run linting
       run: make lint
     - name: Run tests
-      run: make test
+      # Use DEV_MODE=0 to use the installed fastly-compute-py binary instead of rebuilding with cargo
+      run: DEV_MODE=0 make test
