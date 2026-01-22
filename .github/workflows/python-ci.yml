@@ -30,6 +30,7 @@ jobs:
       with:
         toolchain: 1.92.0
         target: wasm32-unknown-unknown
+        components: rustfmt, clippy
         # Disable the built-in cargo cache - we'll use a more sophisticated setup below
         cache: false
     - name: Set up nightly Rust toolchain with rust-src
