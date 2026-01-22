@@ -62,6 +62,7 @@ jobs:
       run: cargo install --git https://github.com/fastly/Viceroy.git --tag "$VICEROY_TAG" viceroy
     
     # Cache Rust dependencies and build artifacts
+    # CRITICAL: ~/.cargo/git/checkouts/ contains componentize-py source + built CPython (5+ min build)
     - name: Cache Rust dependencies
       uses: actions/cache@v4
       with:
@@ -69,41 +70,26 @@ jobs:
           ~/.cargo/registry/index/
           ~/.cargo/registry/cache/
           ~/.cargo/git/db/
+          ~/.cargo/git/checkouts/
           target/
-        key: cargo-deps-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
+        key: cargo-deps-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}-v3
         restore-keys: |
+          cargo-deps-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}-
           cargo-deps-${{ runner.os }}-
-
-    # Cache componentize-py CPython build (this is the slow part!)
-    # The CPython build is deterministic based on the componentize-py version
-    # componentize-py will download WASI SDK automatically if not found at /opt/wasi-sdk
-    - name: Cache componentize-py CPython build
-      uses: actions/cache@v4
-      with:
-        path: |
-          ~/.cargo/git/checkouts/componentize-py-*/*/cpython/builddir/
-          target/*/build/componentize-py-*/out/
-        key: componentize-py-cpython-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}-v2
-        restore-keys: |
-          componentize-py-cpython-${{ runner.os }}-
-
-    # Setup sccache for C/C++ compilation caching (speeds up CPython build)
+    
+    # Setup sccache for Rust compilation caching
     - name: Run sccache-cache
       uses: mozilla-actions/sccache-action@v0.0.8
     - name: Configure sccache
       run: |
         echo "SCCACHE_GHA_ENABLED=true" >> $GITHUB_ENV
         echo "RUSTC_WRAPPER=sccache" >> $GITHUB_ENV
-        echo "CC=sccache clang" >> $GITHUB_ENV
-        echo "CXX=sccache clang++" >> $GITHUB_ENV
 
-    # Build the Rust native extension; this would be triggered by `uv sync` but
-    # separated out here as it can take quite awhile depending on what is
-    # cached.
+    # Build the Rust native extension (this is the slow part - builds componentize-py + CPython)
     - name: Build native extension
       run: uv run maturin develop --release
 
-    # Install Python dependencies (fast now that native extension is built)
+    # Install Python dependencies
     - name: Install Python dependencies
       run: uv sync --extra dev --extra test --extra examples
 
