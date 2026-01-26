@@ -1,15 +1,14 @@
 name: Python CI
 
 on:
-  push:
-    branches:
-      - main
+  push:  # Runs on pushes to all branches
   pull_request:
     branches:
       - main
+  workflow_dispatch:  # Allows manual triggering from GitHub Actions UI
 
 env:
-  VICEROY_TAG: v0.16.2
+  VICEROY_TAG: v0.16.3
 
 jobs:
   build:
@@ -29,34 +28,76 @@ jobs:
     - name: Set up Rust toolchain
       uses: actions-rust-lang/setup-rust-toolchain@v1
       with:
-        toolchain: '1.86.0'
+        toolchain: 1.92.0
         target: wasm32-unknown-unknown
+        components: rustfmt, clippy
+        # Disable the built-in cargo cache - we'll use a more sophisticated setup below
+        cache: false
+    - name: Set up nightly Rust toolchain with rust-src
+      run: |
+        rustup toolchain install nightly --component rust-src
+        rustup target add wasm32-wasip1 --toolchain nightly
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
         python-version: '3.12'
     - name: Install uv
       run: pip install uv
-    - name: Install dependencies
-      run: uv sync
-    - name: Cache viceroy, wasm-tools, etc.
-      id: cache-cargo
+    
+    # Cache cargo binaries (viceroy, wasm-tools, etc.)
+    - name: Cache cargo binaries
+      id: cache-cargo-bins
       uses: actions/cache@v4
       with:
-        key: "viceroy-$VICEROY_TAG"
+        key: cargo-bins-${{ runner.os }}-${{ env.VICEROY_TAG }}
         path: |
-            ~/.cargo/bin/
+            ~/.cargo/bin/viceroy*
+            ~/.cargo/bin/wasm-tools*
+            ~/.cargo/bin/wac*
     - name: Install wasm-tools and wac
-      if: steps.cache-cargo.outputs.cache-hit != 'true'
+      if: steps.cache-cargo-bins.outputs.cache-hit != 'true'
       run: cargo install wasm-tools wac-cli
     - name: Install viceroy
-      if: steps.cache-cargo.outputs.cache-hit != 'true'
+      if: steps.cache-cargo-bins.outputs.cache-hit != 'true'
       run: cargo install --git https://github.com/fastly/Viceroy.git --tag "$VICEROY_TAG" viceroy
-    - name: Install dependencies
-      run: uv sync --extra dev --extra test
+    
+    # Cache Rust dependencies and build artifacts
+    # CRITICAL: ~/.cargo/git/checkouts/ contains componentize-py source + built CPython (5+ min build)
+    - name: Cache Rust dependencies
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cargo/registry/index/
+          ~/.cargo/registry/cache/
+          ~/.cargo/git/db/
+          ~/.cargo/git/checkouts/
+          target/
+        key: cargo-deps-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}-v3
+        restore-keys: |
+          cargo-deps-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}-
+          cargo-deps-${{ runner.os }}-
+    
+    # Setup sccache for Rust compilation caching
+    - name: Run sccache-cache
+      uses: mozilla-actions/sccache-action@v0.0.8
+    - name: Configure sccache
+      run: |
+        echo "SCCACHE_GHA_ENABLED=true" >> $GITHUB_ENV
+        echo "RUSTC_WRAPPER=sccache" >> $GITHUB_ENV
+
+    # Build the Rust native extension (this is the slow part - builds componentize-py + CPython)
+    - name: Build native extension
+      run: uv run maturin develop --release
+
+    # Install Python dependencies
+    - name: Install Python dependencies
+      run: uv sync --extra dev --extra test --extra examples
+
+    # Finally, do our final checks
     - name: Check formatting
       run: make format-check
     - name: Run linting
       run: make lint
     - name: Run tests
-      run: make test
+      # Use DEV_MODE=0 to use the installed fastly-compute-py binary instead of rebuilding with cargo
+      run: DEV_MODE=0 make test

@@ -6,7 +6,7 @@ from types import MappingProxyType
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from wit_world.types import Err as WitErr
+    from componentize_py_types import Err as WitErr
 
     from .response import FastlyResponse
 

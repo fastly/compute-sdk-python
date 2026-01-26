@@ -1,0 +1,15 @@
+[project]
+name = "game-of-life"
+version = "0.1.0"
+description = "Fastly Compute example rendering conway's game of life"
+requires-python = ">=3.12"
+dependencies = [
+    "flask>=3.1.2,<4.0",
+    "fastly-compute",
+]
+
+[tool.uv.sources]
+fastly-compute = { path = "../../", editable = true }
+
+[tool.fastly-compute]
+entry = "game-of-life"

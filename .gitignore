@@ -7,3 +7,9 @@ __pycache__
 
 # Build artifacts
 /build/
+bin/
+
+# Rust
+target/
+*.so
+target/

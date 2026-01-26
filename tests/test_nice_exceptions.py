@@ -9,8 +9,8 @@ from pytest import raises
 # Bring in stubs for local testing:
 sys.path.append(str(Path(__file__).parent.parent / "stubs"))
 
+from componentize_py_types import Err
 from wit_world.imports.types import Error_BufferLen, OpenError
-from wit_world.types import Err
 
 from fastly_compute.exceptions import (
     FastlyError,
