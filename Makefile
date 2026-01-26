@@ -31,7 +31,7 @@ COMPUTE_WIT := wit/deps/fastly/compute.wit
 EXAMPLES := bottle-app flask-app backend-requests game-of-life
 
 # Default example for serve target
-EXAMPLE ?= bottle_app
+EXAMPLE ?= bottle-app
 WASM_FILE := $(BUILD_DIR)/$(EXAMPLE).composed.wasm
 
 TARGET_WORLD := fastly:compute/service
