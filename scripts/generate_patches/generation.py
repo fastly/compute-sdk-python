@@ -107,39 +107,45 @@ def mappings_code_tree(
         imports.add(func.wit_module_path())
 
     # Do templating:
+    code += "try:\n"
     code += (
-        "from .decorators import remap_wit_errors\n"  # Linter: don't join these lines.
-        "import fastly_compute.exceptions\n"
+        "    from .decorators import remap_wit_errors\n"
+        "    import fastly_compute.exceptions\n"
     )
     for import_ in sorted(imports):
-        code += f"import {import_}\n"
-    code += "\n\n"
-
-    code += "MAPPINGS = {\n"
+        code += f"    import {import_}\n"
+    code += (
+        "except ImportError:\n"
+        "    # Tolerate that momentary import for the testrunner before Viceroy, and thus\n"
+        "    # the wit_world, is around.\n"
+        "    def patch():\n"
+        '        print("Faking the run of exception-mapping monkeypatches for test runner.")\n'
+        "else:\n"
+        "    MAPPINGS = {\n"
+    )
     for wit_path, py_module_path, py_exception_name in sorted(mappings):
-        code += f"    {wit_path}: {py_module_path}.{py_exception_name},\n"
-    code += "    type(None): fastly_compute.exceptions.FastlyError,\n"
-    code += "}\n\n"
+        code += f"        {wit_path}: {py_module_path}.{py_exception_name},\n"
+    code += (
+        "        type(None): fastly_compute.exceptions.FastlyError,\n"  # Linter: don't wrap.
+        "    }\n"
+    )
 
     code += '''
-did_patch = False
+    did_patch = False
 
+    def patch():
+        """Apply patches if they haven't already been applied."""
 
-def patch():
-    """Apply patches if they haven't already been applied."""
-
-    global did_patch
-    if did_patch:
-        # This test shouldn't be needed, but it avoids double-wrapping the
-        # routines if somehow patch() did get called twice.
-        return
-    did_patch = True
-
-'''
+        global did_patch
+        if did_patch:
+            # This test shouldn't be needed, but it avoids double-wrapping the
+            # routines if somehow patch() did get called twice.
+            return
+        did_patch = True\n\n'''
 
     for func in functions_to_patch:
         func_path = func.wit_path()
-        code += f"    {func_path} = remap_wit_errors(MAPPINGS)({func_path})\n"
+        code += f"        {func_path} = remap_wit_errors(MAPPINGS)({func_path})\n"
 
     # TODO: Make affordance for manually adding ergonomic getter properties,
     # __str__s, etc. to exception classes.

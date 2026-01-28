@@ -5,7 +5,7 @@ from enum import Enum
 from functools import wraps
 from typing import Any
 
-from wit_world.imports.types import Err
+from componentize_py_types import Err
 
 from fastly_compute.exceptions import FastlyError, UnexpectedFastlyError
 
