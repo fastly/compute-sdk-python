@@ -141,7 +141,7 @@ pub fn build(output: PathBuf, entry_name: String) -> Result<()> {
     futures::executor::block_on(async {
         componentize_py::componentize(
             &[merged_wit_path.as_path()],
-            Some("fastly:compute/service"),
+            Some("fastly:compute/service@0.1.0"),
             &[],
             false,
             Some("wit_world"),

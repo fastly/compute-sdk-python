@@ -34,7 +34,7 @@ EXAMPLES := bottle-app flask-app backend-requests game-of-life
 EXAMPLE ?= bottle-app
 WASM_FILE := $(BUILD_DIR)/$(EXAMPLE).composed.wasm
 
-TARGET_WORLD := fastly:compute/service
+TARGET_WORLD := fastly:compute/service@0.1.0
 
 VICEROY ?= viceroy
 
