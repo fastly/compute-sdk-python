@@ -10,9 +10,10 @@ import urllib.parse
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from componentize_py_types import Err
 from wit_world.imports import backend as wit_backend
-from wit_world.imports.types import OpenError
+
+from fastly_compute.exceptions.types.error import Error
+from fastly_compute.exceptions.types.open_error import OpenError
 
 from .exceptions import MissingSchema, RequestException
 
@@ -65,14 +66,10 @@ def resolve_backend(
         # Check if backend exists by trying to open it
         try:
             backend_obj = wit_backend.Backend.open(fastly_backend)
-        except Err as e:
-            # Check if this is an OpenError (backend not found)
-            if isinstance(e.value, OpenError):
-                raise RequestException(
-                    f"Static backend '{fastly_backend}' does not exist"
-                ) from e
-            # Re-raise if it's a different error
-            raise
+        except OpenError as e:
+            raise RequestException(
+                f"Static backend '{fastly_backend}' does not exist"
+            ) from e
     else:
         # dynamic backend
         if not parsed.scheme or not parsed.netloc:
@@ -117,5 +114,5 @@ def _register_dynamic_backend(
         return wit_backend.register_dynamic_backend(
             prefix=backend_name, target=parsed_url.netloc, options=options
         )
-    except Err as e:
-        raise RequestException.from_wit_error(e, "register_dynamic_backend") from e
+    except Error as e:
+        raise RequestException.from_fastly_error(e, "register_dynamic_backend") from e

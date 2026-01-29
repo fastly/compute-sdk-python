@@ -6,14 +6,23 @@ from types import MappingProxyType
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from componentize_py_types import Err as WitErr
-
     from .response import FastlyResponse
 
 # Runtime imports needed for error mappings at module level
 from wit_world.imports import http_req
 from wit_world.imports import types as wit_types
 from wit_world.imports.http_req import SendErrorDetail
+
+from fastly_compute.exceptions import FastlyError
+from fastly_compute.exceptions.http_req import ErrorWithDetail
+from fastly_compute.exceptions.types.error import (
+    CannotRead,
+    HttpHeadTooLarge,
+    HttpIncomplete,
+    HttpInvalid,
+    HttpInvalidStatus,
+    HttpUser,
+)
 
 
 def _map_error_to_exception(
@@ -59,19 +68,19 @@ class RequestException(IOError):
         self.request: http_req.Request | None = request
 
     @classmethod
-    def from_http_req_error(
-        cls, err: WitErr[http_req.ErrorWithDetail], operation: str
+    def from_detailed_error(
+        cls, err: ErrorWithDetail, operation: str
     ) -> RequestException:
-        """Create appropriate exception from http_req WIT error.
+        """Create a ``requests`` exception from an ErrorWithDetail.
 
         Args:
-            err: WIT Err exception containing ErrorWithDetail
+            err: The error to map from
             operation: Description of what operation failed
 
         Returns:
             Appropriate RequestException subclass instance
         """
-        error_with_detail = err.value
+        error_with_detail = err.args[0]
 
         # Try detailed error classification first; this is not guaranteed
         # to be present in all cases.
@@ -92,21 +101,19 @@ class RequestException(IOError):
         )
 
     @classmethod
-    def from_wit_error(
-        cls, err: WitErr[wit_types.Error], operation: str
-    ) -> RequestException:
-        """Create appropriate exception from generic WIT error.
+    def from_fastly_error(cls, err: FastlyError, operation: str) -> RequestException:
+        """Create a ``requests`` exception from a FastlyError or subclass.
 
         Args:
-            err: WIT Err exception containing generic Error
+            err: The error to map from
             operation: Description of what operation failed
 
         Returns:
             Appropriate RequestException subclass instance
         """
         return _map_error_to_exception(
-            err.value,
-            WIT_ERROR_MAPPINGS,
+            err,
+            FASTLY_ERROR_MAPPINGS,
             f"Operation {operation} failed",
             cls,
         )
@@ -197,6 +204,20 @@ WIT_ERROR_MAPPINGS: MappingProxyType[type[wit_types.Error], type[RequestExceptio
             wit_types.Error_HttpHeadTooLarge: HTTPError,
             wit_types.Error_HttpInvalidStatus: HTTPError,
             wit_types.Error_CannotRead: ConnectionError,
+        }
+    )
+)
+
+# Map FastlyErrors to the errors `requests` returns.
+FASTLY_ERROR_MAPPINGS: MappingProxyType[type[FastlyError], type[RequestException]] = (
+    MappingProxyType(
+        {
+            HttpInvalid: HTTPError,
+            HttpUser: HTTPError,
+            HttpIncomplete: HTTPError,
+            HttpHeadTooLarge: HTTPError,
+            HttpInvalidStatus: HTTPError,
+            CannotRead: ConnectionError,
         }
     )
 )
