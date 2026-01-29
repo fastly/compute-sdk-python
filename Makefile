@@ -48,6 +48,7 @@ COMPOSED_WASMS := $(foreach example,$(EXAMPLES),$(BUILD_DIR)/$(example).composed
 all: $(COMPOSED_WASMS)
 
 $(STUBS_DIR): $(COMPUTE_WIT)
+	rm -rf $(STUBS_DIR)
 	uv run componentize-py -d wit --world-module wit_world -w $(TARGET_WORLD) bindings $(STUBS_DIR)
 
 # Build our composed wasm using fastly-compute-py build
