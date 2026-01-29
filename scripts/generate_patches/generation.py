@@ -153,7 +153,7 @@ def mappings_code_tree(
     # TODO: Maybe automatically improve the docstring of each method to list the
     # exceptions it raises.
 
-    return {"wit_patching": {"patches.py": code}}
+    return {"runtime_patching": {"patches.py": code}}
 
 
 def write_files(tree: Mapping[str, Mapping[str, str]], base_folder: Path):

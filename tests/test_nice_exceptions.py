@@ -16,7 +16,7 @@ from fastly_compute.exceptions import (
     FastlyError,
     UnexpectedFastlyError,
 )
-from fastly_compute.wit_patching.decorators import remap_wit_errors
+from fastly_compute.runtime_patching.decorators import remap_wit_errors
 
 
 class BufferTooShortError(FastlyError):
