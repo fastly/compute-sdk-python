@@ -60,7 +60,7 @@ $(BUILD_DIR)/%.composed.wasm: wit/viceroy.wit wit/deps/fastly/compute.wit fastly
 # The script that writes the exceptions and the patches always rewrites
 # everything, so we can depend on the mod date of only 1 file. We choose
 # patches.py, because its name doesn't depend on the WIT contents.
-fastly_compute/runtime_patching/patches.py: scripts/generate_patches/*.py $(COMPUTE_WIT)
+fastly_compute/runtime_patching/patches.py: scripts/generate_patches/*.py $(shell find scripts/generate_patches/templates -name "*.jinja") $(COMPUTE_WIT)
 	uv run python -m scripts.generate_patches
 
 # Create build directory
