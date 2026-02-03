@@ -22,7 +22,12 @@ class DocsHaver:
     Abstract.
     """
 
-    _me: Any
+    def __init__(self, me: Any):
+        """Construct.
+
+        :arg me: The JSON representing the WIT-file entity I am
+        """
+        self._me: dict[str, Any] = me
 
     def docs(self) -> str:
         """Return the documentation of the type, "" if omitted."""
@@ -76,7 +81,7 @@ class Type(Thing):
 
     In practice, many types, like variants and the unit type, are represented by
     more-specific subclasses, leaving this one to stand in for ones we haven't
-    needed to specializze for yet.
+    needed to specialize for yet.
     """
 
     @classmethod
@@ -97,7 +102,7 @@ class Type(Thing):
                 # It's a primitive.
                 return cls(type_id, {"name": type_id}, wit_json)
             elif isinstance(type_id, NoneType):
-                return NullType()
+                return NullType(wit_json)
 
             # It's an int. Chase that down, including following type aliases.
             current_type = wit_json["types"][type_id]
@@ -112,8 +117,8 @@ class Type(Thing):
 
     def __init__(self, id: int | str, type_: dict, wit_json: dict[str, list[dict]]):
         """Private constructor. Use from_id() instead."""
+        super().__init__(type_)
         self._id: int | str = id
-        self._me: dict[str, Any] = type_
         self._wit = wit_json
 
     def __hash__(self):
@@ -174,9 +179,8 @@ class Result(Type):
 
 
 class NullType(Type):
-    def __init__(self):
-        self._id = "null"
-        self._me = {"name": "null"}
+    def __init__(self, wit_json):
+        super().__init__("null", {"name": "null"}, wit_json)
 
 
 class Record(Type):
@@ -213,7 +217,7 @@ class Case(Thing):
     """Abstract arm of a WIT type that has alternative manifestations."""
 
     def __init__(self, case_json: dict[str, Any], haver: CaseHaver):
-        self._me = case_json
+        super().__init__(case_json)
         self._haver = haver
 
 
@@ -268,7 +272,7 @@ class Function(Thing):
         interface_json: dict[str, Any],
         wit_json: dict[str, list[dict]],
     ):
-        self._me = function_json
+        super().__init__(function_json)
         self._interface = interface_json
         self._wit = wit_json
 
