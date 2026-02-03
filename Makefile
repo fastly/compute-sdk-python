@@ -49,7 +49,7 @@ all: $(COMPOSED_WASMS)
 
 $(STUBS_DIR): $(COMPUTE_WIT)
 	rm -rf $(STUBS_DIR)
-	uv run componentize-py -d wit --world-module wit_world -w $(TARGET_WORLD) bindings $(STUBS_DIR)
+	uv run --extra dev componentize-py -d wit --world-module wit_world -w $(TARGET_WORLD) bindings $(STUBS_DIR)
 
 # Build our composed wasm using fastly-compute-py build
 $(BUILD_DIR)/%.composed.wasm: wit/viceroy.wit wit/deps/fastly/compute.wit fastly_compute/wsgi.py fastly_compute/runtime_patching/patches.py | $(BUILD_DIR) $(STUBS_DIR)
