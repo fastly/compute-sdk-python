@@ -41,9 +41,10 @@ import json as json_module
 import urllib.parse
 from typing import Any, TypedDict, Unpack
 
-from componentize_py_types import Err
 from wit_world.imports import http_body, http_req
 
+from fastly_compute.exceptions.http_req import ErrorWithDetail
+from fastly_compute.exceptions.types.error import Error
 from fastly_compute.requests.backend import resolve_backend
 
 from .exceptions import (
@@ -241,8 +242,8 @@ def request(
         wit_request = http_req.Request.new()
         wit_request.set_method(method.upper())
         wit_request.set_uri(url_parsed.geturl())
-    except Err as e:
-        raise RequestException.from_wit_error(e, "create_req") from e
+    except Error as e:
+        raise RequestException.from_fastly_error(e, "create_req") from e
 
     # Set headers
     headers = headers if headers is not None else {}
@@ -270,8 +271,8 @@ def request(
     for name, value in headers.items():
         try:
             wit_request.insert_header(name, value.encode("utf-8"))
-        except Err as e:
-            raise RequestException.from_wit_error(e, "insert_header") from e
+        except Error as e:
+            raise RequestException.from_fastly_error(e, "insert_header") from e
 
     # Prepare request body
     wit_body = http_body.new()
@@ -280,17 +281,17 @@ def request(
             written = 0
             while written < len(body):
                 written += http_body.write(wit_body, body)
-        except Err as e:
-            raise RequestException.from_wit_error(e, "http_body.write") from e
+        except Error as e:
+            raise RequestException.from_fastly_error(e, "http_body.write") from e
 
     # Send the request
     try:
         wit_response, response_body = http_req.send(
             wit_request, wit_body, resolution.backend
         )
-    except Err as e:
+    except ErrorWithDetail as e:
         # WIT-level errors during request execution - use proper error classification
-        raise RequestException.from_http_req_error(e, "http_req.send") from e
+        raise RequestException.from_detailed_error(e, "http_req.send") from e
 
     # Wrap in FastlyResponse
     return FastlyResponse(wit_response, response_body, url_parsed.geturl())

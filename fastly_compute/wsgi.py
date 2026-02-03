@@ -22,7 +22,8 @@ from wit_world.imports.http_downstream import (
     next_request,
 )
 from wit_world.imports.http_resp import send_downstream
-from wit_world.imports.types import Err, Error_CannotRead
+
+from fastly_compute.exceptions.types.error import CannotRead
 
 
 def serve_wsgi_request(
@@ -222,17 +223,9 @@ class WsgiHttpIncoming(WitHttpIncoming):
             pending_request = next_request(options)
             try:
                 result = await_request(pending_request)
-            except Err as exc:
-                # TODO: Improve error design so we can catch only the exceptions
-                # we're really interested in, per Python's idiom. Rather than
-                # carting around a Result type that's Union[Ok[T], Err[E]], we
-                # should probably return T xor raise E.
-                if isinstance(exc.value, Error_CannotRead):
-                    # There were no more requests within the timeout.
-                    break
-                else:
-                    # Something went wrong.
-                    raise
+            except CannotRead:
+                # There were no more requests within the timeout.
+                break
             else:
                 if not result:
                     break

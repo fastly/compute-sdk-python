@@ -1,8 +1,8 @@
 """Utility functions for fastly_compute package."""
 
-from componentize_py_types import Err
 from wit_world.imports import async_io, http_body
 
+from fastly_compute.exceptions.types.error import Error
 from fastly_compute.requests.exceptions import RequestException
 
 
@@ -25,8 +25,8 @@ def read_response_body(
     while True:
         try:
             chunk = http_body.read(response_body, chunk_size)
-        except Err as e:
-            raise RequestException.from_wit_error(e, "http_body.read") from e
+        except Error as e:
+            raise RequestException.from_fastly_error(e, "http_body.read") from e
 
         if len(chunk) == 0:
             break

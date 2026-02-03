@@ -1,9 +1,13 @@
 # Python/uv artifacts
 .venv/
 *.egg-info
-
-/stubs/
 __pycache__
+
+# Generated code
+/stubs/
+/fastly_compute/exceptions/*
+!/fastly_compute/exceptions/__init__.py
+/fastly_compute/runtime_patching/patches.py
 
 # Build artifacts
 /build/
@@ -12,4 +16,3 @@ bin/
 # Rust
 target/
 *.so
-target/
