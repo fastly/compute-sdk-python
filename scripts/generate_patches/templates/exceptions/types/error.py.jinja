@@ -1,9 +1,16 @@
 {% extends "default_exception.py.jinja" -%}
 
 {% block exceptions -%}
-{{ generated_exceptions(omit=["BufferLen"]) -}}
+{{ generated_exceptions(omit=["BufferLen"]) }}
+
 
 class BufferLen(Error):
+    """Buffer length error
+
+    Returned when a buffer is the wrong size.
+    Includes the buffer length that would allow the operation to succeed.
+    """
+
     def __init__(self, wit_error):
         self.length = wit_error.value
 

@@ -38,43 +38,57 @@ def generate_exceptions(error_types: Iterable[Type]):
         contained code. For example, acl (from the interface name) -> acl_error.py
         (from the enum name) -> class AclError(FastlyError)...
     """
-    # package name -> module name -> code chunks:
-    code = defaultdict(lambda: defaultdict(dict))
-    packages_to_init = set()
+    # package -> module -> code:
+    exceptions = defaultdict(lambda: defaultdict(dict[str, str]))
+    # package -> module -> docstring:
+    module_docstrings = defaultdict(dict)
+    # package -> docstring:
+    package_docstrings = {}
 
     for error_type in error_types:
         package = error_type.py_package()
         module = error_type.py_module() + ".py"
 
-        # Create package's empty __init__.py if not already there:
-        packages_to_init.add(package)
+        try:
+            module_docstrings[package][module]
+        except KeyError:
+            module_docstrings[package][module] = error_type.docstring(indent=0)
+
+        # Create package's __init__.py if not already there:
+        if package not in package_docstrings:
+            package_docstrings[package] = error_type.interface().docstring(indent=0)
 
         # Common superclass for exceptions based on the enum or variant's
         # members. Or the raised exception itself for records.
         top_level_exception_name = error_type.py_exception_name()
-        code[package][module][top_level_exception_name] = (
+        exceptions[package][module][top_level_exception_name] = (
             f"""class {top_level_exception_name}(FastlyError):\n"""
-            f'''    """{error_type.docstring_or_pass()}"""\n\n\n'''
+            f"""    {error_type.docstring(indent=4) or "pass"}"""
         )
         # Insert enum or variant cases.
         for case in error_type.cases():
             case_exception_name = case.py_exception_name()
-            code[package][module][case_exception_name] = (
+            exceptions[package][module][case_exception_name] = (
                 f"""class {case_exception_name}({top_level_exception_name}):\n"""
-                f'''    """{case.docstring_or_pass()}"""\n\n\n'''
+                f"""    {case.docstring(indent=4) or "pass"}"""
             )
 
-    for package in packages_to_init:
+    for package, docstring in package_docstrings.items():
         write_templated_file(
             FASTLY_COMPUTE / "exceptions" / package / "__init__.py",
-            {},
-            jinja_env.get_template("empty_init.py.jinja"),
+            {"module_docstring": docstring},
+            jinja_env.get_template("exception_init_module.py.jinja"),
         )
-    for package, modules in code.items():
-        for module, exceptions in modules.items():
+    for package, modules in exceptions.items():
+        for module, exceptions_by_name in modules.items():
             write_templated_file(
                 FASTLY_COMPUTE / "exceptions" / package / module,
-                {"generated_exceptions": partial(join_named_chunks, exceptions)},
+                {
+                    "generated_exceptions": partial(
+                        join_named_chunks, exceptions_by_name, "\n\n\n"
+                    ),
+                    "module_docstring": module_docstrings[package][module],
+                },
                 jinja_env.get_template("default_exception.py.jinja"),
             )
 
@@ -91,11 +105,12 @@ def generate_patches(
     """
     # Collect info:
     mappings = set()
-    imports = set()
+    wit_imports = set()
+    fastly_imports = set()
     for error_type in error_types:
         # Get where it is found in wit_world. Use shallow imports to avoid collisions.
-        imports.add(error_type.wit_module_path())
-        imports.add(error_type.py_module_path())
+        wit_imports.add(error_type.wit_module_path())
+        fastly_imports.add(error_type.py_module_path())
         if error_type.has_cases():
             # We need only add the cases; it doesn't make sense in WIT to return
             # the Enum or Variant itself in a result.
@@ -118,7 +133,7 @@ def generate_patches(
 
     # Collect import paths for the functions themselves:
     for func in functions_to_patch:
-        imports.add(func.wit_module_path())
+        wit_imports.add(func.wit_module_path())
 
     # TODO: Maybe automatically improve the docstring of each method to list the
     # exceptions it raises.
@@ -126,7 +141,8 @@ def generate_patches(
     write_templated_file(
         FASTLY_COMPUTE / "runtime_patching" / "patches.py",
         {
-            "imports": imports,
+            "fastly_imports": sorted(fastly_imports),
+            "wit_imports": sorted(wit_imports),
             "mappings": sorted(mappings),
             "functions_to_patch": functions_to_patch,
         },
@@ -134,13 +150,15 @@ def generate_patches(
     )
 
 
-def join_named_chunks(chunks: dict[str, str], omit: list[str] | None = None) -> str:
+def join_named_chunks(
+    chunks: dict[str, str], sep: str, omit: list[str] | None = None
+) -> str:
     """Return an ordered concatenation of all items in a dict except those of
     the given keys.
     """
     if omit is None:
         omit = []
-    return "".join(
+    return sep.join(
         chunk for name, chunk in chunks.items() if name not in omit
     )  # O(n^2) but small
 

@@ -10,10 +10,11 @@ Fastly's own slightly higher level generated code.
 
 import re
 from collections.abc import Iterable
+import textwrap
 from types import NoneType
 from typing import Any, Self
 
-from .utils import indent, lower_snake, only, shouty_snake, upper_camel
+from .utils import lower_snake, only, shouty_snake, upper_camel
 
 
 class DocsHaver:
@@ -25,16 +26,24 @@ class DocsHaver:
     _me: Any
 
     def docs(self) -> str:
-        """Return the documentation of the type, "" if omitted."""
-        return self._me.get("docs", {}).get("contents", "")
+        """Return the documentation of the type, "" if omitted.
 
-    def docstring_or_pass(self) -> str:
-        """Return a one-level-indented version of the docs suitable for use as a
-        docstring in an otherwise empty construct.
-
-        Accordingly, emit "pass" if there is no docstring.
+        Strip leading and trailing whitespace.
         """
-        return indent(self.docs()) or "pass"
+        return self._me.get("docs", {}).get("contents", "").strip()
+
+    def docstring(self, indent=4) -> str:
+        """Return a one-level-indented, triple-quoted version of the docs
+        suitable for use as a docstring in a top-level construct.
+        """
+        docs = self.docs()
+        if docs:
+            if docs.count("\n") > 0:  # multi-line
+                docs += "\n"
+            docs += '"""'
+
+            return '"""' + textwrap.indent(docs, " " * indent).lstrip()
+        return ""
 
 
 class Thing(DocsHaver):
@@ -308,7 +317,7 @@ class Function(Thing):
             return return_type.error_type()
 
 
-class Interface:
+class Interface(DocsHaver):
     """A WIT interface"""
 
     def __init__(self, interface_json: dict[str, Any], wit_json: dict[str, list[dict]]):
