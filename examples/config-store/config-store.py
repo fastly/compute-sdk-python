@@ -52,16 +52,6 @@ def test_get(store_name, key, default=None):
     return {"value": value}
 
 
-@app.route("/get_with_initial_buf_len/<store_name>/<key>/<initial_buf_len:int>")
-@handle_request
-def test_get_with_initial_buf_len(store_name, key, initial_buf_len):
-    """Proxy endpoint to test get with custom initial_buf_len using raw API."""
-    config = ConfigStore.open(store_name)
-    # Use _get_raw to test buffer sizing without automatic retry
-    value = config._get_raw(key, initial_buf_len)
-    return {"value": value}
-
-
 @app.route("/contains/<store_name>/<key>")
 @handle_request
 def test_contains(store_name, key):

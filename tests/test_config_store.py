@@ -19,7 +19,7 @@ class TestConfigStore(ViceroyTestBase):
                         "whitespace": "   ",
                         "special_chars": "!@#$%^&*()",
                         "unicode": "Hello 世界 🌍",
-                        "large_value": "x" * 100,  # 100 byte value for buffer tests
+                        "large_value": "x" * 8000,  # 8000 byte value for buffer tests
                     },
                 }
             }
@@ -52,7 +52,7 @@ class TestConfigStore(ViceroyTestBase):
         response = self.get("/get/nonexistent/key")
         assert response.status_code == 500
         data = response.json()
-        assert data["error_type"] == "ConfigStoreNotFoundError"
+        assert data["error_type"] == "NotFound"
 
     def test_get_string_value(self):
         """Test getting a string value."""
@@ -84,20 +84,9 @@ class TestConfigStore(ViceroyTestBase):
         """Test handling of unicode characters."""
         self.assert_get_value("test-config", "unicode", "Hello 世界 🌍")
 
-    def test_automatic_buffer_resize_for_large_values(self):
-        """Test that automatic buffer resizing handles large values."""
-        # The large_value is 100 bytes. With automatic resizing, this should work
-        # even with a small initial buffer (default 1024 bytes).
-        self.assert_get_value("test-config", "large_value", "x" * 100)
-
-    def test_buffer_too_small_with_raw_api(self):
-        """Test that _get_raw API can still raise buffer errors when called directly."""
-        # The /get_with_initial_buf_len endpoint uses a small buffer without retry
-        # to test that buffer errors can still occur at the lower level
-        response = self.get("/get_with_initial_buf_len/test-config/large_value/10")
-        assert response.status_code == 500
-        data = response.json()
-        assert data["error_type"] == "ConfigStoreBufferTooSmallError"
+    def test_large_values(self):
+        """Test that large values are handled correctly."""
+        self.assert_get_value("test-config", "large_value", "x" * 8000)
 
     def test_contains_existing_key(self):
         """Test that contains returns True for existing keys."""
