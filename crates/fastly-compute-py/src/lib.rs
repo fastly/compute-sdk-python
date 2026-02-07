@@ -93,7 +93,7 @@ pub fn run_main(cli: &Cli) -> Result<()> {
     log::info!("  Entry point: {}", config.entry);
     log::info!("  Output: {}", config.output.display());
 
-    build(config.output.clone(), config.entry)?;
+    build(config.output.clone(), config.entry, config.virtualenv)?;
 
     log::info!("✓ Build complete: {}", config.output.display());
 
@@ -118,7 +118,7 @@ fn _fastly_compute_py(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     Ok(())
 }
 
-pub fn build(output: PathBuf, entry_name: String) -> Result<()> {
+pub fn build(output: PathBuf, entry_name: String, virtualenv: Option<PathBuf>) -> Result<()> {
     let temp_dir = TempDir::new()?;
     let temp_path = temp_dir.path();
 
@@ -132,7 +132,7 @@ pub fn build(output: PathBuf, entry_name: String) -> Result<()> {
     let temp_component_wasm_path = temp_path.join("component.wasm");
 
     log::info!("  Resolving Python dependencies...");
-    let python_path = site_packages::build_python_path()?;
+    let python_path = site_packages::build_python_path(&virtualenv)?;
     log::debug!("Using python_path: {:?}", python_path);
 
     let python_path_refs: Vec<&str> = python_path.iter().map(|s| s.as_str()).collect();

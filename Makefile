@@ -10,7 +10,6 @@ DEV_MODE ?= 1
 
 # Rust crate path
 FASTLY_COMPUTE_PY_MANIFEST := $(abspath crates/fastly-compute-py/Cargo.toml)
-FASTLY_COMPUTE_PY_BIN := target/release/fastly_compute_py_build
 
 # Select build tool based on DEV_MODE
 ifeq ($(DEV_MODE),1)
