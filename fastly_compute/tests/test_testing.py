@@ -12,17 +12,18 @@ class TestViceroyTestingFramework(ViceroyTestBase):
     def test_viceroy_server_fixture_provides_server_info(self):
         """Test that the viceroy_server fixture provides expected attributes."""
         # Check that the fixture sets up a ViceroyServer with expected attributes
-        assert hasattr(self.server, "process")
-        assert hasattr(self.server, "base_url")
-        assert hasattr(self.server, "output_lines")
+        server = self.server()
+        assert hasattr(server, "process")
+        assert hasattr(server, "base_url")
+        assert hasattr(server, "output_lines")
 
         # Check that base_url is properly formatted
-        assert self.server.base_url.startswith("http://127.0.0.1:")
+        assert server.base_url.startswith("http://127.0.0.1:")
 
         # Check that output_lines contains viceroy startup output
-        assert len(self.server.output_lines) > 0
+        assert len(server.output_lines) > 0
         listening_lines = [
-            line for line in self.server.output_lines if "Listening on" in line
+            line for line in server.output_lines if "Listening on" in line
         ]
         assert len(listening_lines) > 0
 

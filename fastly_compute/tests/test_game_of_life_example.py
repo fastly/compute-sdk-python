@@ -47,4 +47,4 @@ class TestGameOfLife(ViceroyTestBase):
         # Reports about crashers in the post-response code come *after* the
         # request has succeeded. And it seems to take awhile to show up.
         sleep(0.5)  # .3 is not enough.
-        assert "WebAssembly trapped" not in "\n".join(self.server.output_lines)
+        assert "WebAssembly trapped" not in "\n".join(self.server().output_lines)

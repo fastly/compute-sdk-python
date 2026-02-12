@@ -64,11 +64,11 @@ class ViceroyTestBase:
     WASM_FILE = "build/bottle-app.composed.wasm"  # Default to the main example
     _server: ViceroyServer | None = None  # Will be set by the fixture
 
-    @property
-    def server(self) -> ViceroyServer:
+    @classmethod
+    def server(cls) -> ViceroyServer:
         """Access server properties."""
-        assert self._server is not None
-        return self._server
+        assert cls._server is not None
+        return cls._server
 
     # Configuration for backend testing
     VICEROY_CONFIG = None  # Dict with viceroy config, or None for no config
@@ -309,7 +309,7 @@ class ViceroyTestBase:
         """
         timeout = kwargs.pop("timeout", cls.REQUEST_TIMEOUT)
         response = requests.request(
-            method, f"{cls._server.base_url}{path}", timeout=timeout, **kwargs
+            method, f"{cls.server().base_url}{path}", timeout=timeout, **kwargs
         )
         return response
 
