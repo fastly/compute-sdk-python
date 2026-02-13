@@ -15,7 +15,6 @@ import subprocess
 import sys
 import threading
 import time
-from base64 import a85decode
 from contextlib import chdir, contextmanager
 from dataclasses import dataclass
 from functools import wraps
@@ -23,6 +22,7 @@ from pathlib import Path
 from shutil import rmtree
 from tempfile import NamedTemporaryFile, mkdtemp
 from types import MethodType
+from typing import Any
 from urllib.parse import quote
 
 import pytest
@@ -340,6 +340,8 @@ class AutoViceroyTestBase(ViceroyTestBase):
     def ephemeral_wasm(cls):
         """Build an ad hoc WASM which performs the server-side half of the
         :method:`on_viceroy` magic.
+
+        The ``viceroy_server`` fixture then actually runs what we emit.
         """
         # Import the module where the tests we'll be running are defined. Having
         # them imported in a statically analyzable way allows componentize-py to
@@ -348,14 +350,13 @@ class AutoViceroyTestBase(ViceroyTestBase):
 to execute in Viceroy
 """
 
-from base64 import a85encode
 import pickle
 from urllib.parse import unquote
 
 import bottle
-from bottle import Bottle
+from bottle import Bottle, post
 
-from fastly_compute.testing import AutoViceroyTestBase
+from fastly_compute.testing import AutoViceroyTestBase, ViceroyException, ViceroyReturn
 AutoViceroyTestBase._is_on_viceroy = True
 
 import {cls.__module__}
@@ -366,19 +367,17 @@ bottle.debug(True)
 app = Bottle()
 
 
-@app.route("/<func_path>")
+@app.post("/<func_path>")
 def run_viceroy_chunk(func_path: str) -> dict[str, str | bool]:
-    """Run a method from a test class in Viceroy, and return its result over
-    HTTP.
+    """Run an `@on_viceroy`-decorated method from a test class in Viceroy, and
+    return its result over HTTP.
 
-    The method must be a class method so we don't have to instantiate the class.
-    (Once upon a time, we relaxed this by requiring the class to be instantiable
-    with no args. We could do it again.)
-
-    :arg func_path: Fully qualified name of the ``@in_viceroy``-decorated
-        function to run, typically like "TestClass.test_method".
+    :arg func_path: Fully qualified name of the function to run, typically like
+        "TestClass.test_method".
     """
     func_path = unquote(func_path)
+    body = bottle.request.body.read()
+    shipped_args, shipped_kwargs = pickle.loads(body)
 
     # Walk down the dotted path to get method to run:
     method = {cls.__module__}
@@ -387,14 +386,12 @@ def run_viceroy_chunk(func_path: str) -> dict[str, str | bool]:
         method = getattr(method, part)
 
     try:
-        result = method(class_)
-        is_exception = False
+        return_value = method(class_, *shipped_args, **shipped_kwargs)
     except Exception as exc:
-        result = exc
-        is_exception = True
-
-    return {{"result": a85encode(pickle.dumps(result)).decode("ascii"),
-             "is_exception": is_exception}}
+        result = ViceroyException(exc)
+    else:
+        result = ViceroyReturn(return_value)
+    return pickle.dumps(result)
 
 
 HttpIncoming = WsgiHttpIncoming(app)
@@ -436,6 +433,28 @@ def _as_class_method(method) -> classmethod:
     return classmethod(method) if isinstance(method, MethodType) else method
 
 
+class ViceroyException:
+    """An exception passed back from Viceroy-dwelling code"""
+
+    def __init__(self, exception: Exception):
+        self.exception = exception
+
+    def raise_or_return_value(self):
+        """Raise the exception I contain"""
+        raise self.exception
+
+
+class ViceroyReturn:
+    """A function return value passed back from Viceroy-dwelling code"""
+
+    def __init__(self, return_value: Any):
+        self.return_value = return_value
+
+    def raise_or_return_value(self):
+        """Return the return value I contain"""
+        return self.return_value
+
+
 def on_viceroy(method) -> classmethod:
     """Decorator for making a method run on the testrunner's Viceroy server
 
@@ -460,18 +479,17 @@ def on_viceroy(method) -> classmethod:
         # In the future, we could support incoming params.
 
         @wraps(method)
-        def ask_viceroy_to_call_method(cls):
+        def ask_viceroy_to_call_method(cls, *args, **kwargs):
             """Make a request to Viceroy, passing along a path to a function to
             run within it.
             """
-            response = cls.get("/" + quote(method.__qualname__))
+            response = cls.post(
+                "/" + quote(method.__qualname__), data=pickle.dumps((args, kwargs))
+            )
             response.raise_for_status()
-            data = response.json()
             # Unpickle response. Return retval or raise exception. (Yes, raise.
             # We want exceptions to not be forgotten by default.)
-            result = pickle.loads(a85decode(data["result"]))
-            if data["is_exception"]:
-                raise result
-            return result
+            result = pickle.loads(response.content)
+            return result.raise_or_return_value()
 
         return _as_class_method(ask_viceroy_to_call_method)
