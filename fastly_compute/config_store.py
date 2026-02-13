@@ -71,19 +71,22 @@ class ConfigStore:
 
         return result
 
-    def contains(self, key: str) -> bool:
+    def __contains__(self, key: str) -> bool:
         """Check if a key exists in the config store.
 
         :param key: The configuration key
         :return: True if the key exists, False otherwise
         :raises ~fastly_compute.exceptions.types.error.InvalidArgument: If the key is invalid
+        :raises KeyError: If the key is not a str
 
         Example::
 
             config = ConfigStore.open("app-config")
-            if config.contains("feature_flag"):
+            if "feature_flag" in config:
                 print("Feature flag exists")
         """
+        if not isinstance(key, str):
+            raise KeyError("Key must be a str")
         return self.get(key) is not None
 
     def close(self) -> None:

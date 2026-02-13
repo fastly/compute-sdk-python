@@ -57,7 +57,7 @@ def test_get(store_name, key, default=None):
 def test_contains(store_name, key):
     """Proxy endpoint to test contains."""
     config = ConfigStore.open(store_name)
-    contains = config.contains(key)
+    contains = key in config
     return {"contains": contains}
 
 
