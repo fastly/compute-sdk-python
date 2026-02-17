@@ -26,7 +26,7 @@ examples = [
 ]
 
 [tool.pytest.ini_options]
-testpaths = ["tests", "fastly_compute/tests"]
+testpaths = ["fastly_compute/tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
@@ -72,7 +72,6 @@ convention = "google"
 
 # Ignore doc lints for tests/examples
 [tool.ruff.lint.per-file-ignores]
-"tests/*" = ["D"]
 "fastly_compute/tests/*" = ["D"]
 "examples/*" = ["D"]
 # What can one say about __main__?
@@ -106,7 +105,7 @@ use-ignore-files = true
 # Type-check source code, tests, and examples
 project-includes = [
     "fastly_compute/**/*.py",
-    "tests/**/*.py",
+    "fastly_compute/tests/**/*.py",
     "examples/**/*.py",
     "scripts",
 ]
