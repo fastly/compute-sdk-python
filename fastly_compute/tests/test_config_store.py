@@ -1,12 +1,14 @@
 """Integration tests for Config Store functionality."""
 
-from fastly_compute.testing import ViceroyTestBase
+from pytest import raises
+
+from fastly_compute.config_store import ConfigStore
+from fastly_compute.exceptions.types.open_error import NotFound
+from fastly_compute.testing import AutoViceroyTestBase, on_viceroy
 
 
-class TestConfigStore(ViceroyTestBase):
+class TestConfigStore(AutoViceroyTestBase):
     """Config store integration tests."""
-
-    WASM_FILE = "build/config-store.composed.wasm"
 
     VICEROY_CONFIG = {
         "local_server": {
@@ -26,33 +28,29 @@ class TestConfigStore(ViceroyTestBase):
         }
     }
 
-    def assert_get_value(self, store: str, key: str, expected: str | None) -> None:
-        """Assert that getting a key returns the expected value."""
-        response = self.get(f"/get/{store}/{key}")
-        assert response.status_code == 200
-        assert response.json() == {"value": expected}
-
-    def assert_get_value_with_default(
-        self, store: str, key: str, default: str, expected: str
+    def assert_get_value(
+        self, store: str, key: str, expected: str | None, default: str | None = None
     ) -> None:
-        """Assert that getting a key with a default returns the expected value."""
-        response = self.get(f"/get/{store}/{key}/{default}")
-        assert response.status_code == 200
-        assert response.json() == {"value": expected}
+        """Assert that getting a key returns the expected value."""
+        value = self.config_get(store, key, default=default)
+        assert value == expected
 
-    def assert_get_error(self, store: str, key: str, error_type: str) -> None:
-        """Assert that getting a key raises an error."""
-        response = self.get(f"/get/{store}/{key}")
-        assert response.status_code == 500
-        data = response.json()
-        assert data["error_type"] == error_type
+    @on_viceroy
+    def config_get(cls, store_name, key, default=None):
+        """Return the value associated with a config store key."""
+        with ConfigStore.open(store_name) as config:
+            return config.get(key, default)
+
+    @on_viceroy
+    def config_contains(cls, store_name, key):
+        """Return whether a given key exists in a config store."""
+        with ConfigStore.open(store_name) as config:
+            return key in config
 
     def test_open_nonexistent_store(self):
         """Test opening a non-existent config store raises error."""
-        response = self.get("/get/nonexistent/key")
-        assert response.status_code == 500
-        data = response.json()
-        assert data["error_type"] == "NotFound"
+        with raises(NotFound):
+            self.config_get("nonexistent", "key")
 
     def test_get_string_value(self):
         """Test getting a string value."""
@@ -64,9 +62,7 @@ class TestConfigStore(ViceroyTestBase):
 
     def test_get_with_default(self):
         """Test getting with a default value."""
-        self.assert_get_value_with_default(
-            "test-config", "nonexistent", "my_default", "my_default"
-        )
+        self.assert_get_value("test-config", "nonexistent", "my_default", "my_default")
 
     def test_empty_string_value(self):
         """Test handling of empty string values."""
@@ -90,18 +86,12 @@ class TestConfigStore(ViceroyTestBase):
 
     def test_contains_existing_key(self):
         """Test that contains returns True for existing keys."""
-        response = self.get("/contains/test-config/string_key")
-        assert response.status_code == 200
-        assert response.json() == {"contains": True}
+        assert self.config_contains("test-config", "string_key")
 
     def test_contains_nonexistent_key(self):
         """Test that contains returns False for non-existent keys."""
-        response = self.get("/contains/test-config/nonexistent")
-        assert response.status_code == 200
-        assert response.json() == {"contains": False}
+        assert not self.config_contains("test-config", "nonexistent")
 
     def test_contains_empty_string_value(self):
         """Test that contains returns True for keys with empty string values."""
-        response = self.get("/contains/test-config/empty_string")
-        assert response.status_code == 200
-        assert response.json() == {"contains": True}
+        assert self.config_contains("test-config", "empty_string")

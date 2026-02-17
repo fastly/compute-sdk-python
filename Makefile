@@ -27,7 +27,7 @@ EXAMPLES_DIR := examples
 COMPUTE_WIT := wit/deps/fastly/compute.wit
 
 # Define all available examples (add new ones here)
-EXAMPLES := bottle-app flask-app backend-requests game-of-life config-store
+EXAMPLES := bottle-app flask-app backend-requests game-of-life
 
 # Default example for serve target
 EXAMPLE ?= bottle-app
