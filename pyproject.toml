@@ -37,7 +37,7 @@ addopts = [
 ]
 
 [tool.ruff]
-target-version = "py312"
+target-version = "py314"
 line-length = 88
 
 [tool.ruff.lint]
@@ -99,7 +99,7 @@ fastly-compute-py = "fastly_compute.fastly_compute_py:main"
 py-modules = ["app"]
 
 [tool.pyrefly]
-python-version = "3.12"
+python-version = "3.14"
 search-path = ["stubs"]
 use-ignore-files = true
 # Type-check source code, tests, and examples
