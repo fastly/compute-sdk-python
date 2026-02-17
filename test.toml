@@ -1,4 +1,5 @@
 # Fastly service configuration
+manifest_version = 3
 name = "my-compute-service"
 description = "Example Fastly Compute service"
 authors = ["paul.osborne@fastly.com"]
