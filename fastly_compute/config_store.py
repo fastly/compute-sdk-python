@@ -1,4 +1,4 @@
-"""Config Store API for Fastly Compute.
+"""Config Store API for Fastly Compute
 
 This module provides access to Fastly Config Stores, which allow you to store
 configuration data that can be updated without redeploying your service.
