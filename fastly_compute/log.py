@@ -27,21 +27,6 @@ from collections.abc import Callable
 from typing import Self
 
 from wit_world.imports import log as wit_log
-from wit_world.imports.types import OpenError
-
-from fastly_compute.exceptions import FastlyError, remap_wit_errors
-
-
-class LogEndpointError(FastlyError):
-    """Base exception for all log endpoint errors."""
-
-
-class LogEndpointNotFoundError(LogEndpointError):
-    """The requested log endpoint does not exist."""
-
-
-class LogEndpointInvalidNameError(LogEndpointError):
-    """The log endpoint name is invalid."""
 
 
 class LogEndpoint:
@@ -62,15 +47,7 @@ class LogEndpoint:
         self._endpoint = endpoint
 
     @classmethod
-    @remap_wit_errors(
-        {
-            OpenError.NOT_FOUND: LogEndpointNotFoundError,
-            OpenError.INVALID_SYNTAX: LogEndpointInvalidNameError,
-            OpenError.NAME_TOO_LONG: LogEndpointInvalidNameError,
-            OpenError.RESERVED: LogEndpointInvalidNameError,
-        }
-    )
-    def open(cls, name: str) -> "LogEndpoint":
+    def open(cls, name: str) -> Self:
         r"""Open a logging endpoint by name.
 
         Names are case sensitive. Calling open() with a name that doesn't
@@ -85,8 +62,9 @@ class LogEndpoint:
 
         :param name: The name of the logging endpoint
         :return: LogEndpoint instance
-        :raises LogEndpointNotFoundError: If the endpoint doesn't exist
-        :raises LogEndpointInvalidNameError: If the name is invalid or too long
+        :raises ~fastly_compute.exceptions.types.open_error.NotFound: If the endpoint doesn't exist or can't be created.
+        :raises ~fastly_compute.exceptions.types.open_error.NameTooLong: If the name is too long.
+        :raises ~fastly_compute.exceptions.types.open_error.InvalidSyntax: If the name is invalid.
 
         Example::
 
@@ -127,12 +105,17 @@ class LogEndpoint:
     def __enter__(self) -> Self:
         """Context manager entry.
 
-        Allows use of LogEndpoint in a 'with' statement.
+        Allows use of resource in a 'with' statement.
         """
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        """Context manager exit."""
+        """Context manager exit.
+
+        Use of the context manager will free up the underlying host resource on
+        exit. Referencing the resource after context manager exit will result in
+        a trap.
+        """
         self._endpoint.__exit__(exc_type, exc_val, exc_tb)
 
 
