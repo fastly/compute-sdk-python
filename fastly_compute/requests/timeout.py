@@ -4,7 +4,7 @@ This module provides timeout configuration classes that support both standard
 requests-compatible timeouts and Fastly-specific granular timeout controls.
 """
 
-from typing import override
+from typing import Self, override
 
 
 class TimeoutConfig:
@@ -52,9 +52,7 @@ class TimeoutConfig:
         return int(self.between_bytes * 1000)
 
     @classmethod
-    def from_requests_timeout(
-        cls, timeout: None | float | tuple[float, float]
-    ) -> "TimeoutConfig":
+    def from_requests_timeout(cls, timeout: None | float | tuple[float, float]) -> Self:
         """Create TimeoutConfig from requests-compatible timeout parameter.
 
         Args:

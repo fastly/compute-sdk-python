@@ -30,5 +30,10 @@ pub enum Command {
         /// Entry point module (default: main or auto-detect)
         #[arg(short, long)]
         entry: Option<String>,
+
+        /// Virtual environment in which to look for modules (default:
+        /// VIRTUAL_ENV env var or .venv)
+        #[arg(short, long)]
+        virtualenv: Option<PathBuf>,
     },
 }

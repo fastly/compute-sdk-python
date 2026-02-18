@@ -10,7 +10,6 @@ DEV_MODE ?= 1
 
 # Rust crate path
 FASTLY_COMPUTE_PY_MANIFEST := $(abspath crates/fastly-compute-py/Cargo.toml)
-FASTLY_COMPUTE_PY_BIN := target/release/fastly_compute_py_build
 
 # Select build tool based on DEV_MODE
 ifeq ($(DEV_MODE),1)
@@ -28,7 +27,7 @@ EXAMPLES_DIR := examples
 COMPUTE_WIT := wit/deps/fastly/compute.wit
 
 # Define all available examples (add new ones here)
-EXAMPLES := bottle-app flask-app backend-requests game-of-life config-store logging
+EXAMPLES := bottle-app flask-app backend-requests game-of-life logging
 
 # Default example for serve target
 EXAMPLE ?= bottle-app

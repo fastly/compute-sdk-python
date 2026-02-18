@@ -5,13 +5,13 @@ use std::path::{Path, PathBuf};
 
 /// Build a python_path list suitable for componentize-py.
 /// This includes the current directory and all site-packages paths.
-pub fn build_python_path() -> Result<Vec<String>> {
+pub fn build_python_path(virtualenv: &Option<PathBuf>) -> Result<Vec<String>> {
     let cwd = env::current_dir()?;
     log::debug!("Current directory: {}", cwd.display());
 
     let mut python_path = vec![cwd.to_string_lossy().to_string()];
 
-    if let Some(site_packages) = find_site_packages()? {
+    if let Some(site_packages) = find_site_packages(virtualenv)? {
         log::debug!(
             "Adding site-packages to python_path: {}",
             site_packages.display()
@@ -38,8 +38,8 @@ pub fn build_python_path() -> Result<Vec<String>> {
 }
 
 /// Find the site-packages directory within a virtualenv.
-pub fn find_site_packages() -> Result<Option<PathBuf>> {
-    let venv_path = find_venv()?;
+pub fn find_site_packages(virtualenv: &Option<PathBuf>) -> Result<Option<PathBuf>> {
+    let venv_path = virtualenv.to_owned().or(find_venv()?);
 
     if let Some(venv) = venv_path {
         log::debug!("Found virtualenv: {}", venv.display());

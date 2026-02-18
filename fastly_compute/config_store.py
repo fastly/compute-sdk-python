@@ -11,6 +11,8 @@ Example::
         api_url = config.get("api_url", "https://api.example.com")
 """
 
+from typing import Self
+
 from wit_world.imports import config_store as wit_config_store
 
 # The maximum value for a u32, used to signal that we don't want to cap
@@ -36,7 +38,7 @@ class ConfigStore:
         self._store = store
 
     @classmethod
-    def open(cls, name: str) -> "ConfigStore":
+    def open(cls, name: str) -> Self:
         """Open a config store by name.
 
         :param name: The name of the config store
@@ -101,7 +103,7 @@ class ConfigStore:
         """
         self._store.__exit__(None, None, None)
 
-    def __enter__(self) -> "ConfigStore":
+    def __enter__(self) -> Self:
         """Context manager entry.
 
         Allows use of ConfigStore in a 'with' statement.

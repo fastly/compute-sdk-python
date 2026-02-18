@@ -58,7 +58,7 @@ class TestLogging(ViceroyTestBase):
         """
         log_prefix = f"{endpoint_name} :: "
         logs = []
-        for line in self.server.output_lines:
+        for line in self.server().output_lines:
             if log_prefix in line:
                 log_message = line.split(log_prefix, 1)[1]
                 logs.append(log_message)

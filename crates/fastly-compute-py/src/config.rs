@@ -9,6 +9,7 @@ use crate::cli::Command;
 pub struct ConfigSource {
     pub entry: Option<String>,
     pub output: Option<PathBuf>,
+    pub virtualenv: Option<PathBuf>,
 }
 
 #[derive(Deserialize, Debug)]
@@ -61,12 +62,17 @@ impl ConfigBuilder {
     /// Add CLI command arguments as a configuration source
     pub fn with_command(mut self, command: &Command) -> Self {
         match command {
-            Command::Build { entry, output } => {
-                if entry.is_some() || output.is_some() {
-                    log::debug!("Config from CLI: entry={entry:?}, output={output:?}");
+            Command::Build {
+                entry,
+                output,
+                virtualenv,
+            } => {
+                if entry.is_some() || output.is_some() || virtualenv.is_some() {
+                    log::debug!("Config from CLI: entry={entry:?}, output={output:?}, virtualenv={virtualenv:?}");
                 }
                 self.cli.entry = entry.clone();
                 self.cli.output = output.clone();
+                self.cli.virtualenv = virtualenv.clone();
             }
         }
         self
@@ -89,7 +95,11 @@ impl ConfigBuilder {
                 PathBuf::from("bin/main.wasm")
             });
 
-        Config { entry, output }
+        Config {
+            entry,
+            output,
+            virtualenv: self.cli.virtualenv,
+        }
     }
 }
 
@@ -97,4 +107,5 @@ impl ConfigBuilder {
 pub struct Config {
     pub entry: String,
     pub output: PathBuf,
+    pub virtualenv: Option<PathBuf>,
 }

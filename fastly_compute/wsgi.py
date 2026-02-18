@@ -11,11 +11,12 @@ import encodings.idna  # noqa: F401
 import sys
 import traceback
 from collections.abc import Callable
+from io import BytesIO, Reader
 from typing import Any
 from urllib.parse import urlparse
 
 from wit_world.exports import HttpIncoming as WitHttpIncoming
-from wit_world.imports import http_body, http_resp
+from wit_world.imports import async_io, http_body, http_req, http_resp
 from wit_world.imports.http_downstream import (
     NextRequestOptions,
     await_request,
@@ -27,8 +28,8 @@ from fastly_compute.exceptions.types.error import CannotRead
 
 
 def serve_wsgi_request(
-    req: Any,
-    body: Any,
+    req: http_req.Request,
+    body: Reader[bytes],
     app: Callable,
     handle_errors: bool = False,
 ) -> None:
@@ -76,7 +77,7 @@ def serve_wsgi_request(
         "wsgi.errors": sys.stderr,
         "wsgi.version": (1, 0),
         "wsgi.url_scheme": url.scheme or "http",
-        "wsgi.input": sys.stdin.buffer,
+        "wsgi.input": body,
         "wsgi.multithread": False,
         "wsgi.multiprocess": False,
         "wsgi.run_once": True,
@@ -205,12 +206,19 @@ class WsgiHttpIncoming(WitHttpIncoming):
         """
         return self
 
-    def handle(self, request: Any, body: Any) -> None:
+    def handle(self, request: http_req.Request, body: async_io.Pollable) -> None:
         """Handle incoming HTTP requests by serving them through the WSGI app."""
+
+        def body_reader(body: async_io.Pollable) -> Reader[bytes]:
+            """Given a Fastly HTTP body object, return a file-like object
+            containing the body's content.
+            """
+            return BytesIO(http_body.read(body, 2**32 - 1))
+
         with request:  # Ensure dropping of request resource before trying to get another one. This dodges a crash.
             serve_wsgi_request(
                 request,
-                body,
+                body_reader(body),
                 self.wsgi_app,
                 handle_errors=self.handle_errors,
             )
@@ -233,7 +241,7 @@ class WsgiHttpIncoming(WitHttpIncoming):
                 with request:
                     serve_wsgi_request(
                         request,
-                        body,
+                        body_reader(body),
                         self.wsgi_app,
                         handle_errors=self.handle_errors,
                     )
