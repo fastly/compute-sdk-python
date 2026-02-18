@@ -475,9 +475,6 @@ def on_viceroy(method) -> classmethod:
         return _as_class_method(method)
     else:
         # I'm on the host, in the testrunner.
-        #
-        # In the future, we could support incoming params.
-
         @wraps(method)
         def ask_viceroy_to_call_method(cls, *args, **kwargs):
             """Make a request to Viceroy, passing along a path to a function to
