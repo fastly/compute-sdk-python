@@ -9,7 +9,7 @@ from pathlib import Path
 # This allows us to have compatible definitions around for testing and
 # typechecking.
 try:
-    from componentize_py_types import Err  # noqa
+    from componentize_py_types import Err
 except ImportError:
     sys.path.append(str(Path(__file__).parent.parent.parent / "stubs"))
 else:
