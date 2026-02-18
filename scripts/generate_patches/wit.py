@@ -345,7 +345,7 @@ class Package:
         self._wit = wit_json
 
     def interfaces(self) -> Iterable[Interface]:
-        """Return the iterfaces defined in this package."""
+        """Return the interfaces defined in this package."""
         for interface_num in self._package["interfaces"].values():
             yield Interface(self._wit["interfaces"][interface_num], self._wit)
 
