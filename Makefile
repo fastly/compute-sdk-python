@@ -27,7 +27,7 @@ EXAMPLES_DIR := examples
 COMPUTE_WIT := wit/deps/fastly/compute.wit
 
 # Define all available examples (add new ones here)
-EXAMPLES := bottle-app flask-app backend-requests game-of-life
+EXAMPLES := bottle-app flask-app backend-requests game-of-life logging
 
 # Default example for serve target
 EXAMPLE ?= bottle-app
@@ -54,7 +54,6 @@ $(STUBS_DIR): $(COMPUTE_WIT)
 $(BUILD_DIR)/%.composed.wasm: wit/viceroy.wit wit/deps/fastly/compute.wit fastly_compute/wsgi.py fastly_compute/runtime_patching/patches.py | $(BUILD_DIR) $(STUBS_DIR)
 	@echo "Building $* example with fastly-compute-py..."
 	@test -d $(EXAMPLES_DIR)/$* || (echo "Error: Example directory $(EXAMPLES_DIR)/$* not found" && exit 1)
-	@test -f $(EXAMPLES_DIR)/$*/$*.py || (echo "Error: Example file $(EXAMPLES_DIR)/$*/$*.py not found" && exit 1)
 	cd $(EXAMPLES_DIR)/$* && $(FASTLY_COMPUTE_PY) build --output ../../$@
 
 # The script that writes the exceptions and the patches always rewrites
