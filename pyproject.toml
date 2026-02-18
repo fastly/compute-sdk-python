@@ -56,6 +56,7 @@ ignore = [
     "D415",  # Don't require punctuation at the end of a docstring summary: sometimes they are noun phrases, not sentences.
     "D205",  # This spuriously complains about line-wrapped single-sentence docstring summaries. Sometimes 80 chars isn't enough.
     "D107",  # Sometimes there's nothing non-obvious to say about a constructor.
+    "D105",  # Usually there's nothing to say about __str__, etc.
 ]
 
 [tool.ruff.format]
@@ -63,6 +64,7 @@ quote-style = "double"
 indent-style = "space"
 skip-magic-trailing-comma = false
 line-ending = "auto"
+exclude = ["fastly_compute/runtime_patching/patches.py"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
@@ -80,6 +82,7 @@ build-backend = "maturin"
 
 [dependency-groups]
 dev = [
+    "jinja2>=3.1.6",
     "maturin>=1.11.5",
 ]
 

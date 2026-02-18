@@ -1,0 +1,19 @@
+{% extends "default_exception.py.jinja" -%}
+
+{% block exceptions -%}
+{{ generated_exceptions(omit=["BufferLen"]) }}
+
+
+class BufferLen(Error):
+    """Buffer length error
+
+    Returned when a buffer is the wrong size.
+    Includes the buffer length that would allow the operation to succeed.
+    """
+
+    def __init__(self, wit_error):
+        self.length = wit_error.value
+
+    def __str__(self):
+        return f"Buffer was too short to hold the result. At least {self.length} bytes are needed."
+{% endblock %}

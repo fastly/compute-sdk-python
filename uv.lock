@@ -144,6 +144,7 @@ test = [
 
 [package.dev-dependencies]
 dev = [
+    { name = "jinja2" },
     { name = "maturin" },
 ]
 
@@ -162,7 +163,10 @@ requires-dist = [
 provides-extras = ["test", "dev", "examples"]
 
 [package.metadata.requires-dev]
-dev = [{ name = "maturin", specifier = ">=1.11.5" }]
+dev = [
+    { name = "jinja2", specifier = ">=3.1.6" },
+    { name = "maturin", specifier = ">=1.11.5" },
+]
 
 [[package]]
 name = "flask"
