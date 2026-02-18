@@ -1,14 +1,15 @@
 """Integration tests for Logging functionality."""
 
+import json
+import logging
 import re
 
-from fastly_compute.testing import ViceroyTestBase
+from fastly_compute.log import FastlyLogHandler, LogEndpoint
+from fastly_compute.testing import AutoViceroyTestBase, on_viceroy
 
 
-class TestLogging(ViceroyTestBase):
+class TestLogging(AutoViceroyTestBase):
     """Logging integration tests."""
-
-    WASM_FILE = "build/logging.composed.wasm"
 
     VICEROY_CONFIG = {
         "local_server": {
@@ -21,31 +22,6 @@ class TestLogging(ViceroyTestBase):
             }
         }
     }
-
-    def assert_success(self, response, expected_data=None):
-        """Assert that the response was successful.
-
-        Args:
-            response: The HTTP response
-            expected_data: Optional dict of expected response data
-        """
-        assert response.status_code == 200
-        data = response.json()
-        if expected_data:
-            for key, value in expected_data.items():
-                assert data[key] == value
-        return data
-
-    def assert_error(self, response, error_type):
-        """Assert that the response contains an error of the expected type.
-
-        Args:
-            response: The HTTP response
-            error_type: Expected error type name (e.g., "LogEndpointInvalidNameError")
-        """
-        assert response.status_code == 500
-        data = response.json()
-        assert data["error_type"] == error_type
 
     def _get_logs_for_endpoint(self, endpoint_name):
         """Get all log messages for a specific endpoint from viceroy output.
@@ -145,100 +121,238 @@ class TestLogging(ViceroyTestBase):
 
     # Writing messages
 
+    @on_viceroy
+    def log(cls, endpoint_name, message):
+        """Log a message to a named endpoint."""
+        endpoint = LogEndpoint.open(endpoint_name)
+        endpoint.write(message)
+
     def test_write_string(self):
         """Test writing a string message."""
-        response = self.get("/test/write/test-logs/Hello%20World")
-        self.assert_success(response, {"written": True})
-        self.assert_log_message("test-logs", "Hello%20World")
+        self.log("test-logs", "Hello World")
+        self.assert_log_message("test-logs", "Hello World")
+
+    @on_viceroy
+    def log_bytes(cls, endpoint_name):
+        """Log a message to a named endpoint."""
+        endpoint = LogEndpoint.open(endpoint_name)
+        endpoint.write(b"Binary log data: \x00\x01\x02\x03")
 
     def test_write_bytes(self):
-        """Test writing bytes directly."""
-        response = self.get("/test/write-bytes/test-logs")
-        self.assert_success(response, {"written": True})
-        # Binary data with null bytes - verify at least one log was written
+        """Test writing raw bytes, including null ones."""
+        self.log_bytes("test-logs")
         self.assert_log_matches("test-logs", r"Binary log data")
 
     def test_write_unicode(self):
         """Test writing unicode characters."""
-        response = self.get(
-            "/test/write/test-logs/Hello%20%E4%B8%96%E7%95%8C%20%F0%9F%8C%8D"
-        )
-        self.assert_success(response, {"written": True})
-        self.assert_log_message(
-            "test-logs", "Hello%20%E4%B8%96%E7%95%8C%20%F0%9F%8C%8D"
-        )
+        message = "Hello 世界 🌍"
+        self.log("test-logs", message)
+        self.assert_log_message("test-logs", message)
 
     def test_write_empty_string(self):
         """Test writing an empty string (produces no log event per spec)."""
-        response = self.get("/test/write-empty/test-logs")
-        self.assert_success(response, {"written": True})
+        self.log("test-logs", "")
         # Per spec: "Each call to write with a non-empty message produces a single log event"
         # Empty string shouldn't produce a log, but we can't easily verify this
         # since we share the endpoint with other tests. Just verify the API succeeds.
 
+    @on_viceroy
+    def log_with_context_manager(cls, endpoint_name):
+        """Test using endpoint as a context manager."""
+        with LogEndpoint.open(endpoint_name) as endpoint:
+            endpoint.write("Message from context manager")
+
     def test_context_manager(self):
         """Test using endpoint as a context manager."""
-        response = self.get("/test/context-manager/test-logs")
-        self.assert_success(response, {"success": True})
+        self.log_with_context_manager("test-logs")
         self.assert_log_message("test-logs", "Message from context manager")
 
     # Python logging integration
 
+    @on_viceroy
+    def log_at_level(cls, endpoint_name: str, level: str, message: str):
+        """Log a message using Python logging stdlib integration."""
+        logger = logging.getLogger(f"test_{endpoint_name}")
+        logger.setLevel(logging.DEBUG)
+
+        # Clear any existing handlers
+        logger.handlers.clear()
+
+        # Add Fastly handler with new API
+        handler = FastlyLogHandler(default_endpoint=endpoint_name)
+        handler.setFormatter(
+            logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+        )
+        logger.addHandler(handler)
+
+        # Log at the requested level
+        log_func = getattr(logger, level.lower())
+        log_func(message)
+
+        # Clean up
+        handler.close()
+
     def test_standard_logging_integration(self):
         """Test integration with Python standard logging."""
-        response = self.get("/test/logging/test-logs/INFO/Test%20message")
-        self.assert_success(response, {"logged": True})
+        self.log_at_level("test-logs", "INFO", "Test message")
         # The log should include timestamp, logger name, level, and message
-        self.assert_log_matches("test-logs", r"INFO.*Test%20message")
+        self.assert_log_matches("test-logs", r"INFO.*Test message")
+
+    @on_viceroy
+    def log_with_extra(cls, endpoint_name):
+        """Test logging with extra fields."""
+        logger = logging.getLogger(f"test_extra_{endpoint_name}")
+        logger.setLevel(logging.INFO)
+        logger.handlers.clear()
+
+        handler = FastlyLogHandler(default_endpoint=endpoint_name)
+        handler.setFormatter(
+            logging.Formatter(
+                "%(asctime)s - %(levelname)s - %(message)s - user=%(user_id)s"
+            )
+        )
+        logger.addHandler(handler)
+
+        logger.info("User action", extra={"user_id": 12345})
+
+        handler.close()
 
     def test_logging_with_extra_fields(self):
         """Test logging with extra fields."""
-        response = self.get("/test/logging-extra/test-logs")
-        self.assert_success(response, {"logged": True})
+        self.log_with_extra("test-logs")
         # Should include the user_id in the formatted message
         self.assert_log_matches("test-logs", r"user=12345")
 
+    @on_viceroy
+    def log_multiple(cls, endpoint_name):
+        """Test logging multiple messages."""
+        logger = logging.getLogger(f"test_multiple_{endpoint_name}")
+        logger.setLevel(logging.INFO)
+        logger.handlers.clear()
+
+        handler = FastlyLogHandler(default_endpoint=endpoint_name)
+        logger.addHandler(handler)
+
+        count = 5
+        for i in range(count):
+            logger.info(f"Log message {i + 1}")
+
+        handler.close()
+
     def test_logging_multiple_messages(self):
         """Test logging multiple messages in sequence."""
-        response = self.get("/test/logging-multiple/test-logs")
-        self.assert_success(response, {"count": 5})
+        self.log_multiple("test-logs")
         # Should have exactly 5 log messages with "Log message" in them
         self.assert_log_count("test-logs", 5, pattern=r"Log message")
 
     def test_logging_all_levels(self):
         """Test logging at all standard levels."""
         for level in ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]:
-            response = self.get(f"/test/logging/test-logs/{level}/Test%20at%20{level}")
-            self.assert_success(response, {"logged": True})
-            self.assert_log_matches("test-logs", rf"{level}.*Test%20at%20{level}")
+            self.log_at_level("test-logs", level, f"Test at {level}")
+            self.assert_log_matches("test-logs", rf"{level}.*Test at {level}")
+
+    @on_viceroy
+    def log_json(cls, endpoint_name):
+        """Test structured JSON logging."""
+        logger = logging.getLogger(f"test_json_{endpoint_name}")
+        logger.setLevel(logging.INFO)
+        logger.handlers.clear()
+
+        handler = FastlyLogHandler(default_endpoint=endpoint_name)
+        logger.addHandler(handler)
+
+        # Create structured log message
+        log_data = {
+            "event": "request_processed",
+            "status": 200,
+            "duration_ms": 42,
+            "user_id": 12345,
+            "path": "/api/data",
+        }
+        logger.info(json.dumps(log_data))
+
+        handler.close()
 
     def test_json_structured_logging(self):
         """Test structured logging with JSON format."""
-        response = self.get("/test/json-log/json-logs")
-        self.assert_success(response, {"logged": True})
+        self.log_json("json-logs")
         # Should contain JSON with the expected fields
         self.assert_log_matches("json-logs", r'"event":\s*"request_processed"')
         self.assert_log_matches("json-logs", r'"user_id":\s*12345')
 
     # Endpoint routing tests
 
+    @on_viceroy
+    def log_with_mapper(cls, logger_name, level, message):
+        """Test logging with endpoint mapper function."""
+        logger = logging.getLogger(logger_name)
+        logger.setLevel(logging.DEBUG)
+        logger.handlers.clear()
+
+        # Define a mapper that routes based on logger name
+        def endpoint_mapper(name: str) -> str | None:
+            if name.startswith("api"):
+                return "api-logs"
+            # Return None to use default
+            return None
+
+        handler = FastlyLogHandler(
+            default_endpoint="default-logs", endpoint_mapper=endpoint_mapper
+        )
+        handler.setFormatter(
+            logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+        )
+        logger.addHandler(handler)
+
+        # Log at the requested level
+        log_func = getattr(logger, level.lower())
+        log_func(message)
+
+        handler.close()
+
     def test_logging_with_mapper_function(self):
         """Test endpoint routing using a mapper function."""
-        response = self.get("/test/logging-with-mapper/api.requests/INFO/API%20request")
-        self.assert_success(response, {"logged": True})
+        self.log_with_mapper("api.requests", "INFO", "API request")
         # Should route to api-logs based on logger name
-        self.assert_log_matches("api-logs", r"INFO.*API%20request")
+        self.assert_log_matches("api-logs", r"INFO.*API request")
 
     def test_logging_with_mapper_fallback(self):
         """Test endpoint routing with mapper fallback to default."""
-        response = self.get("/test/logging-with-mapper/unknown/INFO/Unknown%20logger")
-        self.assert_success(response, {"logged": True})
+        self.log_with_mapper("unknown", "INFO", "Unknown logger")
         # Should fall back to default-logs
-        self.assert_log_matches("default-logs", r"INFO.*Unknown%20logger")
+        self.assert_log_matches("default-logs", r"INFO.*Unknown logger")
+
+    @on_viceroy
+    def log_with_dict(cls, logger_name, level, message):
+        """Test logging with dict-based endpoint mapper."""
+        logger = logging.getLogger(logger_name)
+        logger.setLevel(logging.DEBUG)
+        logger.handlers.clear()
+
+        # Use a dict for simple mapping
+        endpoint_map = {
+            "api": "api-logs",
+            "worker": "worker-logs",
+            "background": "worker-logs",
+        }
+
+        handler = FastlyLogHandler(
+            default_endpoint="default-logs",
+            endpoint_mapper=lambda name: endpoint_map.get(name.split(".")[0]),
+        )
+        handler.setFormatter(
+            logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+        )
+        logger.addHandler(handler)
+
+        # Log at the requested level
+        log_func = getattr(logger, level.lower())
+        log_func(message)
+
+        handler.close()
 
     def test_logging_with_dict_mapper(self):
         """Test endpoint routing using a dict-based mapper."""
-        response = self.get("/test/logging-with-dict/worker/INFO/Worker%20task")
-        self.assert_success(response, {"logged": True})
+        self.log_with_dict("worker", "INFO", "Worker task")
         # Should route to worker-logs via dict lookup
-        self.assert_log_matches("worker-logs", r"INFO.*Worker%20task")
+        self.assert_log_matches("worker-logs", r"INFO.*Worker task")
