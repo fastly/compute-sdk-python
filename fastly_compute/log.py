@@ -28,8 +28,10 @@ from typing import Self
 
 from wit_world.imports import log as wit_log
 
+from .resource import FastlyResource
 
-class LogEndpoint:
+
+class LogEndpoint(FastlyResource[wit_log.Endpoint]):
     """Interface to a Fastly logging endpoint.
 
     Logging endpoints send log data to configured Real-Time Log Streaming
@@ -44,7 +46,7 @@ class LogEndpoint:
 
     def __init__(self, endpoint: wit_log.Endpoint):
         """Private constructor. Use LogEndpoint.open() instead."""
-        self._endpoint = endpoint
+        super().__init__(endpoint)
 
     @classmethod
     def open(cls, name: str) -> Self:
@@ -88,35 +90,7 @@ class LogEndpoint:
         """
         if isinstance(msg, str):
             msg = msg.encode("utf-8")
-        self._endpoint.write(msg)
-
-    def close(self) -> None:
-        """Explicitly close the logging endpoint, releasing its resources.
-
-        This is called automatically when using the endpoint as a context
-        manager. If not called explicitly, resources will eventually be freed
-        by the garbage collector.
-
-        Note: Attempting to use the endpoint after it is closed will result
-        in a trap.
-        """
-        self._endpoint.__exit__(None, None, None)
-
-    def __enter__(self) -> Self:
-        """Context manager entry.
-
-        Allows use of resource in a 'with' statement.
-        """
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        """Context manager exit.
-
-        Use of the context manager will free up the underlying host resource on
-        exit. Referencing the resource after context manager exit will result in
-        a trap.
-        """
-        self._endpoint.__exit__(exc_type, exc_val, exc_tb)
+        self._inner.write(msg)
 
 
 class FastlyLogHandler(logging.Handler):
