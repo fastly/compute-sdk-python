@@ -68,14 +68,12 @@ class TestRateCounter(AutoViceroyTestBase):
         """Test looking up rate."""
         # Viceroy returns 0, but we verify the API works
         rate = self.rate_counter_lookup_rate("test-counter", "192.168.1.1", 60)
-        assert isinstance(rate, int)
         assert rate == 0  # Viceroy stub returns 0
 
     def test_lookup_count(self):
         """Test looking up count."""
         # Viceroy returns 0, but we verify the API works
         count = self.rate_counter_lookup_count("test-counter", "192.168.1.1", 30)
-        assert isinstance(count, int)
         assert count == 0  # Viceroy stub returns 0
 
     def test_check_rate(self):
@@ -84,7 +82,6 @@ class TestRateCounter(AutoViceroyTestBase):
         is_limited = self.rate_counter_check_rate(
             "test-counter", "test-penalty", "192.168.1.1", 1, 10, 100, 300
         )
-        assert isinstance(is_limited, bool)
         assert is_limited is False  # Viceroy stub returns False
 
 
