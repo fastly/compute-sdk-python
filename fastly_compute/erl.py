@@ -36,6 +36,8 @@ Example::
             return Response("Blocked", status=403)
 """
 
+from __future__ import annotations
+
 from typing import Self
 
 from wit_world.imports import erl as wit_erl
