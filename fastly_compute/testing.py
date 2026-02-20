@@ -356,7 +356,7 @@ from urllib.parse import unquote
 import bottle
 from bottle import Bottle, post
 
-from fastly_compute.testing import AutoViceroyTestBase, ViceroyException, ViceroyReturn
+from fastly_compute.testing import AutoViceroyTestBase, _ViceroyException, _ViceroyReturn
 AutoViceroyTestBase._is_on_viceroy = True
 
 import {cls.__module__}
@@ -368,9 +368,10 @@ app = Bottle()
 
 
 @app.post("/<func_path>")
-def run_viceroy_chunk(func_path: str) -> dict[str, str | bool]:
+def run_viceroy_chunk(func_path: str) -> bytes:
     """Run an `@on_viceroy`-decorated method from a test class in Viceroy, and
-    return its result over HTTP.
+    return its result, wrapped in a pickled _ViceroyReturn or _ViceroyException,
+    over HTTP.
 
     :arg func_path: Fully qualified name of the function to run, typically like
         "TestClass.test_method".
@@ -388,9 +389,9 @@ def run_viceroy_chunk(func_path: str) -> dict[str, str | bool]:
     try:
         return_value = method(class_, *shipped_args, **shipped_kwargs)
     except Exception as exc:
-        result = ViceroyException(exc)
+        result = _ViceroyException(exc)
     else:
-        result = ViceroyReturn(return_value)
+        result = _ViceroyReturn(return_value)
     return pickle.dumps(result)
 
 
@@ -433,7 +434,7 @@ def _as_class_method(method) -> classmethod:
     return classmethod(method) if isinstance(method, MethodType) else method
 
 
-class ViceroyException:
+class _ViceroyException:
     """An exception passed back from Viceroy-dwelling code"""
 
     def __init__(self, exception: Exception):
@@ -444,7 +445,7 @@ class ViceroyException:
         raise self.exception
 
 
-class ViceroyReturn:
+class _ViceroyReturn:
     """A function return value passed back from Viceroy-dwelling code"""
 
     def __init__(self, return_value: Any):
@@ -468,9 +469,9 @@ def on_viceroy(method) -> classmethod:
     """
     # TODO: Complain if the decorated method isn't in a subclass of AutoViceroyTestBase.
 
-    # Advise users in the readme to put their tests within their package,
-    # not outside it. They need to be importable, because the
-    # test-code-runner template needs to be able to import them.
+    # Advise users in the readme to put their tests within their package, not
+    # outside it. They need to be importable, because the Viceroy-side code
+    # needs to be able to import them.
     if AutoViceroyTestBase._is_on_viceroy:
         return _as_class_method(method)
     else:
