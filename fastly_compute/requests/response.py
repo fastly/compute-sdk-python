@@ -6,7 +6,7 @@ from typing import Any, override
 
 from wit_world.imports import async_io, http_resp
 
-from ..utils import read_response_body
+from ..utils import create_body_reader
 from .exceptions import HTTPError
 
 
@@ -85,7 +85,8 @@ class FastlyResponse:
     def content(self) -> bytes:
         """Response body as bytes."""
         if self._content is None:
-            self._content = self._read_body()
+            reader = create_body_reader(self._response_body)
+            self._content = reader.read()
         return self._content
 
     @property
@@ -171,10 +172,6 @@ class FastlyResponse:
     def encoding(self) -> str | None:
         """Response encoding."""
         return self._parse_charset()
-
-    def _read_body(self) -> bytes:
-        """Read the complete response body from WIT."""
-        return read_response_body(self._response_body)
 
     def __bool__(self) -> bool:
         """Boolean evaluation returns ok status."""
