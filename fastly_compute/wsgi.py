@@ -11,9 +11,9 @@ import encodings.idna  # noqa: F401
 import sys
 import traceback
 from collections.abc import Callable
-from io import BytesIO, Reader
 from typing import Any
 from urllib.parse import urlparse
+from wsgiref.types import InputStream
 
 from wit_world.exports import HttpIncoming as WitHttpIncoming
 from wit_world.imports import async_io, http_body, http_req, http_resp
@@ -25,11 +25,12 @@ from wit_world.imports.http_downstream import (
 from wit_world.imports.http_resp import send_downstream
 
 from fastly_compute.exceptions.types.error import CannotRead
+from fastly_compute.utils import create_body_reader
 
 
 def serve_wsgi_request(
     req: http_req.Request,
-    body: Reader[bytes],
+    body: InputStream,
     app: Callable,
     handle_errors: bool = False,
 ) -> None:
@@ -39,13 +40,11 @@ def serve_wsgi_request(
     specification, allowing any WSGI-compatible web framework to run on
     Fastly Compute.
 
-    Args:
-        req: Fastly HTTP request object from WIT bindings
-        body: Fastly HTTP body object from WIT bindings
-        app: WSGI application callable
-        handle_errors: If True, the wrapper will log exceptions and return 500; if not,
-                       then it will be handled by the server (or will be handled by
-                       the WSGI app/framework itself).
+    :param req: Fastly HTTP request object from WIT bindings
+    :param body: WSGI input stream containing the request body (PEP 3333 compliant)
+    :param app: WSGI application callable
+    :param handle_errors: If True, log exceptions and return 500; otherwise let
+                         the server or WSGI app handle them
     """
     response = http_resp.Response.new()
     response_body = http_body.new()
@@ -208,17 +207,10 @@ class WsgiHttpIncoming(WitHttpIncoming):
 
     def handle(self, request: http_req.Request, body: async_io.Pollable) -> None:
         """Handle incoming HTTP requests by serving them through the WSGI app."""
-
-        def body_reader(body: async_io.Pollable) -> Reader[bytes]:
-            """Given a Fastly HTTP body object, return a file-like object
-            containing the body's content.
-            """
-            return BytesIO(http_body.read(body, 2**32 - 1))
-
         with request:  # Ensure dropping of request resource before trying to get another one. This dodges a crash.
             serve_wsgi_request(
                 request,
-                body_reader(body),
+                create_body_reader(body),
                 self.wsgi_app,
                 handle_errors=self.handle_errors,
             )
@@ -241,7 +233,7 @@ class WsgiHttpIncoming(WitHttpIncoming):
                 with request:
                     serve_wsgi_request(
                         request,
-                        body_reader(body),
+                        create_body_reader(body),
                         self.wsgi_app,
                         handle_errors=self.handle_errors,
                     )
