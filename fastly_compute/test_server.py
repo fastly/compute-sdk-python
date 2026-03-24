@@ -114,11 +114,8 @@ def make_test_request_handler(
 ) -> type[BaseHTTPRequestHandler]:
     """Create a request handler class with configured responses.
 
-    Args:
-        responses: Dictionary mapping paths to response configurations
-
-    Returns:
-        A new handler class with responses bound as a class attribute
+    :arg responses: Dictionary mapping paths to response configurations
+    :return: A new handler class with responses bound as a class attribute
     """
     # Create a new class that inherits from our base handler
     # and sets the responses as a class attribute
@@ -144,15 +141,21 @@ class LocalTestServer:
     ):
         """Initialize the test server.
 
-        Args:
-            host: The host interface to bind to (default: "127.0.0.1")
-            port: The port to bind to (default: 0 for auto-assignment)
-            responses: Optional dict mapping paths to response configs.
-                      Each response config can contain:
-                      - "status": HTTP status code (default: 200)
-                      - "headers": Dict of HTTP headers
-                      - "body": Response body (dict will be JSON-encoded)
-                      Example: {"/api/test": {"status": 200, "body": {"success": True}}}
+        :arg host: The host interface to bind to (default: "127.0.0.1")
+        :arg port: The port to bind to (default: 0 for auto-assignment)
+        :arg responses: Optional dict mapping paths to response configs.
+            Each response config can contain...
+
+            "status"
+                HTTP status code (default: 200)
+            "headers"
+                Dict of HTTP headers
+            "body"
+                Response body (dict will be JSON-encoded)
+
+            Example::
+
+                {"/api/test": {"status": 200, "body": {"success": True}}}
         """
         self.host = host
         self.port = port
@@ -163,8 +166,7 @@ class LocalTestServer:
     def start(self) -> str:
         """Start the test server.
 
-        Returns:
-            The base URL of the started server (e.g., "http://127.0.0.1:12345")
+        :return: The base URL of the started server (e.g., "http://127.0.0.1:12345")
         """
         if self._server is not None:
             raise RuntimeError("Server is already running")

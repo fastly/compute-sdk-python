@@ -100,27 +100,23 @@ def get(
 ) -> FastlyResponse:
     """Send a GET request.
 
-    Args:
-        url: URL for the request. Can be a path (for static backends) or full URL (for dynamic)
-        params: Query parameters to append to the URL
-        headers: HTTP headers to send with the request
-        fastly_backend: Static backend name (optional, will use dynamic backend if not provided)
-        timeout: Request timeout in seconds (requests-compatible). Can be:
-            - float: Single timeout for all phases
-            - (connect, read): Tuple for connect and read timeouts
-        fastly_timeout: **Fastly-only** Advanced timeout configuration with granular control
-            over connect_timeout, first_byte_timeout, and between_bytes_timeout
-        **kwargs: Additional arguments (for requests compatibility, ignored)
+    :arg url: URL for the request. Can be a path (for static backends) or full URL (for dynamic)
+    :arg params: Query parameters to append to the URL
+    :arg headers: HTTP headers to send with the request
+    :arg fastly_backend: Static backend name (optional, will use dynamic backend if not provided)
+    :arg timeout: Request timeout in seconds (requests-compatible). Can be:
+        - ``float``: Single timeout for all phases
+        - ``(connect, read)``: Tuple for connect and read timeouts
+    :arg fastly_timeout: **Fastly-only** Advanced timeout configuration with granular control
+        over connect_timeout, first_byte_timeout, and between_bytes_timeout
 
-    Note:
-        The fastly_timeout parameter is Fastly-specific and will cause a TypeError
-        if used with the standard requests library. Use timeout for cross-platform compatibility.
-
-    Raises:
-        RequestException: For general request errors
-        ConnectionError: For connection-related errors
-        Timeout: For timeout errors
-        ValueError: If both timeout and fastly_timeout are specified
+        .. note:: The fastly_timeout parameter is Fastly-specific and will cause a TypeError
+            if used with the standard requests library. Use ``timeout`` for cross-platform compatibility.
+    :arg kwargs: Additional arguments (for requests compatibility, ignored)
+    :raise RequestException: For general request errors
+    :raise ConnectionError: For connection-related errors
+    :raise Timeout: For timeout errors
+    :raise ValueError: If both timeout and fastly_timeout are specified
     """
     return request("GET", url, **kwargs)
 
@@ -131,16 +127,15 @@ def post(
 ) -> FastlyResponse:
     """Send a POST request.
 
-    Args:
-        url: URL for the request
-        data: Form data to send in the body
-        json: JSON data to send in the body (mutually exclusive with data)
-        params: Query parameters to append to the URL
-        headers: HTTP headers to send with the request
-        fastly_backend: Static backend name (optional)
-        timeout: Request timeout in seconds (requests-compatible)
-        fastly_timeout: **Fastly-only** Advanced timeout configuration
-        **kwargs: Additional arguments (for requests compatibility, ignored)
+    :arg url: URL for the request
+    :arg data: Form data to send in the body
+    :arg json: JSON data to send in the body (mutually exclusive with data)
+    :arg params: Query parameters to append to the URL
+    :arg headers: HTTP headers to send with the request
+    :arg fastly_backend: Static backend name (optional)
+    :arg timeout: Request timeout in seconds (requests-compatible)
+    :arg fastly_timeout: **Fastly-only** Advanced timeout configuration
+    :arg kwargs: Additional arguments (for requests compatibility, ignored)
     """
     return request("POST", url, **kwargs)
 
@@ -193,21 +188,18 @@ def request(
 ) -> FastlyResponse:
     """Send an HTTP request.
 
-    Args:
-        method: HTTP method (GET, POST, PUT, DELETE, etc.)
-        url: URL for the request
-        params: Query parameters
-        data: Form data for the request body
-        json: JSON data for the request body (mutually exclusive with data)
-        headers: HTTP headers
-        fastly_backend: Static backend name (if not provided, will use dynamic backend)
-        timeout: Request timeout in seconds (requests-compatible)
-        fastly_timeout: **Fastly-only** Advanced timeout configuration
-        **kwargs: Additional arguments (for requests compatibility, ignored)
-
-    Raises:
-        RequestException: For general request errors
-        ValueError: For invalid arguments
+    :arg method: HTTP method (GET, POST, PUT, DELETE, etc.)
+    :arg url: URL for the request
+    :arg params: Query parameters
+    :arg data: Form data for the request body
+    :arg json: JSON data for the request body (mutually exclusive with data)
+    :arg headers: HTTP headers
+    :arg fastly_backend: Static backend name (if not provided, will use dynamic backend)
+    :arg timeout: Request timeout in seconds (requests-compatible)
+    :arg fastly_timeout: **Fastly-only** Advanced timeout configuration
+    :arg kwargs: Additional arguments (for requests compatibility, ignored)
+    :raise RequestException: For general request errors
+    :raise ValueError: For invalid arguments
     """
     # Validate arguments
     if data is not None and json is not None:

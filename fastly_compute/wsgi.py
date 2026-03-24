@@ -40,11 +40,11 @@ def serve_wsgi_request(
     specification, allowing any WSGI-compatible web framework to run on
     Fastly Compute.
 
-    :param req: Fastly HTTP request object from WIT bindings
-    :param body: WSGI input stream containing the request body (PEP 3333 compliant)
-    :param app: WSGI application callable
-    :param handle_errors: If True, log exceptions and return 500; otherwise let
-                         the server or WSGI app handle them
+    :arg req: Fastly HTTP request object from WIT bindings
+    :arg body: WSGI input stream containing the request body (PEP 3333 compliant)
+    :arg app: WSGI application callable
+    :arg handle_errors: If True, log exceptions and return 500; otherwise let
+        the server or WSGI app handle them
     """
     response = http_resp.Response.new()
     response_body = http_body.new()
@@ -163,8 +163,8 @@ class WsgiHttpIncoming(WitHttpIncoming):
     on Fastly Compute. Subclass this and set the `app` attribute to your WSGI
     application.
 
-    Example:
-        ```python
+    Example::
+
         from flask import Flask
         from fastly_compute.wsgi import WsgiHttpIncoming
 
@@ -175,7 +175,6 @@ class WsgiHttpIncoming(WitHttpIncoming):
             return "Hello, World!"
 
         HttpIncoming = WsgiHttpIncoming(app)
-        ```
     """
 
     def __init__(

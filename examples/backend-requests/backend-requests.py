@@ -16,9 +16,7 @@ app = Bottle()
 def _map_error(e: Exception):
     """Return a standardized error response.
 
-    Args:
-        e: The exception that occurred
-        demo: The demo/endpoint name for this error
+    :arg e: The exception that occurred
     """
     return {
         "error": repr(e),

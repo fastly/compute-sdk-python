@@ -41,11 +41,11 @@ class ConfigStore:
     def open(cls, name: str) -> Self:
         """Open a config store by name.
 
-        :param name: The name of the config store
+        :arg name: The name of the config store
         :return: ConfigStore instance
-        :raises ~fastly_compute.exceptions.types.open_error.NotFound: If the config store doesn't exist
-        :raises ~fastly_compute.exceptions.types.open_error.InvalidSyntax: If the name is invalid
-        :raises ~fastly_compute.exceptions.types.open_error.NameTooLong: If the name is too long
+        :raise ~fastly_compute.exceptions.types.open_error.NotFound: If the config store doesn't exist
+        :raise ~fastly_compute.exceptions.types.open_error.InvalidSyntax: If the name is invalid
+        :raise ~fastly_compute.exceptions.types.open_error.NameTooLong: If the name is too long
 
         Example::
 
@@ -57,10 +57,10 @@ class ConfigStore:
     def get(self, key: str, default: str | None = None) -> str | None:
         """Get a configuration value.
 
-        :param key: The configuration key
-        :param default: Default value if key not found
+        :arg key: The configuration key
+        :arg default: Default value if key not found
         :return: Configuration value or default if not found
-        :raises ~fastly_compute.exceptions.types.error.InvalidArgument: If the key is invalid
+        :raise ~fastly_compute.exceptions.types.error.InvalidArgument: If the key is invalid
 
         Example::
 
@@ -76,10 +76,10 @@ class ConfigStore:
     def __contains__(self, key: str) -> bool:
         """Check if a key exists in the config store.
 
-        :param key: The configuration key
+        :arg key: The configuration key
         :return: True if the key exists, False otherwise
-        :raises ~fastly_compute.exceptions.types.error.InvalidArgument: If the key is invalid
-        :raises KeyError: If the key is not a str
+        :raise ~fastly_compute.exceptions.types.error.InvalidArgument: If the key is invalid
+        :raise KeyError: If the key is not a str
 
         Example::
 
@@ -98,8 +98,8 @@ class ConfigStore:
         manager. If not called explicitly, resources will eventually be freed
         by the garbage collector.
 
-        Note: Attempting to use the config store after it is closed will result
-        in a trap.
+        .. note:: Attempting to use the config store after it is closed will result
+            in a trap.
         """
         self._store.__exit__(None, None, None)
 
