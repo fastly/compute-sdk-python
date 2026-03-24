@@ -60,11 +60,11 @@ class LogEndpoint:
         - It must not contain newlines (\n) or colons (:).
         - It must not be `stdout` or `stderr`, which are reserved for debugging.
 
-        :param name: The name of the logging endpoint
+        :arg name: The name of the logging endpoint
         :return: LogEndpoint instance
-        :raises ~fastly_compute.exceptions.types.open_error.NotFound: If the endpoint doesn't exist or can't be created.
-        :raises ~fastly_compute.exceptions.types.open_error.NameTooLong: If the name is too long.
-        :raises ~fastly_compute.exceptions.types.open_error.InvalidSyntax: If the name is invalid.
+        :raise ~fastly_compute.exceptions.types.open_error.NotFound: If the endpoint doesn't exist or can't be created.
+        :raise ~fastly_compute.exceptions.types.open_error.NameTooLong: If the name is too long.
+        :raise ~fastly_compute.exceptions.types.open_error.InvalidSyntax: If the name is invalid.
 
         Example::
 
@@ -78,7 +78,7 @@ class LogEndpoint:
 
         Each call to write() with a non-empty message produces a single log event.
 
-        :param msg: The message to write (bytes or string). Strings are UTF-8 encoded.
+        :arg msg: The message to write (bytes or string). Strings are UTF-8 encoded.
 
         Example::
 
@@ -169,11 +169,11 @@ class FastlyLogHandler(logging.Handler):
     ):
         """Initialize the handler.
 
-        :param default_endpoint: The default endpoint name (used when no mapper provided)
-        :param endpoint_mapper: Optional callable that maps logger name to endpoint name.
+        :arg default_endpoint: The default endpoint name (used when no mapper provided)
+        :arg endpoint_mapper: Optional callable that maps logger name to endpoint name.
             Signature: (logger_name: str) -> endpoint_name: str
-        :param level: Minimum logging level to handle (default: NOTSET)
-        :raises ValueError: If neither default_endpoint nor endpoint_mapper is provided
+        :arg level: Minimum logging level to handle (default: NOTSET)
+        :raise ValueError: If neither default_endpoint nor endpoint_mapper is provided
 
         Example::
 
@@ -205,7 +205,7 @@ class FastlyLogHandler(logging.Handler):
     def _get_endpoint(self, logger_name: str) -> LogEndpoint:
         """Get or create an endpoint for the given logger name.
 
-        :param logger_name: Name of the logger
+        :arg logger_name: Name of the logger
         :return: LogEndpoint instance
         """
         # Determine which endpoint to use
@@ -242,7 +242,7 @@ class FastlyLogHandler(logging.Handler):
         The endpoint is determined by calling endpoint_mapper with the
         logger name, or using the default_endpoint.
 
-        :param record: The log record to emit
+        :arg record: The log record to emit
         """
         try:
             endpoint = self._get_endpoint(record.name)

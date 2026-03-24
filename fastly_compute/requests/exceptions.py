@@ -33,14 +33,11 @@ def _map_error_to_exception(
 ) -> RequestException:
     """Map WIT error to appropriate RequestException subclass.
 
-    Args:
-        error: The WIT error object to map
-        mapping: Mapping from error types to exception classes
-        operation: Description of operation that failed
-        fallback_cls: Exception class to use if no mapping found
-
-    Returns:
-        Appropriate RequestException subclass instance
+    :arg error: The WIT error object to map
+    :arg mapping: Mapping from error types to exception classes
+    :arg operation: Description of operation that failed
+    :arg fallback_cls: Exception class to use if no mapping found
+    :return: Appropriate RequestException subclass instance
     """
     error_type = type(error)
     exc_cls = mapping.get(error_type, fallback_cls)
@@ -58,10 +55,9 @@ class RequestException(IOError):
     ) -> None:
         """Initialize RequestException.
 
-        Args:
-            message: Error message
-            response: Optional response object that caused the error
-            request: Optional request object that caused the error
+        :arg message: Error message
+        :arg response: Optional response object that caused the error
+        :arg request: Optional request object that caused the error
         """
         super().__init__(message)
         self.response: FastlyResponse | None = response
@@ -73,12 +69,9 @@ class RequestException(IOError):
     ) -> RequestException:
         """Create a ``requests`` exception from an ErrorWithDetail.
 
-        Args:
-            err: The error to map from
-            operation: Description of what operation failed
-
-        Returns:
-            Appropriate RequestException subclass instance
+        :arg err: The error to map from
+        :arg operation: Description of what operation failed
+        :return: Appropriate RequestException subclass instance
         """
         error_with_detail = err.args[0]
 
@@ -104,12 +97,9 @@ class RequestException(IOError):
     def from_fastly_error(cls, err: FastlyError, operation: str) -> RequestException:
         """Create a ``requests`` exception from a FastlyError or subclass.
 
-        Args:
-            err: The error to map from
-            operation: Description of what operation failed
-
-        Returns:
-            Appropriate RequestException subclass instance
+        :arg err: The error to map from
+        :arg operation: Description of what operation failed
+        :return: Appropriate RequestException subclass instance
         """
         return _map_error_to_exception(
             err,

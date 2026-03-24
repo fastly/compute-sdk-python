@@ -15,8 +15,8 @@ class _RawBodyReader(RawIOBase):
     def __init__(self, body_handle: async_io.Pollable, chunk_size: int = 4096):
         """Initialize the reader.
 
-        :param body_handle: Fastly HTTP body handle to read from
-        :param chunk_size: Size of chunks to read at a time (default: 4096)
+        :arg body_handle: Fastly HTTP body handle to read from
+        :arg chunk_size: Size of chunks to read at a time (default: 4096)
         """
         self._body = body_handle
         self._chunk_size = chunk_size
@@ -32,7 +32,7 @@ class _RawBodyReader(RawIOBase):
     def readinto(self, b) -> int:
         """Read up to len(b) bytes into writable buffer b.
 
-        :param b: Writable buffer to read into
+        :arg b: Writable buffer to read into
         :return: Number of bytes read, or 0 on EOF
         """
         if self._closed:
@@ -65,8 +65,8 @@ def create_body_reader(
     readlines(), and iteration. Note that seeking is not supported as the body
     is a forward-only stream.
 
-    :param body: Fastly HTTP body handle to read from
-    :param chunk_size: Size of chunks to read at a time (default: 4096)
+    :arg body: Fastly HTTP body handle to read from
+    :arg chunk_size: Size of chunks to read at a time (default: 4096)
     :return: A BufferedReader that streams the body content (WSGI compatible)
 
     Example::

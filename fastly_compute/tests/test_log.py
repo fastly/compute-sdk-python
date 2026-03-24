@@ -26,11 +26,8 @@ class TestLogging(AutoViceroyTestBase):
     def _get_logs_for_endpoint(self, endpoint_name):
         """Get all log messages for a specific endpoint from viceroy output.
 
-        Args:
-            endpoint_name: Name of the log endpoint
-
-        Returns:
-            List of log messages (without the endpoint prefix)
+        :arg endpoint_name: Name of the log endpoint
+        :return: List of log messages (without the endpoint prefix)
         """
         log_prefix = f"{endpoint_name} :: "
         logs = []
@@ -43,9 +40,8 @@ class TestLogging(AutoViceroyTestBase):
     def assert_log_message(self, endpoint_name, expected_message):
         """Assert that an exact log message was written to viceroy stdout.
 
-        Args:
-            endpoint_name: Name of the log endpoint
-            expected_message: Exact message expected
+        :arg endpoint_name: Name of the log endpoint
+        :arg expected_message: Exact message expected
         """
         logs = self._get_logs_for_endpoint(endpoint_name)
 
@@ -64,9 +60,8 @@ class TestLogging(AutoViceroyTestBase):
     def assert_log_matches(self, endpoint_name, pattern):
         """Assert that a log message matching the pattern was written to viceroy stdout.
 
-        Args:
-            endpoint_name: Name of the log endpoint
-            pattern: Regex pattern to match
+        :arg endpoint_name: Name of the log endpoint
+        :arg pattern: Regex pattern to match
         """
         logs = self._get_logs_for_endpoint(endpoint_name)
 
@@ -86,10 +81,9 @@ class TestLogging(AutoViceroyTestBase):
     def assert_log_count(self, endpoint_name, expected_count, pattern=None):
         """Assert that a specific number of log messages were written.
 
-        Args:
-            endpoint_name: Name of the log endpoint
-            expected_count: Expected number of log messages
-            pattern: Optional regex pattern to filter logs
+        :arg endpoint_name: Name of the log endpoint
+        :arg expected_count: Expected number of log messages
+        :arg pattern: Optional regex pattern to filter logs
         """
         logs = self._get_logs_for_endpoint(endpoint_name)
 

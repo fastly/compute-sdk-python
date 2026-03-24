@@ -25,10 +25,9 @@ class FastlyResponse:
     ):
         """Initialize FastlyResponse.
 
-        Args:
-            wit_response: The WIT response object
-            response_body: The WIT response body
-            url: The final URL that was requested
+        :arg wit_response: The WIT response object
+        :arg response_body: The WIT response body
+        :arg url: The final URL that was requested
         """
         self._wit_response: http_resp.Response = wit_response
         self._response_body: async_io.Pollable = response_body
@@ -109,14 +108,9 @@ class FastlyResponse:
     def json(self, **kwargs: Any) -> Any:
         """Parse response body as JSON.
 
-        Args:
-            **kwargs: Additional arguments passed to json.loads()
-
-        Returns:
-            Parsed JSON data
-
-        Raises:
-            json.JSONDecodeError: If response is not valid JSON
+        :arg kwargs: Additional arguments passed to json.loads()
+        :return: Parsed JSON data
+        :raise json.JSONDecodeError: If response is not valid JSON
         """
         if self._json_data is None:
             self._json_data = json.loads(self.text, **kwargs)
@@ -140,8 +134,7 @@ class FastlyResponse:
     def raise_for_status(self) -> None:
         """Raise an HTTPError for bad responses.
 
-        Raises:
-            HTTPError: If response status indicates an error
+        :raise HTTPError: If response status indicates an error
         """
         if not self.ok:
             raise HTTPError(

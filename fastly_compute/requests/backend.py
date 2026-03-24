@@ -46,17 +46,12 @@ def resolve_backend(
     Static backends must already be configured in the Fastly service.
     Dynamic backends are automatically registered on first use and cached for reuse.
 
-    Args:
-        url: The URL to request (must be full with scheme and netloc for dynamic backends)
-        fastly_backend: Optional static backend name
-        timeout_config: Optional timeout configuration for dynamic backends
-
-    Returns:
-        ResolutionResult containing backend and updated parsed url
-
-    Raises:
-        RequestException: If backend resolution fails
-        MissingSchema: If URL is missing scheme (subclass of RequestException)
+    :arg url: The URL to request (must be full with scheme and netloc for dynamic backends)
+    :arg fastly_backend: Optional static backend name
+    :arg timeout_config: Optional timeout configuration for dynamic backends
+    :return: ResolutionResult containing backend and updated parsed url
+    :raise RequestException: If backend resolution fails
+    :raise MissingSchema: If URL is missing scheme (subclass of RequestException)
     """
     parsed = urllib.parse.urlparse(url)
     backend_obj: wit_backend.Backend

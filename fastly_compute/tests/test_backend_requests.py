@@ -16,12 +16,7 @@ class BackendRequestsTestBase(ViceroyTestBase):
     WASM_FILE = "build/backend-requests.composed.wasm"
 
     def assert_success(self, response: requests.Response) -> dict[str, Any]:
-        """Assert that a result represents a successful operation.
-
-        Args:
-            result: Response JSON dictionary
-            expected_demo: Expected value of 'demo' field
-        """
+        """Assert that a response represents a successful operation."""
         # request to helper service succeeded (non-proxy)
         assert response.status_code == 200
 
@@ -42,15 +37,13 @@ class BackendRequestsTestBase(ViceroyTestBase):
     def assert_error(
         self, response: requests.Response, error_substring: str | None = None
     ) -> dict[str, Any]:
-        """Assert that a result represents an error.
+        """Assert that a response represents an error.
 
         The return dictionary is the transformed error, with the traceback
         information removed (which is too noisy to compare against).
 
-        Args:
-            result: Response JSON dictionary
-            expected_demo: Expected value of 'demo' field
-            error_substring: Optional substring that should appear in error message
+        :arg response: Response about which to assert
+        :arg error_substring: Optional substring that should appear in error message
         """
         result: dict[str, Any] = response.json()
         error = result.get("error")

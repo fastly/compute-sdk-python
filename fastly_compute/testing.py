@@ -45,11 +45,11 @@ class ViceroyTestBase:
     Provides common functionality for testing Fastly Compute services.
     Inherit from this class and use the viceroy_server fixture.
 
-    Note: This assumes your WASM file is already built. Use your build system
-    (e.g., Makefile) to ensure the WASM file is up to date before running tests.
+    .. note:: This assumes your WASM file is already built. Use your build system
+        (e.g., Makefile) to ensure the WASM file is up to date before running tests.
 
-    Example:
-        ```python
+    Example::
+
         import pytest
         from fastly_compute.testing import ViceroyTestBase
 
@@ -57,7 +57,6 @@ class ViceroyTestBase:
             def test_my_endpoint(self):
                 response = self.get("/my-endpoint")
                 assert response.status_code == 200
-        ```
     """
 
     REQUEST_TIMEOUT = 10
@@ -86,12 +85,9 @@ class ViceroyTestBase:
     def _create_viceroy_config(cls, backends: dict[str, str] | None = None) -> str:
         """Create a temporary viceroy configuration file.
 
-        Args:
-            backends: Dict mapping backend names to URLs
-                     e.g., {"httpbin": "http://127.0.0.1:8080"}
-
-        Returns:
-            Path to the temporary configuration file
+        :arg backends: Dict mapping backend names to URLs
+            e.g., {"httpbin": "http://127.0.0.1:8080"}
+        :return: Path to the temporary configuration file
         """
         config_dict = {}
 
@@ -132,9 +128,8 @@ class ViceroyTestBase:
 
         Call this in setUpClass or as a class-level setup.
 
-        Args:
-            backends: Dict mapping backend names to URLs
-                     e.g., {"httpbin": "http://127.0.0.1:8080"}
+        :arg backends: Dict mapping backend names to URLs
+            e.g., {"httpbin": "http://127.0.0.1:8080"}
         """
         cls._test_backends = backends
 
@@ -143,11 +138,10 @@ class ViceroyTestBase:
     def viceroy_server(cls):
         """Start viceroy server for the duration of the test class.
 
-        Note: This assumes the WASM file already exists. Use your build system
-        to ensure it's built before running tests.
+        .. note:: This assumes the WASM file already exists. Use your build system
+            to ensure it's built before running tests.
 
-        Returns:
-            ViceroyServer: Server instance with process, base_url, and captured output
+        :return: Server instance with process, base_url, and captured output
         """
         print("Starting viceroy server...")
 
@@ -273,12 +267,9 @@ class ViceroyTestBase:
     def get(cls, path: str, **kwargs) -> requests.Response:
         """Make a GET request to the viceroy server.
 
-        Args:
-            path: URL path to request
-            **kwargs: Additional arguments passed to requests.get()
-
-        Returns:
-            requests.Response: The HTTP response
+        :arg path: URL path to request
+        :arg kwargs: Additional arguments passed to requests.get()
+        :return: The HTTP response
         """
         return cls.request("GET", path, **kwargs)
 
@@ -286,12 +277,9 @@ class ViceroyTestBase:
     def post(cls, path: str, **kwargs) -> requests.Response:
         """Make a POST request to the viceroy server.
 
-        Args:
-            path: URL path to request
-            **kwargs: Additional arguments passed to requests.post()
-
-        Returns:
-            requests.Response: The HTTP response
+        :arg path: URL path to request
+        :arg kwargs: Additional arguments passed to requests.post()
+        :return: The HTTP response
         """
         return cls.request("POST", path, **kwargs)
 
@@ -299,13 +287,10 @@ class ViceroyTestBase:
     def request(cls, method: str, path: str, **kwargs) -> requests.Response:
         """Make an HTTP request to the viceroy server.
 
-        Args:
-            method: HTTP method (GET, POST, PUT, DELETE, etc.)
-            path: URL path to request
-            **kwargs: Additional arguments passed to requests.request()
-
-        Returns:
-            requests.Response: The HTTP response
+        :arg method: HTTP method (GET, POST, PUT, DELETE, etc.)
+        :arg path: URL path to request
+        :arg kwargs: Additional arguments passed to requests.request()
+        :return: The HTTP response
         """
         timeout = kwargs.pop("timeout", cls.REQUEST_TIMEOUT)
         response = requests.request(
@@ -462,10 +447,11 @@ def on_viceroy(method) -> classmethod:
     Decorate a method with this, and it will automagically run under Viceroy
     when called. The method must be in a subclass of AutoViceroyTestBase.
 
-    Notes and caveats:
-    * Return values and raised exceptions must be pickleable.
-    * If the decorated method is not already a class method, we make it one, in
-      service to conciseness.
+    .. note::
+
+        * Return values and raised exceptions must be pickleable.
+        * If the decorated method is not already a class method, we make it one, in
+          service to conciseness.
     """
     # TODO: Complain if the decorated method isn't in a subclass of AutoViceroyTestBase.
 

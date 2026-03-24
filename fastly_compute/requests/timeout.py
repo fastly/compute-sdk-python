@@ -27,10 +27,9 @@ class TimeoutConfig:
     ):
         """Initialize timeout configuration.
 
-        Args:
-            connect: Connection timeout in seconds (default: 30.0)
-            first_byte: First byte timeout in seconds (default: 60.0)
-            between_bytes: Between bytes timeout in seconds (default: 10.0)
+        :arg connect: Connection timeout in seconds (default: 30.0)
+        :arg first_byte: First byte timeout in seconds (default: 60.0)
+        :arg between_bytes: Between bytes timeout in seconds (default: 10.0)
         """
         self.connect: float = connect
         self.first_byte: float = first_byte
@@ -55,17 +54,12 @@ class TimeoutConfig:
     def from_requests_timeout(cls, timeout: None | float | tuple[float, float]) -> Self:
         """Create TimeoutConfig from requests-compatible timeout parameter.
 
-        Args:
-            timeout: Timeout specification in requests-compatible formats:
-                - None: Use default timeouts
-                - float: Single timeout applied to all phases
-                - (connect, read): Tuple with separate connect and read timeouts
-
-        Returns:
-            TimeoutConfig object with appropriate timeout values
-
-        Raises:
-            ValueError: If timeout format is invalid
+        :arg timeout: Timeout specification in requests-compatible formats:
+            - ``None``: Use default timeouts
+            - ``float``: Single timeout applied to all phases
+            - ``(connect, read)``: Tuple with separate connect and read timeouts
+        :return: TimeoutConfig object with appropriate timeout values
+        :raise ValueError: If timeout format is invalid
         """
         if timeout is None:
             return cls()
