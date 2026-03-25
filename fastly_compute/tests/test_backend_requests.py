@@ -6,8 +6,7 @@ from typing import Any
 import pytest
 import requests
 
-from fastly_compute.test_server import LocalTestServer
-from fastly_compute.testing import ViceroyTestBase
+from fastly_compute.testing import MockHttpServer, ViceroyTestBase
 
 
 class BackendRequestsTestBase(ViceroyTestBase):
@@ -105,7 +104,7 @@ class TestRequestsSimple(BackendRequestsTestBase):
         }
 
         # Set up mock server
-        cls.test_server = LocalTestServer(
+        cls.test_server = MockHttpServer(
             host="127.0.0.1", port=0, responses=mock_responses
         )
         cls.test_server_url = cls.test_server.start()
@@ -225,7 +224,7 @@ class TestRequestsCompatibility(BackendRequestsTestBase):
             },
         }
 
-        cls.test_server = LocalTestServer(host="127.0.0.1", port=0, responses=responses)
+        cls.test_server = MockHttpServer(host="127.0.0.1", port=0, responses=responses)
         cls.test_server_url = cls.test_server.start()
 
         # Set up backends for viceroy
@@ -395,7 +394,7 @@ class TestRequestErrorHandling(BackendRequestsTestBase):
     def setup_class(cls):
         """Set up test backend."""
         # Create a local test server for backend testing
-        cls.test_server = LocalTestServer(host="127.0.0.1", port=0)
+        cls.test_server = MockHttpServer(host="127.0.0.1", port=0)
         base_url = cls.test_server.start()
 
         # Set up backends for viceroy (keep the full URL with scheme)
@@ -539,7 +538,7 @@ class TestBackendResolution(BackendRequestsTestBase):
     @classmethod
     def setup_class(cls):
         """Set up multiple backends for testing."""
-        cls.test_server1 = LocalTestServer(host="127.0.0.1", port=0)
+        cls.test_server1 = MockHttpServer(host="127.0.0.1", port=0)
         base_url1 = cls.test_server1.start()
 
         cls.set_up_backends(
@@ -597,7 +596,7 @@ class TestHTTPMethodHandling(BackendRequestsTestBase):
     @classmethod
     def setup_class(cls):
         """Set up test backend."""
-        cls.test_server = LocalTestServer(host="127.0.0.1", port=0)
+        cls.test_server = MockHttpServer(host="127.0.0.1", port=0)
         base_url = cls.test_server.start()
         cls.set_up_backends({"test-be": base_url})
 
