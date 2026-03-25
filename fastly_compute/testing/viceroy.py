@@ -341,7 +341,7 @@ from urllib.parse import unquote
 import bottle
 from bottle import Bottle, post
 
-from fastly_compute.testing import AutoViceroyTestBase, _ViceroyException, _ViceroyReturn
+from fastly_compute.testing import AutoViceroyTestBase, ViceroyException, ViceroyReturn
 AutoViceroyTestBase._is_on_viceroy = True
 
 import {cls.__module__}
@@ -355,7 +355,7 @@ app = Bottle()
 @app.post("/<func_path>")
 def run_viceroy_chunk(func_path: str) -> bytes:
     """Run an `@on_viceroy`-decorated method from a test class in Viceroy, and
-    return its result, wrapped in a pickled _ViceroyReturn or _ViceroyException,
+    return its result, wrapped in a pickled ViceroyReturn or ViceroyException,
     over HTTP.
 
     :arg func_path: Fully qualified name of the function to run, typically like
@@ -374,9 +374,9 @@ def run_viceroy_chunk(func_path: str) -> bytes:
     try:
         return_value = method(class_, *shipped_args, **shipped_kwargs)
     except Exception as exc:
-        result = _ViceroyException(exc)
+        result = ViceroyException(exc)
     else:
-        result = _ViceroyReturn(return_value)
+        result = ViceroyReturn(return_value)
     return pickle.dumps(result)
 
 
@@ -419,7 +419,7 @@ def _as_class_method(method) -> classmethod:
     return classmethod(method) if isinstance(method, MethodType) else method
 
 
-class _ViceroyException:
+class ViceroyException:
     """An exception passed back from Viceroy-dwelling code"""
 
     def __init__(self, exception: Exception):
@@ -430,7 +430,7 @@ class _ViceroyException:
         raise self.exception
 
 
-class _ViceroyReturn:
+class ViceroyReturn:
     """A function return value passed back from Viceroy-dwelling code"""
 
     def __init__(self, return_value: Any):

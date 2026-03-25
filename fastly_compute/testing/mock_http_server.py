@@ -126,7 +126,7 @@ def make_test_request_handler(
     )
 
 
-class LocalTestServer:
+class MockHttpServer:
     """Local HTTP server for backend testing.
 
     This server can be used to mock external backends during testing.
