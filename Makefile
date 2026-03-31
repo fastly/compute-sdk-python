@@ -21,7 +21,7 @@ else
 endif
 
 # Configuration
-STUBS_DIR := stubs
+STUBS_DIR := fastly_compute/testing/stubs
 BUILD_DIR := build
 EXAMPLES_DIR := examples
 COMPUTE_WIT := wit/deps/fastly/compute.wit

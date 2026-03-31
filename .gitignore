@@ -3,9 +3,6 @@
 *.egg-info
 __pycache__
 
-# Generated code
-/stubs/
-
 # Build artifacts
 /build/
 bin/
