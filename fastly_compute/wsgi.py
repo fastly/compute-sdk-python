@@ -15,7 +15,7 @@ from typing import Any
 from urllib.parse import urlparse
 from wsgiref.types import InputStream
 
-from wit_world.exports import HttpIncoming as WitHttpIncoming
+from wit_world.exports import HttpIncoming
 from wit_world.imports import async_io, http_body, http_req, http_resp
 from wit_world.imports.http_downstream import (
     NextRequestOptions,
@@ -156,12 +156,11 @@ def serve_wsgi_request(
         send_downstream(error_response, error_body)
 
 
-class WsgiHttpIncoming(WitHttpIncoming):
+class WsgiHttpIncoming(HttpIncoming):
     """HTTP request handler that serves WSGI applications.
 
     This class provides a convenient base class for serving WSGI applications
-    on Fastly Compute. Subclass this and set the `app` attribute to your WSGI
-    application.
+    on Fastly Compute. Instantiate this, and pass in your application.
 
     Example::
 
