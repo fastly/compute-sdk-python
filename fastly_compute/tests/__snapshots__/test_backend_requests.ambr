@@ -41,7 +41,7 @@
           "host": "http-me.fastly.dev",
           "content-type": "",
           "connection": "keep-alive",
-          "user-agent": "python-requests/2.32.5",
+          "user-agent": "python-requests/2.33.0",
           "accept-encoding": "gzip, defla...
     ''',
     'status_code': 200,
