@@ -11,6 +11,6 @@ from pathlib import Path
 try:
     from componentize_py_types import Err
 except ImportError:
-    sys.path.append(str(Path(__file__).parent.parent.parent / "stubs"))
+    sys.path.append(str(Path(__file__).parent.parent / "testing" / "stubs"))
 else:
     del Err
