@@ -1,3 +1,1 @@
-[submodule "crates/wasiless"]
-	path = crates/wasiless
-	url = git@github.com:fastly/wasiless.git
+
