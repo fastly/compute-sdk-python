@@ -15,16 +15,6 @@ jobs:
     runs-on: forge-amd64-medium
     steps:
     - uses: actions/checkout@v4
-    - name: Get wasiless submodule
-      # Org-internal submodules are very tricky to check out.
-      env:
-        SSHK: ${{ secrets.WASILESS_REPO_READ_KEY }}
-      run: |
-        mkdir -p $HOME/.ssh
-        echo "$SSHK" > $HOME/.ssh/ssh.key
-        chmod 600 $HOME/.ssh/ssh.key
-        export GIT_SSH_COMMAND="ssh -i $HOME/.ssh/ssh.key"
-        git submodule update --init --recursive
     - name: Set up Rust toolchain
       uses: actions-rust-lang/setup-rust-toolchain@v1
       with:
