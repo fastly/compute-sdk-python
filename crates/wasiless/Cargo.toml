@@ -1,0 +1,11 @@
+[package]
+name = "wasiless"
+version = "0.1.0"
+edition = "2024"
+description = "Minimal or trapping implementations of WASI interfaces, allowing ports from non-WASI environments to link and even sometimes run"
+
+[dependencies]
+wit-bindgen = "0.46.0"
+
+[lib]
+crate-type = ["cdylib"]

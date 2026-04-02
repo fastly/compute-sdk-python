@@ -1,0 +1,22 @@
+package fastly:wasiless;
+
+// Interfaces that are imported by the Python+app component but are not provided
+// by Viceroy (ignoring versions):
+world wasiless {
+  export wasi:cli/terminal-input@0.2.0;
+  export wasi:cli/terminal-output@0.2.0;
+  export wasi:cli/terminal-stdin@0.2.0;
+  export wasi:cli/terminal-stdout@0.2.0;
+  export wasi:cli/terminal-stderr@0.2.0;  
+  export wasi:filesystem/types@0.2.0;
+  export wasi:filesystem/preopens@0.2.0;  
+  export wasi:sockets/network@0.2.0;
+  export wasi:sockets/instance-network@0.2.0;
+  export wasi:sockets/udp@0.2.0;
+  export wasi:sockets/udp-create-socket@0.2.0;  
+  export wasi:sockets/tcp@0.2.0;
+  export wasi:sockets/tcp-create-socket@0.2.0;
+  export wasi:sockets/ip-name-lookup@0.2.0;
+  export wasi:random/insecure@0.2.0;
+  export wasi:random/insecure-seed@0.2.0;  
+}
