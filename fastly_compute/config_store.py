@@ -15,13 +15,15 @@ from typing import Self
 
 from wit_world.imports import config_store as wit_config_store
 
+from ._resource import FastlyResource
+
 # The maximum value for a u32, used to signal that we don't want to cap
 # the length of values returned by the host.  In practice, this limit
 # is at 8KB, though that could change.
 _MAX_U32 = 0xFFFFFFFF
 
 
-class ConfigStore:
+class ConfigStore(FastlyResource[wit_config_store.Store]):
     """Interface to Fastly Config Store.
 
     Config Stores provide read-only access to configuration data that can be
@@ -32,10 +34,6 @@ class ConfigStore:
         with ConfigStore.open("app-config") as config:
             api_url = config.get("api_url", "https://api.example.com")
     """
-
-    def __init__(self, store: wit_config_store.Store):
-        """Private constructor. Use ConfigStore.open() instead."""
-        self._store = store
 
     @classmethod
     def open(cls, name: str) -> Self:
@@ -67,7 +65,7 @@ class ConfigStore:
             config = ConfigStore.open("app-config")
             api_url = config.get("api_url", "https://api.example.com")
         """
-        result = self._store.get(key, _MAX_U32)
+        result = self._wit_resource.get(key, _MAX_U32)
         if result is None:
             result = default
 
@@ -90,31 +88,3 @@ class ConfigStore:
         if not isinstance(key, str):
             raise KeyError("Key must be a str")
         return self.get(key) is not None
-
-    def close(self) -> None:
-        """Explicitly close the config store, releasing its resources.
-
-        This is called automatically when using the config store as a context
-        manager. If not called explicitly, resources will eventually be freed
-        by the garbage collector.
-
-        .. note:: Attempting to use the config store after it is closed will result
-            in a trap.
-        """
-        self._store.__exit__(None, None, None)
-
-    def __enter__(self) -> Self:
-        """Context manager entry.
-
-        Allows use of ConfigStore in a 'with' statement.
-        """
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        """Context manager exit.
-
-        Use of the context manager will free up the underlying host resource on
-        exit. Referencing the resource after context manager exit will result in
-        a trap.
-        """
-        self.close()
