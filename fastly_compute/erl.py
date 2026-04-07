@@ -42,8 +42,10 @@ from typing import Self
 
 from wit_world.imports import erl as wit_erl
 
+from ._resource import FastlyResource
 
-class RateCounter:
+
+class RateCounter(FastlyResource[wit_erl.RateCounter]):
     """Interface to Fastly Edge Rate Limiter counter.
 
     Rate counters track request counts and calculate rates for rate limiting
@@ -55,10 +57,6 @@ class RateCounter:
             counter.increment("192.168.1.1", delta=1)
             rate = counter.lookup_rate("192.168.1.1", window=60)
     """
-
-    def __init__(self, counter: wit_erl.RateCounter):
-        """Private constructor. Use RateCounter.open() instead."""
-        self._counter = counter
 
     @classmethod
     def open(cls, name: str) -> Self:
@@ -82,7 +80,7 @@ class RateCounter:
 
         :return: The name of the rate counter
         """
-        return self._counter.get_name()
+        return self._wit_resource.get_name()
 
     def check_rate(
         self,
@@ -127,8 +125,8 @@ class RateCounter:
                         ttl=300
                     )
         """
-        return self._counter.check_rate(
-            entry, delta, window, limit, penalty_box._box, ttl
+        return self._wit_resource.check_rate(
+            entry, delta, window, limit, penalty_box._wit_resource, ttl
         )
 
     def increment(self, entry: str, delta: int) -> None:
@@ -144,7 +142,7 @@ class RateCounter:
             with RateCounter.open("tracker") as counter:
                 counter.increment("192.168.1.1", delta=1)
         """
-        self._counter.increment(entry, delta)
+        self._wit_resource.increment(entry, delta)
 
     def lookup_rate(self, entry: str, window: int) -> int:
         """Get the current rate for an entry over a time window.
@@ -161,7 +159,7 @@ class RateCounter:
             with RateCounter.open("tracker") as counter:
                 rate = counter.lookup_rate("192.168.1.1", window=60)
         """
-        return self._counter.lookup_rate(entry, window)
+        return self._wit_resource.lookup_rate(entry, window)
 
     def lookup_count(self, entry: str, duration: int) -> int:
         """Get the total count for an entry over a duration.
@@ -178,38 +176,10 @@ class RateCounter:
             with RateCounter.open("tracker") as counter:
                 count = counter.lookup_count("192.168.1.1", duration=30)
         """
-        return self._counter.lookup_count(entry, duration)
-
-    def close(self) -> None:
-        """Explicitly close the rate counter, releasing its resources.
-
-        This is called automatically when using the rate counter as a context
-        manager. If not called explicitly, resources will eventually be freed
-        by the garbage collector.
-
-        Note: Attempting to use the rate counter after it is closed will result
-        in a trap.
-        """
-        self._counter.__exit__(None, None, None)
-
-    def __enter__(self) -> Self:
-        """Context manager entry.
-
-        Allows use of RateCounter in a 'with' statement.
-        """
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        """Context manager exit.
-
-        Use of the context manager will free up the underlying host resource on
-        exit. Referencing the resource after context manager exit will result in
-        a trap.
-        """
-        self.close()
+        return self._wit_resource.lookup_count(entry, duration)
 
 
-class PenaltyBox:
+class PenaltyBox(FastlyResource[wit_erl.PenaltyBox]):
     """Interface to Fastly Edge Rate Limiter penalty box.
 
     Penalty boxes maintain a set of blocked entries (e.g., IP addresses).
@@ -221,10 +191,6 @@ class PenaltyBox:
             if "192.168.1.1" in penalty:
                 return Response("Blocked", status=403)
     """
-
-    def __init__(self, box: wit_erl.PenaltyBox):
-        """Private constructor. Use PenaltyBox.open() instead."""
-        self._box = box
 
     @classmethod
     def open(cls, name: str) -> Self:
@@ -248,7 +214,7 @@ class PenaltyBox:
 
         :return: The name of the penalty box
         """
-        return self._box.get_name()
+        return self._wit_resource.get_name()
 
     def add(self, entry: str, ttl: int) -> None:
         """Add entry to the penalty box.
@@ -265,7 +231,7 @@ class PenaltyBox:
             with PenaltyBox.open("blocklist") as penalty:
                 penalty.add("192.168.1.1", ttl=600)  # Block for 10 minutes
         """
-        self._box.add(entry, ttl)
+        self._wit_resource.add(entry, ttl)
 
     def __contains__(self, entry: str) -> bool:
         """Check if entry is in the penalty box using the 'in' operator.
@@ -281,35 +247,7 @@ class PenaltyBox:
                 if "192.168.1.1" in penalty:
                     return Response("Blocked", status=403)
         """
-        return self._box.has(entry)
-
-    def close(self) -> None:
-        """Explicitly close the penalty box, releasing its resources.
-
-        This is called automatically when using the penalty box as a context
-        manager. If not called explicitly, resources will eventually be freed
-        by the garbage collector.
-
-        Note: Attempting to use the penalty box after it is closed will result
-        in a trap.
-        """
-        self._box.__exit__(None, None, None)
-
-    def __enter__(self) -> Self:
-        """Context manager entry.
-
-        Allows use of PenaltyBox in a 'with' statement.
-        """
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        """Context manager exit.
-
-        Use of the context manager will free up the underlying host resource on
-        exit. Referencing the resource after context manager exit will result in
-        a trap.
-        """
-        self.close()
+        return self._wit_resource.has(entry)
 
 
 class EdgeRateLimiter:
