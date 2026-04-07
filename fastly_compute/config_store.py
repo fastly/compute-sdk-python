@@ -15,7 +15,7 @@ from typing import Self
 
 from wit_world.imports import config_store as wit_config_store
 
-from .resource import FastlyResource
+from ._resource import FastlyResource
 
 # The maximum value for a u32, used to signal that we don't want to cap
 # the length of values returned by the host.  In practice, this limit
@@ -34,10 +34,6 @@ class ConfigStore(FastlyResource[wit_config_store.Store]):
         with ConfigStore.open("app-config") as config:
             api_url = config.get("api_url", "https://api.example.com")
     """
-
-    def __init__(self, store: wit_config_store.Store):
-        """Private constructor. Use ConfigStore.open() instead."""
-        super().__init__(store)
 
     @classmethod
     def open(cls, name: str) -> Self:
@@ -69,7 +65,7 @@ class ConfigStore(FastlyResource[wit_config_store.Store]):
             config = ConfigStore.open("app-config")
             api_url = config.get("api_url", "https://api.example.com")
         """
-        result = self._inner.get(key, _MAX_U32)
+        result = self._wit_resource.get(key, _MAX_U32)
         if result is None:
             result = default
 

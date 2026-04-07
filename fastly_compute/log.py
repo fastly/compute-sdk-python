@@ -28,7 +28,7 @@ from typing import Self
 
 from wit_world.imports import log as wit_log
 
-from .resource import FastlyResource
+from ._resource import FastlyResource
 
 
 class LogEndpoint(FastlyResource[wit_log.Endpoint]):
@@ -43,10 +43,6 @@ class LogEndpoint(FastlyResource[wit_log.Endpoint]):
             endpoint.write("Application started")
             endpoint.write(b"Binary log data")
     """
-
-    def __init__(self, endpoint: wit_log.Endpoint):
-        """Private constructor. Use LogEndpoint.open() instead."""
-        super().__init__(endpoint)
 
     @classmethod
     def open(cls, name: str) -> Self:
@@ -90,7 +86,7 @@ class LogEndpoint(FastlyResource[wit_log.Endpoint]):
         """
         if isinstance(msg, str):
             msg = msg.encode("utf-8")
-        self._inner.write(msg)
+        self._wit_resource.write(msg)
 
 
 class FastlyLogHandler(logging.Handler):

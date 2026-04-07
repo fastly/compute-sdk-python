@@ -19,8 +19,6 @@ class WitResource(Protocol):
 
     This protocol defines the context manager interface that all WIT resources
     must implement for resource lifecycle management.
-
-    **Internal use only** - do not use directly.
     """
 
     def __enter__(self) -> Self:
@@ -44,19 +42,16 @@ class FastlyResource[T: WitResource]:
     resource lifecycle management for all Fastly resource types that wrap
     WIT bindings (e.g., ConfigStore, RateCounter, PenaltyBox, LogEndpoint).
 
-    **Internal use only** - do not instantiate or subclass directly. Use the
-    public resource classes instead (ConfigStore, RateCounter, etc.).
-
     The type parameter T represents the underlying WIT binding resource type
     and must satisfy the WitResource protocol (context manager support).
     """
 
-    def __init__(self, inner: T):
+    def __init__(self, wit_resource: T):
         """Initialize the resource wrapper with an inner WIT binding.
 
-        :param inner: The underlying WIT binding resource to wrap
+        :param wit_resource: The underlying WIT binding resource to wrap
         """
-        self._inner = inner
+        self._wit_resource = wit_resource
 
     def close(self) -> None:
         """Explicitly close the resource, releasing its resources.
@@ -68,7 +63,7 @@ class FastlyResource[T: WitResource]:
         Note: Attempting to use the resource after it is closed will result
         in a trap.
         """
-        self._inner.__exit__(None, None, None)
+        self._wit_resource.__exit__(None, None, None)
 
     def __enter__(self) -> Self:
         """Context manager entry.
@@ -101,4 +96,4 @@ class FastlyResource[T: WitResource]:
         :param exc_val: Exception value if an exception occurred, None otherwise
         :param exc_tb: Exception traceback if an exception occurred, None otherwise
         """
-        self._inner.__exit__(exc_type, exc_val, exc_tb)
+        self._wit_resource.__exit__(exc_type, exc_val, exc_tb)
