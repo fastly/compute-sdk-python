@@ -301,6 +301,10 @@ class ListType(Type):
         return Type.from_id(self._me["kind"]["list"], self._wit)
 
     def py_annotation(self, self_resource=None) -> str:
+        # list<u8> is the WIT encoding of a byte buffer; map it to bytes
+        # rather than list[int] since that is what callers actually pass.
+        if self._me["kind"]["list"] == "u8":
+            return "bytes"
         inner = self.inner_type().py_annotation(self_resource)
         return f"list[{inner}]"
 

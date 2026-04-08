@@ -21,12 +21,12 @@ def append(dest: Pollable, src: Pollable) -> None:
     return _wit.append(dest._wit_resource, src._wit_resource)
 
 @remap_wit_errors(MAPPINGS)
-def read(body: Pollable, chunk_size: int) -> list[int]:
+def read(body: Pollable, chunk_size: int) -> bytes:
     """Reads from a body."""
     return _wit.read(body._wit_resource, chunk_size)
 
 @remap_wit_errors(MAPPINGS)
-def write(body: Pollable, buf: list[int]) -> int:
+def write(body: Pollable, buf: bytes) -> int:
     """Writes to a body.
 
     This function may write fewer bytes than requested; on success, the number of
@@ -35,7 +35,7 @@ def write(body: Pollable, buf: list[int]) -> int:
     return _wit.write(body._wit_resource, buf)
 
 @remap_wit_errors(MAPPINGS)
-def write_front(body: Pollable, buf: list[int]) -> None:
+def write_front(body: Pollable, buf: bytes) -> None:
     """Prepends bytes to the front of a body.
 
     On success, this function always writes all the bytes of `buf`.
@@ -72,7 +72,7 @@ def get_known_length(body: Pollable) -> int | None:
     return _wit.get_known_length(body._wit_resource)
 
 @remap_wit_errors(MAPPINGS)
-def append_trailer(body: Pollable, name: str, value: list[int]) -> None:
+def append_trailer(body: Pollable, name: str, value: bytes) -> None:
     """Adds a body trailing header with given value."""
     return _wit.append_trailer(body._wit_resource, name, value)
 
@@ -89,7 +89,7 @@ def get_trailer_names(body: Pollable, max_len: int, cursor: int) -> tuple[str, i
     return _wit.get_trailer_names(body._wit_resource, max_len, cursor)
 
 @remap_wit_errors(MAPPINGS)
-def get_trailer_value(body: Pollable, name: str, max_len: int) -> list[int] | None:
+def get_trailer_value(body: Pollable, name: str, max_len: int) -> bytes | None:
     """Gets the value for the trailer with the given name, or `none` if the trailer is not present.
 
     If there are multiple values for this header, only one is returned, which may be
@@ -103,7 +103,7 @@ def get_trailer_value(body: Pollable, name: str, max_len: int) -> list[int] | No
     return _wit.get_trailer_value(body._wit_resource, name, max_len)
 
 @remap_wit_errors(MAPPINGS)
-def get_trailer_values(body: Pollable, name: str, max_len: int, cursor: int) -> tuple[list[int], int | None]:
+def get_trailer_values(body: Pollable, name: str, max_len: int, cursor: int) -> tuple[bytes, int | None]:
     """Gets multiple values associated with the trailer with the given name.
 
     As opposed to `get-trailer-value`, this function returns all of the values for this trailer.

@@ -53,7 +53,7 @@ class WriteOptions:
         stale_while_revalidate_ns: int | None = None,
         surrogate_keys: str | None = None,
         length: int | None = None,
-        user_metadata: list[int] | None = None,
+        user_metadata: bytes | None = None,
         edge_max_age_ns: int | None = None,
         sensitive_data: bool = False,
     ) -> None:
@@ -107,7 +107,7 @@ class Entry(FastlyResource[_wit.Entry]):
 
     @classmethod
     @remap_wit_errors(MAPPINGS)
-    def lookup(cls, key: list[int], options: LookupOptions) -> Self:
+    def lookup(cls, key: bytes, options: LookupOptions) -> Self:
         """Performs a non-request-collapsing cache lookup.
 
         Returns a result without waiting for any request collapsing that may be ongoing.
@@ -116,7 +116,7 @@ class Entry(FastlyResource[_wit.Entry]):
 
     @classmethod
     @remap_wit_errors(MAPPINGS)
-    def transaction_lookup(cls, key: list[int], options: LookupOptions) -> Self:
+    def transaction_lookup(cls, key: bytes, options: LookupOptions) -> Self:
         """The entrypoint to the request-collapsing cache transaction API.
 
         This operation always participates in request collapsing and may return stale objects. To
@@ -126,7 +126,7 @@ class Entry(FastlyResource[_wit.Entry]):
 
     @classmethod
     @remap_wit_errors(MAPPINGS)
-    def transaction_lookup_async(cls, key: list[int], options: LookupOptions) -> Pollable:
+    def transaction_lookup_async(cls, key: bytes, options: LookupOptions) -> Pollable:
         """The entrypoint to the request-collapsing cache transaction API, returning instead of waiting
         on busy.
 
@@ -183,7 +183,7 @@ class Entry(FastlyResource[_wit.Entry]):
         return self._wit_resource.get_state()
 
     @remap_wit_errors(MAPPINGS)
-    def get_user_metadata(self, max_len: int) -> list[int] | None:
+    def get_user_metadata(self, max_len: int) -> bytes | None:
         """Gets the user metadata of the found object, returning `ok(none)` if no object
         was found.
         """
@@ -252,7 +252,7 @@ class ReplaceEntry(FastlyResource[_wit.ReplaceEntry]):
 
     @classmethod
     @remap_wit_errors(MAPPINGS)
-    def replace(cls, key: list[int], options: ReplaceOptions) -> Self:
+    def replace(cls, key: bytes, options: ReplaceOptions) -> Self:
         """The entrypoint to the replace API.
 
         This operation always participates in request collapsing and may return stale objects.
@@ -318,7 +318,7 @@ class ReplaceEntry(FastlyResource[_wit.ReplaceEntry]):
         return self._wit_resource.get_state()
 
     @remap_wit_errors(MAPPINGS)
-    def get_user_metadata(self, max_len: int) -> list[int] | None:
+    def get_user_metadata(self, max_len: int) -> bytes | None:
         """Gets the user metadata of the existing object during replace, returning
         `ok(none)` if there was no object.
         """
@@ -353,7 +353,7 @@ class ExtraReplaceOptions(FastlyResource[_wit.ExtraReplaceOptions]):
 
 
 @remap_wit_errors(MAPPINGS)
-def insert(key: list[int], options: WriteOptions) -> Pollable:
+def insert(key: bytes, options: WriteOptions) -> Pollable:
     """Performs a non-request-collapsing cache insertion (or update).
 
     The returned handle is to a streaming body that is used for writing the object into

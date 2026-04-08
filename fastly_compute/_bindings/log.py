@@ -35,7 +35,7 @@ class Endpoint(FastlyResource[_wit.Endpoint]):
         """
         return cls(_wit.Endpoint.open(name))
 
-    def write(self, msg: list[int]) -> None:
+    def write(self, msg: bytes) -> None:
         """Writes a data to the given endpoint.
 
         Each call to `write` with a non-empty message produces a single log event.

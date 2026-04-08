@@ -118,7 +118,7 @@ def downstream_client_ddos_detected(ds_request: Request) -> bool:
     return _wit.downstream_client_ddos_detected(ds_request._wit_resource)
 
 @remap_wit_errors(MAPPINGS)
-def downstream_tls_cipher_openssl_name(ds_request: Request, max_len: int) -> list[int] | None:
+def downstream_tls_cipher_openssl_name(ds_request: Request, max_len: int) -> bytes | None:
     """Gets the cipher suite used to secure the downstream client TLS connection.
 
     The value returned will be consistent with the [OpenSSL name] for the cipher suite.
@@ -130,7 +130,7 @@ def downstream_tls_cipher_openssl_name(ds_request: Request, max_len: int) -> lis
     return _wit.downstream_tls_cipher_openssl_name(ds_request._wit_resource, max_len)
 
 @remap_wit_errors(MAPPINGS)
-def downstream_tls_protocol(ds_request: Request, max_len: int) -> list[int] | None:
+def downstream_tls_protocol(ds_request: Request, max_len: int) -> bytes | None:
     """Gets the TLS protocol version used to secure the downstream client TLS connection.
 
     Returns `ok(none)` if the downstream client connection is not a TLS connection.
@@ -138,7 +138,7 @@ def downstream_tls_protocol(ds_request: Request, max_len: int) -> list[int] | No
     return _wit.downstream_tls_protocol(ds_request._wit_resource, max_len)
 
 @remap_wit_errors(MAPPINGS)
-def downstream_tls_client_hello(ds_request: Request, max_len: int) -> list[int] | None:
+def downstream_tls_client_hello(ds_request: Request, max_len: int) -> bytes | None:
     """Gets the raw bytes sent by the client in the TLS ClientHello message.
 
     See [RFC 5246] for details.
@@ -150,7 +150,7 @@ def downstream_tls_client_hello(ds_request: Request, max_len: int) -> list[int] 
     return _wit.downstream_tls_client_hello(ds_request._wit_resource, max_len)
 
 @remap_wit_errors(MAPPINGS)
-def downstream_tls_raw_client_certificate(ds_request: Request, max_len: int) -> list[int] | None:
+def downstream_tls_raw_client_certificate(ds_request: Request, max_len: int) -> bytes | None:
     """Gets the raw client certificate used to secure the downstream client mTLS connection.
 
     The value returned will be based on PEM format.
@@ -176,7 +176,7 @@ def downstream_tls_client_servername(ds_request: Request, max_len: int) -> str |
     return _wit.downstream_tls_client_servername(ds_request._wit_resource, max_len)
 
 @remap_wit_errors(MAPPINGS)
-def downstream_tls_ja3_md5(ds_request: Request) -> list[int] | None:
+def downstream_tls_ja3_md5(ds_request: Request) -> bytes | None:
     """Gets the JA3 hash of the TLS ClientHello message.
 
     Returns `ok(none)` if the downstream client connection is not a TLS connection.

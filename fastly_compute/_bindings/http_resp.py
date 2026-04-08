@@ -41,7 +41,7 @@ class Response(FastlyResource[_wit.Response]):
         return self._wit_resource.get_header_names(max_len, cursor)
 
     @remap_wit_errors(MAPPINGS)
-    def get_header_value(self, name: str, max_len: int) -> list[int] | None:
+    def get_header_value(self, name: str, max_len: int) -> bytes | None:
         """Gets the value of a header, or `none` if the header is not present.
 
         If there are multiple values for the header, only one is returned. See
@@ -53,7 +53,7 @@ class Response(FastlyResource[_wit.Response]):
         return self._wit_resource.get_header_value(name, max_len)
 
     @remap_wit_errors(MAPPINGS)
-    def get_header_values(self, name: str, max_len: int, cursor: int) -> tuple[list[int], int | None]:
+    def get_header_values(self, name: str, max_len: int, cursor: int) -> tuple[bytes, int | None]:
         """Gets multiple header values for the given `name` via a buffer of the provided size.
 
         As opposed to `get-header-value`, this function returns all of the values for this header.
@@ -67,21 +67,21 @@ class Response(FastlyResource[_wit.Response]):
         return self._wit_resource.get_header_values(name, max_len, cursor)
 
     @remap_wit_errors(MAPPINGS)
-    def set_header_values(self, name: str, values: list[int]) -> None:
+    def set_header_values(self, name: str, values: bytes) -> None:
         """Sets the values for the given header name, replacing any headers that previously existed for
         that name.
         """
         return self._wit_resource.set_header_values(name, values)
 
     @remap_wit_errors(MAPPINGS)
-    def insert_header(self, name: str, value: list[int]) -> None:
+    def insert_header(self, name: str, value: bytes) -> None:
         """Sets a response header to the given value, discarding any previous values for the given
         header name.
         """
         return self._wit_resource.insert_header(name, value)
 
     @remap_wit_errors(MAPPINGS)
-    def append_header(self, name: str, value: list[int]) -> None:
+    def append_header(self, name: str, value: bytes) -> None:
         """Add a response header with given value.
 
         Unlike `set-header-values`, this does not discard existing values for the same header name.

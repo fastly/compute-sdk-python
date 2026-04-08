@@ -276,7 +276,7 @@ class Backend(FastlyResource[_wit.Backend]):
         return self._wit_resource.get_host(max_len)
 
     @remap_wit_errors(MAPPINGS)
-    def get_override_host(self, max_len: int) -> list[int] | None:
+    def get_override_host(self, max_len: int) -> bytes | None:
         """Gets the “override host” for this backend.
 
         This is used to change the `Host` header sent to the backend. See

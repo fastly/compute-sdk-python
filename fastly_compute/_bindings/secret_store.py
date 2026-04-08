@@ -20,7 +20,7 @@ class Secret(FastlyResource[_wit.Secret]):
 
     @classmethod
     @remap_wit_errors(MAPPINGS)
-    def from_bytes(cls, bytes: list[int]) -> Self:
+    def from_bytes(cls, bytes: bytes) -> Self:
         """Creates a new “secret” from the given memory.
 
         This is *not* the suggested way to create `secret`s; instead, we suggest using `get`.
@@ -38,7 +38,7 @@ class Secret(FastlyResource[_wit.Secret]):
         return cls(_wit.Secret.from_bytes(bytes))
 
     @remap_wit_errors(MAPPINGS)
-    def plaintext(self, max_len: int) -> list[int]:
+    def plaintext(self, max_len: int) -> bytes:
         """Returns the plaintext value of this secret."""
         return self._wit_resource.plaintext(max_len)
 

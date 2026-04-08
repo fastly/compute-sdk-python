@@ -41,7 +41,7 @@ class LogEndpoint(_Endpoint):
             endpoint.write(b"Binary log data")
     """
 
-    def write(self, msg: bytes | str) -> None:  # pyrefly: ignore[bad-override]
+    def write(self, msg: bytes | str) -> None:
         """Write data to the logging endpoint.
 
         Each call to write() with a non-empty message produces a single log event.

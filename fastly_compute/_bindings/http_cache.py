@@ -45,7 +45,7 @@ class LookupOptions:
 
     def __init__(
         self,
-        override_key: list[int] | None = None,
+        override_key: bytes | None = None,
         backend: Backend | None = None,
     ) -> None:
         self._wit = _wit.LookupOptions(
@@ -354,7 +354,7 @@ def is_request_cacheable(request: Request) -> bool:
     return _wit.is_request_cacheable(request._wit_resource)
 
 @remap_wit_errors(MAPPINGS)
-def get_suggested_cache_key(request: Request, max_len: int) -> list[int]:
+def get_suggested_cache_key(request: Request, max_len: int) -> bytes:
     """Retrieves the default cache key for the request.
 
     If the full key requires more than `max-len` bytes, an `error.buffer-len`
