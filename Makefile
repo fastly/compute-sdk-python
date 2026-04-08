@@ -60,6 +60,7 @@ $(BUILD_DIR)/%.composed.wasm: wit/viceroy.wit wit/deps/fastly/compute.wit fastly
 # _error_mapping.py together.  We depend on _bindings/__init__.py as the
 # sentinel since the script always rewrites every file.
 fastly_compute/_bindings/__init__.py: scripts/generate_bindings/*.py \
+    scripts/generate_patches/*.py \
     $(shell find scripts/generate_bindings/templates -name "*.jinja") \
     $(COMPUTE_WIT)
 	uv run python -m scripts.generate_bindings

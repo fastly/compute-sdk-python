@@ -30,7 +30,10 @@ class Acl(FastlyResource[_wit.Acl]):
     @classmethod
     @remap_wit_errors(MAPPINGS)
     def open(cls, name: str) -> Self:
-        """Opens an ACL linked to the current service with the given link name."""
+        """Opens an ACL linked to the current service with the given link name.
+
+        :raises ~fastly_compute.exceptions.types.open_error.OpenError:
+        """
         return cls(_wit.Acl.open(name))
 
     @remap_wit_errors(MAPPINGS)
@@ -39,8 +42,10 @@ class Acl(FastlyResource[_wit.Acl]):
 
         If any matches are found, the result is a JSON-encoded HTTP body.
 
-        If no matches are found, then `ok(none)` is returned. This corresponds
+        If no matches are found, then `None` is returned. This corresponds
         to an HTTP error code of 204, “No Content”.
+
+        :raises ~fastly_compute.exceptions.acl.acl_error.AclError:
         """
         return Pollable(self._wit_resource.lookup(ip_addr))
 

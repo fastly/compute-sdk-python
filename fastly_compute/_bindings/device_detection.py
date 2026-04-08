@@ -24,6 +24,8 @@ def lookup(user_agent: str, max_len: int) -> str | None:
     of the JSON fields.
 
     [here]: https://www.fastly.com/documentation/reference/vcl/variables/client-request/client-identified/
+
+    :raises ~fastly_compute.exceptions.types.error.Error:
     """
     return _wit.lookup(user_agent, max_len)
 

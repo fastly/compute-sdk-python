@@ -70,7 +70,7 @@ def get_sandbox_id() -> str:
 
 def get_hostname() -> str:
     """The hostname of the Fastly cache server which is executing the current sandbox, for
-    example, `cache-jfk1034`.
+    example, `cache_jfk1034`.
 
     Equivalent to the "FASTLY_HOSTNAME" environment variable and to [`server.hostname`] in VCL.
 
@@ -127,7 +127,7 @@ def get_customer_id() -> str:
 def get_is_staging() -> bool:
     """Whether the request is running in the Fastly service's [staging environment].
 
-    `false` for production or `true` for staging.
+    `False` for production or `True` for staging.
 
     Equivalent to the "FASTLY_IS_STAGING" environment variable and to [`fastly.is_staging`] in VCL.
 

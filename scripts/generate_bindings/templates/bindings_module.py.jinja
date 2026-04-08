@@ -101,7 +101,7 @@ class {{ resource.bindings_class_name() }}(FastlyResource[_wit.{{ resource.bindi
     {% if func.kind() == 'constructor' %}
     @classmethod
     def {{ func.py_name() }}(cls) -> Self:
-        {{ func.docstring(indent=8) or '"""Construct a new instance with default values."""' }}
+        {{ func.docstring_with_raises(indent=8, fallback='"""Construct a new instance with default values."""') }}
         return cls(_wit.{{ resource.bindings_class_name() }}())
     {% elif func.kind() == 'static' %}
     @classmethod
@@ -109,7 +109,7 @@ class {{ resource.bindings_class_name() }}(FastlyResource[_wit.{{ resource.bindi
     @remap_wit_errors(MAPPINGS)
     {% endif %}
     def {{ func.py_name() }}(cls{% for p in func.params() %}, {{ p.name() }}: {{ p.annotation(resource) }}{% endfor %}) -> {{ func.return_annotation(resource) }}:
-        {{ func.docstring(indent=8) or '"""' + func.py_name() + '."""' }}
+        {{ func.docstring_with_raises(indent=8) }}
         {% if func.return_annotation(resource) == 'Self' %}
         return cls(_wit.{{ resource.bindings_class_name() }}.{{ func.py_name() }}({{ wit_args(func.params()) }}))
         {% else %}
@@ -120,7 +120,7 @@ class {{ resource.bindings_class_name() }}(FastlyResource[_wit.{{ resource.bindi
     @remap_wit_errors(MAPPINGS)
     {% endif %}
     def {{ func.py_name() }}(self{% for p in func.params() %}, {{ p.name() }}: {{ p.annotation(resource) }}{% endfor %}) -> {{ func.return_annotation(resource) }}:
-        {{ func.docstring(indent=8) or '"""' + func.py_name() + '."""' }}
+        {{ func.docstring_with_raises(indent=8) }}
         {{ return_body(func, 'self._wit_resource.' + func.py_name() + '(' + wit_args(func.params()) + ')') | trim | indent(8) }}
     {% endif %}
 
@@ -132,7 +132,7 @@ class {{ resource.bindings_class_name() }}(FastlyResource[_wit.{{ resource.bindi
 @remap_wit_errors(MAPPINGS)
 {% endif %}
 def {{ func.py_name() }}({% for p in func.params() %}{{ p.name() }}: {{ p.annotation() }}{% if not loop.last %}, {% endif %}{% endfor %}) -> {{ func.return_annotation() }}:
-    {{ func.docstring(indent=4) or '"""' + func.py_name() + '."""' }}
+    {{ func.docstring_with_raises(indent=4) }}
     {{ return_body(func, '_wit.' + func.py_name() + '(' + wit_args(func.params()) + ')') | trim | indent(4) }}
 
 {% endfor %}

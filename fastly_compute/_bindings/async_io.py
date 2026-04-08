@@ -49,7 +49,7 @@ class Pollable(FastlyResource[_wit.Pollable]):
     def is_ready(self) -> bool:
         """Make a nonblocking attempt to complete the I/O operation.
 
-        Returns `true` if the given async item is “ready” for its associated I/O action, `false`
+        Returns `True` if the given async item is “ready” for its associated I/O action, `False`
         otherwise.
 
         If an object is ready, the I/O action is guaranteed to complete without blocking.
@@ -92,7 +92,7 @@ def select_with_timeout(handles: list[Pollable], timeout_ms: int) -> int | None:
 
     The timeout is specified in milliseconds.
 
-    Returns the *index* (not handle!) of the first object that is ready, or `none` if the
+    Returns the *index* (not handle!) of the first object that is ready, or `None` if the
     timeout expires before any objects are ready for I/O.
     """
     return _wit.select_with_timeout(handles, timeout_ms)

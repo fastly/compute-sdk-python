@@ -34,10 +34,12 @@ class Endpoint(FastlyResource[_wit.Endpoint]):
         - It must not contain newlines (`\n`) or colons (`:`).
         - It must not be `stdout` or `stderr`, which are reserved for debugging.
 
-        Names are case sensitive. Calling `get-endpoint` with a name that doesn't correspond to any
+        Names are case sensitive. Calling `get_endpoint` with a name that doesn't correspond to any
         logging endpoint available in your service will still return a usable endpoint, and writes
         to that endpoint will succeed. Refer to your service dashboard to diagnose missing log
         events.
+
+        :raises ~fastly_compute.exceptions.types.open_error.OpenError:
         """
         return cls(_wit.Endpoint.open(name))
 

@@ -51,6 +51,8 @@ def inspect(request: Request, body: Pollable, options: InspectOptions, max_len: 
     Returns a JSON-encoded string.
 
     [NGWAF]: https://docs.fastly.com/en/ngwaf/
+
+    :raises ~fastly_compute.exceptions.types.error.Error:
     """
     return _wit.inspect(request._wit_resource, body._wit_resource, options._wit, max_len)
 

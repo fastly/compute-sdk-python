@@ -30,7 +30,10 @@ class RateCounter(FastlyResource[_wit.RateCounter]):
     @classmethod
     @remap_wit_errors(MAPPINGS)
     def open(cls, name: str) -> Self:
-        """Opens a `rate-counter` with the given name."""
+        """Opens a `rate_counter` with the given name.
+
+        :raises ~fastly_compute.exceptions.types.open_error.OpenError:
+        """
         return cls(_wit.RateCounter.open(name))
 
     def get_name(self) -> str:
@@ -45,23 +48,34 @@ class RateCounter(FastlyResource[_wit.RateCounter]):
         If the client is over the rps limit for the window, add to the penaltybox for ttl. Valid ttl
         span is 1m to 1h and TTL value is truncated to the nearest minute.
 
-        Returns `true` if the client is penalized (i.e. should be limited), or `false` if not.
+        Returns `True` if the client is penalized (i.e. should be limited), or `False` if not.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
         """
         return self._wit_resource.check_rate(entry, delta, window, limit, penalty_box._wit_resource, ttl)
 
     @remap_wit_errors(MAPPINGS)
     def increment(self, entry: str, delta: int) -> None:
-        """Increments an entry in the ratecounter by `delta`."""
+        """Increments an entry in the ratecounter by `delta`.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
+        """
         return self._wit_resource.increment(entry, delta)
 
     @remap_wit_errors(MAPPINGS)
     def lookup_rate(self, entry: str, window: int) -> int:
-        """Looks up the current rate for entry in the ratecounter for a window."""
+        """Looks up the current rate for entry in the ratecounter for a window.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
+        """
         return self._wit_resource.lookup_rate(entry, window)
 
     @remap_wit_errors(MAPPINGS)
     def lookup_count(self, entry: str, duration: int) -> int:
-        """Looks up the current count for entry in the ratecounter for duration."""
+        """Looks up the current count for entry in the ratecounter for duration.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
+        """
         return self._wit_resource.lookup_count(entry, duration)
 
 class PenaltyBox(FastlyResource[_wit.PenaltyBox]):
@@ -72,7 +86,10 @@ class PenaltyBox(FastlyResource[_wit.PenaltyBox]):
     @classmethod
     @remap_wit_errors(MAPPINGS)
     def open(cls, name: str) -> Self:
-        """Opens a `penalty-box` identified by the given name."""
+        """Opens a `penalty_box` identified by the given name.
+
+        :raises ~fastly_compute.exceptions.types.open_error.OpenError:
+        """
         return cls(_wit.PenaltyBox.open(name))
 
     def get_name(self) -> str:
@@ -84,12 +101,17 @@ class PenaltyBox(FastlyResource[_wit.PenaltyBox]):
         """Adds `entry` to a the penaltybox for the duration of ttl.
 
         Valid ttl span is 1m to 1h and TTL value is truncated to the nearest minute.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
         """
         return self._wit_resource.add(entry, ttl)
 
     @remap_wit_errors(MAPPINGS)
     def has(self, entry: str) -> bool:
-        """Checks if `entry` is in the penaltybox."""
+        """Checks if `entry` is in the penaltybox.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
+        """
         return self._wit_resource.has(entry)
 
 

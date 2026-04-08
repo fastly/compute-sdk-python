@@ -30,6 +30,8 @@ class Dictionary(FastlyResource[_wit.Dictionary]):
         """Opens a dictionary, given its name.
 
         Names are case sensitive.
+
+        :raises ~fastly_compute.exceptions.types.open_error.OpenError:
         """
         return cls(_wit.Dictionary.open(name))
 
@@ -37,8 +39,10 @@ class Dictionary(FastlyResource[_wit.Dictionary]):
     def lookup(self, key: str, max_len: int) -> str | None:
         """Tries to look up a value in this dictionary.
 
-        If the lookup is successful, this function returns `ok(some(s))` containing the found
-        string `s`, or `ok(none)` if no entry with the given key was found.
+        If the lookup is successful, this function returns `s` containing the found
+        string `s`, or `None` if no entry with the given key was found.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
         """
         return self._wit_resource.lookup(key, max_len)
 

@@ -41,12 +41,17 @@ class Secret(FastlyResource[_wit.Secret]):
 
         As the early note says, this `secret` will be local to the current sandbox, and
         will not be shared with other instances of this service.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
         """
         return cls(_wit.Secret.from_bytes(bytes))
 
     @remap_wit_errors(MAPPINGS)
     def plaintext(self, max_len: int) -> bytes:
-        """Returns the plaintext value of this secret."""
+        """Returns the plaintext value of this secret.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
+        """
         return self._wit_resource.plaintext(max_len)
 
 class Store(FastlyResource[_wit.Store]):
@@ -55,15 +60,20 @@ class Store(FastlyResource[_wit.Store]):
     @classmethod
     @remap_wit_errors(MAPPINGS)
     def open(cls, name: str) -> Self:
-        """Opens the Secret Store with the given name."""
+        """Opens the Secret Store with the given name.
+
+        :raises ~fastly_compute.exceptions.types.open_error.OpenError:
+        """
         return cls(_wit.Store.open(name))
 
     @remap_wit_errors(MAPPINGS)
     def get(self, key: str) -> Secret | None:
         """Tries to look up a Secret by name in this secret store.
 
-        If successful, this method returns `ok(some(s))` containing the found secret `s` if the
-        secret is found, or `ok(none)` if the secret was not found.
+        If successful, this method returns `s` containing the found secret `s` if the
+        secret is found, or `None` if the secret was not found.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
         """
         return Secret(self._wit_resource.get(key))
 

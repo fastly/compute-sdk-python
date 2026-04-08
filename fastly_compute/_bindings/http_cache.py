@@ -107,6 +107,8 @@ class Entry(FastlyResource[_wit.Entry]):
         insert or update responses, and/or stale responses.
 
         The request is not consumed.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
         """
         return cls(_wit.Entry.transaction_lookup(req_handle._wit_resource, options._wit))
 
@@ -115,9 +117,11 @@ class Entry(FastlyResource[_wit.Entry]):
         """Inserts a response into the cache with the given options, returning a streaming body handle
         that is ready for writing or appending.
 
-        Can only be used if the cache handle state includes the `must-insert-or-update` flag.
+        Can only be used if the cache handle state includes the `must_insert_or_update` flag.
 
         The response is consumed.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
         """
         return Pollable(self._wit_resource.transaction_insert(resp_handle._wit_resource, options._wit))
 
@@ -131,6 +135,8 @@ class Entry(FastlyResource[_wit.Entry]):
         in an HTTP response.
 
         The response is consumed.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
         """
         _r = self._wit_resource.transaction_insert_and_stream_back(resp_handle._wit_resource, options._wit)
         return (Pollable(_r[0]), Entry(_r[1]))
@@ -142,9 +148,11 @@ class Entry(FastlyResource[_wit.Entry]):
 
         Can only be used in if the cache handle state includes both of the flags:
         - `found`
-        - `must-insert-or-update`
+        - `must_insert_or_update`
 
         The response is consumed.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
         """
         return self._wit_resource.transaction_update(resp_handle._wit_resource, options._wit)
 
@@ -156,9 +164,11 @@ class Entry(FastlyResource[_wit.Entry]):
 
         Can only be used in if the cache handle state includes both of the flags:
         - `found`
-        - `must-insert-or-update`
+        - `must_insert_or_update`
 
         The response is consumed.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
         """
         return Entry(self._wit_resource.transaction_update_and_return_fresh(resp_handle._wit_resource, options._wit))
 
@@ -170,6 +180,8 @@ class Entry(FastlyResource[_wit.Entry]):
 
         Only the max age and, optionally, the vary rule are read from the `options`
         for this function.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
         """
         return self._wit_resource.transaction_record_not_cacheable(options._wit)
 
@@ -180,6 +192,8 @@ class Entry(FastlyResource[_wit.Entry]):
         If there is a stored, stale response, this suggested request may be for revalidation. If the
         looked-up request is ranged, the suggested request will be unranged in order to try caching
         the entire response.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
         """
         return Request(self._wit_resource.get_suggested_backend_request())
 
@@ -188,6 +202,8 @@ class Entry(FastlyResource[_wit.Entry]):
         """Prepares a suggested set of cache write options for a given request and response pair.
 
         The response is not consumed.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
         """
         return SuggestedWriteOptions(self._wit_resource.get_suggested_write_options(response._wit_resource))
 
@@ -200,18 +216,22 @@ class Entry(FastlyResource[_wit.Entry]):
         interpret a `304 Not Modified` response for revalidation by updating headers.
 
         In addition to the updated response, this function returns the recommended storage action.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
         """
         _r = self._wit_resource.prepare_response_for_storage(response._wit_resource)
         return (_r[0], Response(_r[1]))
 
     @remap_wit_errors(MAPPINGS)
     def get_found_response(self, transform_for_client: int) -> tuple[Response, Pollable] | None:
-        """Retrieves a stored response from the cache, returning `ok(none)` if
+        """Retrieves a stored response from the cache, returning `None` if
         there was no response found.
 
-        If `transform-for-client` is set, the response will be adjusted according to the looked-up
+        If `transform_for_client` is set, the response will be adjusted according to the looked-up
         request. For example, a response retrieved for a range request may be transformed into a
-        `206 Partial Content` response with an appropriate `content-range` header.
+        `206 Partial Content` response with an appropriate `content_range` header.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
         """
         _r = self._wit_resource.get_found_response(transform_for_client)
         return (Response(_r[0]), Pollable(_r[1])) if _r is not None else None
@@ -222,75 +242,93 @@ class Entry(FastlyResource[_wit.Entry]):
 
         Primarily useful after performing the lookup to determine what subsequent operations are
         possible and whether any insertion or update obligations exist.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
         """
         return self._wit_resource.get_state()
 
     @remap_wit_errors(MAPPINGS)
     def get_length(self) -> int | None:
-        """Gets the length of the found response, returning `ok(none)` if there
+        """Gets the length of the found response, returning `None` if there
         was no response found or no length was provided.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
         """
         return self._wit_resource.get_length()
 
     @remap_wit_errors(MAPPINGS)
     def get_max_age_ns(self) -> int | None:
-        """Gets the configured max age of the found response in nanoseconds, returning `ok(none)`
+        """Gets the configured max age of the found response in nanoseconds, returning `None`
         if there was no response found.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
         """
         return self._wit_resource.get_max_age_ns()
 
     @remap_wit_errors(MAPPINGS)
     def get_stale_while_revalidate_ns(self) -> int | None:
         """Gets the configured stale-while-revalidate period of the found response in nanoseconds,
-        returning `ok(none)` if there was no response found.
+        returning `None` if there was no response found.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
         """
         return self._wit_resource.get_stale_while_revalidate_ns()
 
     @remap_wit_errors(MAPPINGS)
     def get_age_ns(self) -> int | None:
-        """Gets the age of the found response in nanoseconds, returning `ok(none)`
+        """Gets the age of the found response in nanoseconds, returning `None`
         if there was no response found.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
         """
         return self._wit_resource.get_age_ns()
 
     @remap_wit_errors(MAPPINGS)
     def get_hits(self) -> int | None:
-        """Gets the number of cache hits for the found response, returning `ok(none)`
+        """Gets the number of cache hits for the found response, returning `None`
         if there was no response found.
 
         This figure only reflects hits for a stored response in a particular cache server
         or cluster, not the entire Fastly network.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
         """
         return self._wit_resource.get_hits()
 
     @remap_wit_errors(MAPPINGS)
     def get_sensitive_data(self) -> bool | None:
-        """Gets whether a found response is marked as containing sensitive data, returning `ok(none)`
+        """Gets whether a found response is marked as containing sensitive data, returning `None`
         if there was no response found.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
         """
         return self._wit_resource.get_sensitive_data()
 
     @remap_wit_errors(MAPPINGS)
     def get_surrogate_keys(self, max_len: int) -> str | None:
-        """Gets the surrogate keys of the found response, returning `ok(none)` if
+        """Gets the surrogate keys of the found response, returning `None` if
         there was no response found.
 
         The output is a list of surrogate keys separated by spaces.
 
-        If the full list requires more than `max-len` bytes, an `error.buffer-len`
+        If the full list requires more than `max_len` bytes, an `error.buffer-len`
         error is returned containing the required size.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
         """
         return self._wit_resource.get_surrogate_keys(max_len)
 
     @remap_wit_errors(MAPPINGS)
     def get_vary_rule(self, max_len: int) -> str | None:
-        """Gets the vary rule of the found response, returning `ok(none)` if there
+        """Gets the vary rule of the found response, returning `None` if there
         was no response found.
 
         The output is a list of header names separated by spaces.
 
-        If the full list requires more than `max-len` bytes, an `error.buffer-len`
+        If the full list requires more than `max_len` bytes, an `error.buffer-len`
         error is returned containing the required size.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
         """
         return self._wit_resource.get_vary_rule(max_len)
 
@@ -304,8 +342,10 @@ class Entry(FastlyResource[_wit.Entry]):
         If there are other requests collapsed on this transaction, one of those other requests will
         be awoken and given the obligation to provide a response. If subsequent requests
         are unlikely to yield cacheable responses, this may lead to undesired serialization of
-        requests. Consider using `transaction-record-not-cacheable` to make lookups for this request
+        requests. Consider using `transaction_record_not_cacheable` to make lookups for this request
         bypass the cache.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
         """
         return self._wit_resource.transaction_abandon()
 
@@ -329,7 +369,10 @@ class SuggestedWriteOptions(FastlyResource[_wit.SuggestedWriteOptions]):
 
     @remap_wit_errors(MAPPINGS)
     def get_vary_rule(self, max_len: int) -> str:
-        """Returns the suggested value for the `write-options.vary-rule` field."""
+        """Returns the suggested value for the `write-options.vary-rule` field.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
+        """
         return self._wit_resource.get_vary_rule(max_len)
 
     def get_initial_age_ns(self) -> int:
@@ -342,7 +385,10 @@ class SuggestedWriteOptions(FastlyResource[_wit.SuggestedWriteOptions]):
 
     @remap_wit_errors(MAPPINGS)
     def get_surrogate_keys(self, max_len: int) -> str:
-        """Returns the suggested value for the `write-options.surrogate-keys` field."""
+        """Returns the suggested value for the `write-options.surrogate-keys` field.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
+        """
         return self._wit_resource.get_surrogate_keys(max_len)
 
     def get_length(self) -> int | None:
@@ -364,6 +410,8 @@ def is_request_cacheable(request: Request) -> bool:
     this function.
 
     [RFC 9111]: https://www.rfc-editor.org/rfc/rfc9111.html
+
+    :raises ~fastly_compute.exceptions.types.error.Error:
     """
     return _wit.is_request_cacheable(request._wit_resource)
 
@@ -371,10 +419,12 @@ def is_request_cacheable(request: Request) -> bool:
 def get_suggested_cache_key(request: Request, max_len: int) -> bytes:
     """Retrieves the default cache key for the request.
 
-    If the full key requires more than `max-len` bytes, an `error.buffer-len`
+    If the full key requires more than `max_len` bytes, an `error.buffer-len`
     error is returned containing the required size.
 
     At the moment, HTTP cache keys must always be 32 bytes.
+
+    :raises ~fastly_compute.exceptions.types.error.Error:
     """
     return _wit.get_suggested_cache_key(request._wit_resource, max_len)
 
@@ -382,9 +432,11 @@ def get_suggested_cache_key(request: Request, max_len: int) -> bytes:
 def close_entry(handle: Entry) -> None:
     """Closes an ongoing interaction with the cache.
 
-    If the cache handle state includes `must-insert-or-update` (and hence no insert or update
+    If the cache handle state includes `must_insert_or_update` (and hence no insert or update
     has been performed), closing the handle cancels any request collapsing, potentially choosing
     a new waiter to perform the insertion/update.
+
+    :raises ~fastly_compute.exceptions.types.error.Error:
     """
     return _wit.close_entry(handle._wit_resource)
 

@@ -42,7 +42,10 @@ class ExtraImageOptimizerTransformOptions(FastlyResource[_wit.ExtraImageOptimize
 
 @remap_wit_errors(MAPPINGS)
 def transform_image_optimizer_request(origin_image_request: Request, origin_image_request_body: Pollable | None, origin_image_request_backend: Backend, io_transform_options: ImageOptimizerTransformOptions) -> tuple[Response, Pollable]:
-    """transform_image_optimizer_request."""
+    """transform_image_optimizer_request.
+
+    :raises ~fastly_compute.exceptions.types.error.Error:
+    """
     _r = _wit.transform_image_optimizer_request(origin_image_request._wit_resource, origin_image_request_body, origin_image_request_backend._wit_resource, io_transform_options._wit)
     return (Response(_r[0]), Pollable(_r[1]))
 

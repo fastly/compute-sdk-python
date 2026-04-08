@@ -29,6 +29,8 @@ def lookup(ip_addr: IpAddress, max_len: int) -> str:
     of the JSON fields.
 
     [here]: https://www.fastly.com/documentation/reference/vcl/variables/geolocation/
+
+    :raises ~fastly_compute.exceptions.types.error.Error:
     """
     return _wit.lookup(ip_addr, max_len)
 

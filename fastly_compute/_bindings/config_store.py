@@ -30,12 +30,17 @@ class Store(FastlyResource[_wit.Store]):
         """Attempts to open the named config store.
 
         Names are case sensitive.
+
+        :raises ~fastly_compute.exceptions.types.open_error.OpenError:
         """
         return cls(_wit.Store.open(name))
 
     @remap_wit_errors(MAPPINGS)
     def get(self, key: str, max_len: int) -> str | None:
-        """Fetches a value from the config store, returning `ok(none)` if it doesn't exist."""
+        """Fetches a value from the config store, returning `None` if it doesn't exist.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
+        """
         return self._wit_resource.get(key, max_len)
 
 

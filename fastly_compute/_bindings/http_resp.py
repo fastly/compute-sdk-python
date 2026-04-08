@@ -38,6 +38,8 @@ class Response(FastlyResource[_wit.Response]):
         """Create a new `response`.
 
         The new `response` is created with status code 200 OK, no headers, and an empty body.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
         """
         return cls(_wit.Response.new())
 
@@ -46,22 +48,26 @@ class Response(FastlyResource[_wit.Response]):
         """Read the response's header names via a buffer of the provided size.
 
         The first `cursor` names are skipped. The remaining names are encoded successively with
-        a NUL byte after each into a list of bytes at most `max-len` long. If any of the remaining
+        a NUL byte after each into a list of bytes at most `max_len` long. If any of the remaining
         names don't fit, the returned `option<u32>` is the index of the first name that didn't fit,
-        or `none` if all the remaining names fit. If `max-len` is too small to fit any name,
+        or `None` if all the remaining names fit. If `max_len` is too small to fit any name,
         an `error.buffer-len` error is returned, providing a recommended buffer size.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
         """
         return self._wit_resource.get_header_names(max_len, cursor)
 
     @remap_wit_errors(MAPPINGS)
     def get_header_value(self, name: str, max_len: int) -> bytes | None:
-        """Gets the value of a header, or `none` if the header is not present.
+        """Gets the value of a header, or `None` if the header is not present.
 
         If there are multiple values for the header, only one is returned. See
-        `get-header-values` if you need to get all of the values.
+        `get_header_values` if you need to get all of the values.
 
-        If header name requires more than `max-len` bytes, this will return an `error.buffer-len`
+        If header name requires more than `max_len` bytes, this will return an `error.buffer-len`
         containing the required size.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
         """
         return self._wit_resource.get_header_value(name, max_len)
 
@@ -69,13 +75,15 @@ class Response(FastlyResource[_wit.Response]):
     def get_header_values(self, name: str, max_len: int, cursor: int) -> tuple[bytes, int | None]:
         """Gets multiple header values for the given `name` via a buffer of the provided size.
 
-        As opposed to `get-header-value`, this function returns all of the values for this header.
+        As opposed to `get_header_value`, this function returns all of the values for this header.
 
         The first `cursor` values are skipped. The remaining values are encoded successively with
-        a NUL byte after each into a list of bytes at most `max-len` long. If any of the remaining
+        a NUL byte after each into a list of bytes at most `max_len` long. If any of the remaining
         values don't fit, the returned `option<u32>` is the index of the first value that didn't
-        fit, or `none` if all the remaining values fit. If `max-len` is too small to fit any value,
+        fit, or `None` if all the remaining values fit. If `max_len` is too small to fit any value,
         an `error.buffer-len` error is returned, providing a recommended buffer size.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
         """
         return self._wit_resource.get_header_values(name, max_len, cursor)
 
@@ -83,6 +91,8 @@ class Response(FastlyResource[_wit.Response]):
     def set_header_values(self, name: str, values: bytes) -> None:
         """Sets the values for the given header name, replacing any headers that previously existed for
         that name.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
         """
         return self._wit_resource.set_header_values(name, values)
 
@@ -90,6 +100,8 @@ class Response(FastlyResource[_wit.Response]):
     def insert_header(self, name: str, value: bytes) -> None:
         """Sets a response header to the given value, discarding any previous values for the given
         header name.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
         """
         return self._wit_resource.insert_header(name, value)
 
@@ -97,7 +109,9 @@ class Response(FastlyResource[_wit.Response]):
     def append_header(self, name: str, value: bytes) -> None:
         """Add a response header with given value.
 
-        Unlike `set-header-values`, this does not discard existing values for the same header name.
+        Unlike `set_header_values`, this does not discard existing values for the same header name.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
         """
         return self._wit_resource.append_header(name, value)
 
@@ -106,39 +120,58 @@ class Response(FastlyResource[_wit.Response]):
         """Remove all response headers of the given name
 
         Returns `ok` if any headers were successfully removed.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
         """
         return self._wit_resource.remove_header(name)
 
     @remap_wit_errors(MAPPINGS)
     def get_version(self) -> HttpVersion:
-        """Gets the HTTP version of this response."""
+        """Gets the HTTP version of this response.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
+        """
         return self._wit_resource.get_version()
 
     @remap_wit_errors(MAPPINGS)
     def set_version(self, version: HttpVersion) -> None:
-        """Sets the HTTP version of this response."""
+        """Sets the HTTP version of this response.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
+        """
         return self._wit_resource.set_version(version)
 
     @remap_wit_errors(MAPPINGS)
     def get_status(self) -> int:
-        """Gets the HTTP status code of the response."""
+        """Gets the HTTP status code of the response.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
+        """
         return self._wit_resource.get_status()
 
     @remap_wit_errors(MAPPINGS)
     def set_status(self, status: int) -> None:
-        """Sets the HTTP status code of the response."""
+        """Sets the HTTP status code of the response.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
+        """
         return self._wit_resource.set_status(status)
 
     @remap_wit_errors(MAPPINGS)
     def set_framing_headers_mode(self, mode: FramingHeadersMode) -> None:
         """Sets how the framing headers `Content-Length` and `Transfer-Encoding` will be determined
         when sending this response.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
         """
         return self._wit_resource.set_framing_headers_mode(mode)
 
     @remap_wit_errors(MAPPINGS)
     def set_http_keepalive_mode(self, mode: KeepaliveMode) -> None:
-        """Adjust the response's connection reuse mode."""
+        """Adjust the response's connection reuse mode.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
+        """
         return self._wit_resource.set_http_keepalive_mode(mode)
 
     def get_remote_ip_addr(self) -> IpAddress | None:
@@ -158,7 +191,9 @@ def send_downstream(response: Response, body: Pollable) -> None:
     transmission of the response will continue in the background.
 
     Data for the body must be written before calling this function. To start a response
-    and write data to it afterwards, use `send-downstream-streaming` instead.
+    and write data to it afterwards, use `send_downstream_streaming` instead.
+
+    :raises ~fastly_compute.exceptions.types.error.Error:
     """
     return _wit.send_downstream(response._wit_resource, body._wit_resource)
 
@@ -167,6 +202,8 @@ def send_downstream_streaming(response: Response, body: Pollable) -> None:
     """Starts a response to the client that made the request passed to `http-incoming.handle`.
 
     The body is left open, allowing data to be written after calling this function.
+
+    :raises ~fastly_compute.exceptions.types.error.Error:
     """
     return _wit.send_downstream_streaming(response._wit_resource, body._wit_resource)
 
@@ -177,6 +214,8 @@ def close(response: Response) -> None:
     A `response` is consumed when you send a response to a client or stream one to a
     client. You should call `close` only if you have a `response` you don't intend
     to use anymore.
+
+    :raises ~fastly_compute.exceptions.types.error.Error:
     """
     return _wit.close(response._wit_resource)
 

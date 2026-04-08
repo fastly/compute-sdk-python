@@ -130,6 +130,8 @@ class Entry(FastlyResource[_wit.Entry]):
         """Performs a non-request-collapsing cache lookup.
 
         Returns a result without waiting for any request collapsing that may be ongoing.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
         """
         return cls(_wit.Entry.lookup(key, options._wit))
 
@@ -140,6 +142,8 @@ class Entry(FastlyResource[_wit.Entry]):
 
         This operation always participates in request collapsing and may return stale objects. To
         bypass request collapsing, use `entry.lookup` or `insert` instead.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
         """
         return cls(_wit.Entry.transaction_lookup(key, options._wit))
 
@@ -151,6 +155,8 @@ class Entry(FastlyResource[_wit.Entry]):
 
         This operation always participates in request collapsing and may return stale objects. To
         bypass request collapsing, use `entry.lookup` or `insert` instead.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
         """
         return Pollable(_wit.Entry.transaction_lookup_async(key, options._wit))
 
@@ -158,10 +164,12 @@ class Entry(FastlyResource[_wit.Entry]):
     def transaction_insert(self, options: WriteOptions) -> Pollable:
         """Inserts an object into the cache with the given metadata.
 
-        Can only be used in if the cache handle state includes the `must-insert-or-update` flag.
+        Can only be used in if the cache handle state includes the `must_insert_or_update` flag.
 
         The returned handle is to a streaming body that is used for writing the object into
         the cache.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
         """
         return Pollable(self._wit_resource.transaction_insert(options._wit))
 
@@ -177,6 +185,8 @@ class Entry(FastlyResource[_wit.Entry]):
         The returned body handle is to a streaming body that is used for writing the object *into*
         the cache. The returned cache handle provides a separate transaction for reading out the
         newly cached object to send elsewhere.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
         """
         _r = self._wit_resource.transaction_insert_and_stream_back(options._wit)
         return (Pollable(_r[0]), Entry(_r[1]))
@@ -187,7 +197,9 @@ class Entry(FastlyResource[_wit.Entry]):
 
         Can only be used in if the cache handle state includes both of the flags:
         - `found`
-        - `must-insert-or-update`
+        - `must_insert_or_update`
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
         """
         return self._wit_resource.transaction_update(options._wit)
 
@@ -198,19 +210,23 @@ class Entry(FastlyResource[_wit.Entry]):
         Note that FOUND == USABLE, and means "usable" (fresh or stale-while-revalidate).
         Some SDKs were released that checked only FOUND to infer "usable";
         we preserve the equivalence for backwards compatibility.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
         """
         return self._wit_resource.get_state()
 
     @remap_wit_errors(MAPPINGS)
     def get_user_metadata(self, max_len: int) -> bytes | None:
-        """Gets the user metadata of the found object, returning `ok(none)` if no object
+        """Gets the user metadata of the found object, returning `None` if no object
         was found.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
         """
         return self._wit_resource.get_user_metadata(max_len)
 
     @remap_wit_errors(MAPPINGS)
     def get_body(self, options: GetBodyOptions) -> Pollable:
-        """Gets a range of the found object body, returning `ok(none)` if there
+        """Gets a range of the found object body, returning `None` if there
         was no found object.
 
         The returned `body` must be closed before calling this function again on the same
@@ -219,41 +235,53 @@ class Entry(FastlyResource[_wit.Entry]):
         Note: until the CacheD protocol is adjusted to fully support this functionality,
         the body of objects that are past the stale-while-revalidate period will not
         be available, even when other metadata is.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
         """
         return Pollable(self._wit_resource.get_body(options._wit))
 
     @remap_wit_errors(MAPPINGS)
     def get_length(self) -> int | None:
-        """Gets the content length of the found object, returning `ok(none)` if
+        """Gets the content length of the found object, returning `None` if
         there was no found object, or no content length was provided.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
         """
         return self._wit_resource.get_length()
 
     @remap_wit_errors(MAPPINGS)
     def get_max_age_ns(self) -> int | None:
-        """Gets the configured max age of the found object, returning `ok(none)`
+        """Gets the configured max age of the found object, returning `None`
         if there was no found object.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
         """
         return self._wit_resource.get_max_age_ns()
 
     @remap_wit_errors(MAPPINGS)
     def get_stale_while_revalidate_ns(self) -> int | None:
-        """Gets the configured stale-while-revalidate period of the found object, returning `ok(none)`
+        """Gets the configured stale-while-revalidate period of the found object, returning `None`
         if there was no found object.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
         """
         return self._wit_resource.get_stale_while_revalidate_ns()
 
     @remap_wit_errors(MAPPINGS)
     def get_age_ns(self) -> int | None:
-        """Gets the age of the found object, returning `ok(none)` if there
+        """Gets the age of the found object, returning `None` if there
         was no found object.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
         """
         return self._wit_resource.get_age_ns()
 
     @remap_wit_errors(MAPPINGS)
     def get_hits(self) -> int | None:
-        """Gets the number of cache hits for the found object, returning `ok(none)`
+        """Gets the number of cache hits for the found object, returning `None`
         if there was no found object.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
         """
         return self._wit_resource.get_hits()
 
@@ -263,6 +291,8 @@ class Entry(FastlyResource[_wit.Entry]):
 
         Useful if there is an error before streaming is possible, for example if a backend is
         unreachable.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
         """
         return self._wit_resource.transaction_cancel()
 
@@ -275,71 +305,89 @@ class ReplaceEntry(FastlyResource[_wit.ReplaceEntry]):
         """The entrypoint to the replace API.
 
         This operation always participates in request collapsing and may return stale objects.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
         """
         return cls(_wit.ReplaceEntry.replace(key, options._wit))
 
     @remap_wit_errors(MAPPINGS)
     def get_age_ns(self) -> int | None:
         """Gets the age of the existing object during replace, returning
-        `ok(none)` if there was no object.
+        `None` if there was no object.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
         """
         return self._wit_resource.get_age_ns()
 
     @remap_wit_errors(MAPPINGS)
     def get_body(self, options: GetBodyOptions) -> Pollable | None:
-        """Gets a range of the existing object body, returning `ok(none)` if there
+        """Gets a range of the existing object body, returning `None` if there
         was no existing object.
 
         The returned `body` must be closed before calling this function
-        again on the same `replace-entry`.
+        again on the same `replace_entry`.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
         """
         return Pollable(self._wit_resource.get_body(options._wit))
 
     @remap_wit_errors(MAPPINGS)
     def get_hits(self) -> int | None:
         """Gets the number of cache hits for the existing object during replace,
-        returning `ok(none)` if there was no object.
+        returning `None` if there was no object.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
         """
         return self._wit_resource.get_hits()
 
     @remap_wit_errors(MAPPINGS)
     def get_length(self) -> int | None:
         """Gets the content length of the existing object during replace,
-        returning `ok(none)` if there was no object, or no content
+        returning `None` if there was no object, or no content
         length was provided.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
         """
         return self._wit_resource.get_length()
 
     @remap_wit_errors(MAPPINGS)
     def get_max_age_ns(self) -> int | None:
         """Gets the configured max age of the existing object during replace,
-        returning `ok(none)` if there was no object.
+        returning `None` if there was no object.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
         """
         return self._wit_resource.get_max_age_ns()
 
     @remap_wit_errors(MAPPINGS)
     def get_stale_while_revalidate_ns(self) -> int | None:
         """Gets the configured stale-while-revalidate period of the existing
-        object during replace, returning `ok(none)` if there was no
+        object during replace, returning `None` if there was no
         object.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
         """
         return self._wit_resource.get_stale_while_revalidate_ns()
 
     @remap_wit_errors(MAPPINGS)
     def get_state(self) -> LookupState | None:
         """Gets the lookup state of the existing object during replace, returning
-        `ok(none)` if there was no object.
+        `None` if there was no object.
 
         Note that FOUND == USABLE, and means "usable" (fresh or stale-while-revalidate).
         Some SDKs were released that checked only FOUND to infer "usable";
         we preserve the equivalence for backwards compatibility.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
         """
         return self._wit_resource.get_state()
 
     @remap_wit_errors(MAPPINGS)
     def get_user_metadata(self, max_len: int) -> bytes | None:
         """Gets the user metadata of the existing object during replace, returning
-        `ok(none)` if there was no object.
+        `None` if there was no object.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
         """
         return self._wit_resource.get_user_metadata(max_len)
 
@@ -377,6 +425,8 @@ def insert(key: bytes, options: WriteOptions) -> Pollable:
 
     The returned handle is to a streaming body that is used for writing the object into
     the cache.
+
+    :raises ~fastly_compute.exceptions.types.error.Error:
     """
     return Pollable(_wit.insert(key, options._wit))
 
@@ -384,21 +434,28 @@ def insert(key: bytes, options: WriteOptions) -> Pollable:
 def await_entry(handle: Pollable) -> Entry:
     """Continues the lookup transaction from which the given busy handle was returned,
     waiting for the leader transaction if request collapsed, and returns a cache handle.
+
+    :raises ~fastly_compute.exceptions.types.error.Error:
     """
     return Entry(_wit.await_entry(handle._wit_resource))
 
 @remap_wit_errors(MAPPINGS)
 def close_pending_entry(handle: Pollable) -> None:
-    """Closes an interaction with the cache that has not yet finished request collapsing."""
+    """Closes an interaction with the cache that has not yet finished request collapsing.
+
+    :raises ~fastly_compute.exceptions.types.error.Error:
+    """
     return _wit.close_pending_entry(handle._wit_resource)
 
 @remap_wit_errors(MAPPINGS)
 def close_entry(handle: Entry) -> None:
     """Closes an ongoing interaction with the cache.
 
-    If the cache handle state includes the `must-insert-or-update` (and hence no insert or
+    If the cache handle state includes the `must_insert_or_update` (and hence no insert or
     update has been performed), closing the handle cancels any request collapsing, potentially
     choosing a new waiter to perform the insertion/update.
+
+    :raises ~fastly_compute.exceptions.types.error.Error:
     """
     return _wit.close_entry(handle._wit_resource)
 
@@ -408,6 +465,8 @@ def replace_insert(handle: ReplaceEntry, options: WriteOptions) -> Pollable:
 
     The returned handle is to a streaming body that is used for writing the object into
     the cache.
+
+    :raises ~fastly_compute.exceptions.types.error.Error:
     """
     return Pollable(_wit.replace_insert(handle._wit_resource, options._wit))
 
@@ -415,9 +474,11 @@ def replace_insert(handle: ReplaceEntry, options: WriteOptions) -> Pollable:
 def close_replace_entry(handle: ReplaceEntry) -> None:
     """Closes an ongoing replace interaction with the cache.
 
-    If the replace handle state includes the `must-insert-or-update` (and hence no insert or
+    If the replace handle state includes the `must_insert_or_update` (and hence no insert or
     update has been performed), closing the handle cancels any request collapsing, potentially
     choosing a new waiter to perform the insertion/update.
+
+    :raises ~fastly_compute.exceptions.types.error.Error:
     """
     return _wit.close_replace_entry(handle._wit_resource)
 

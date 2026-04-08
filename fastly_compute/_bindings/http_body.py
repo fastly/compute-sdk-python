@@ -29,17 +29,26 @@ __all__ = [
 
 @remap_wit_errors(MAPPINGS)
 def new() -> Pollable:
-    """Creates a new empty body that can be used for outgoing requests and responses."""
+    """Creates a new empty body that can be used for outgoing requests and responses.
+
+    :raises ~fastly_compute.exceptions.types.error.Error:
+    """
     return Pollable(_wit.new())
 
 @remap_wit_errors(MAPPINGS)
 def append(dest: Pollable, src: Pollable) -> None:
-    """Appends the contents of the body `src` to the body `dest`."""
+    """Appends the contents of the body `src` to the body `dest`.
+
+    :raises ~fastly_compute.exceptions.types.error.Error:
+    """
     return _wit.append(dest._wit_resource, src._wit_resource)
 
 @remap_wit_errors(MAPPINGS)
 def read(body: Pollable, chunk_size: int) -> bytes:
-    """Reads from a body."""
+    """Reads from a body.
+
+    :raises ~fastly_compute.exceptions.types.error.Error:
+    """
     return _wit.read(body._wit_resource, chunk_size)
 
 @remap_wit_errors(MAPPINGS)
@@ -48,6 +57,8 @@ def write(body: Pollable, buf: bytes) -> int:
 
     This function may write fewer bytes than requested; on success, the number of
     bytes actually written is returned.
+
+    :raises ~fastly_compute.exceptions.types.error.Error:
     """
     return _wit.write(body._wit_resource, buf)
 
@@ -56,6 +67,8 @@ def write_front(body: Pollable, buf: bytes) -> None:
     """Prepends bytes to the front of a body.
 
     On success, this function always writes all the bytes of `buf`.
+
+    :raises ~fastly_compute.exceptions.types.error.Error:
     """
     return _wit.write_front(body._wit_resource, buf)
 
@@ -70,19 +83,21 @@ def close(body: Pollable) -> None:
 
     If a handle is dropped without calling `close`, it's an *unsuccessful* stream
     termination.
+
+    :raises ~fastly_compute.exceptions.types.error.Error:
     """
     return _wit.close(body._wit_resource)
 
 def get_known_length(body: Pollable) -> int | None:
-    """Returns a `u64` body length if the length of a body is known, or `none` otherwise.
+    """Returns a `u64` body length if the length of a body is known, or `None` otherwise.
 
     If the length is unknown, it is likely due to the body arising from an HTTP/1.1 message with
-    chunked encoding, an HTTP/2 or later message with no `content-length`, or being a streaming
+    chunked encoding, an HTTP/2 or later message with no `content_length`, or being a streaming
     body.
 
     Receiving a length from this function does not guarantee that the full number of
     bytes can actually be read from the body. For example, when proxying a response from a
-    backend, this length may reflect the `content-length` promised in the response, but if the
+    backend, this length may reflect the `content_length` promised in the response, but if the
     backend connection is closed prematurely, fewer bytes may be delivered before this body
     handle can no longer be read.
     """
@@ -90,7 +105,10 @@ def get_known_length(body: Pollable) -> int | None:
 
 @remap_wit_errors(MAPPINGS)
 def append_trailer(body: Pollable, name: str, value: bytes) -> None:
-    """Adds a body trailing header with given value."""
+    """Adds a body trailing header with given value.
+
+    :raises ~fastly_compute.exceptions.types.error.Error:
+    """
     return _wit.append_trailer(body._wit_resource, name, value)
 
 @remap_wit_errors(MAPPINGS)
@@ -98,24 +116,28 @@ def get_trailer_names(body: Pollable, max_len: int, cursor: int) -> tuple[str, i
     """Gets the names of the trailers associated with this body.
 
     The first `cursor` names are skipped. The remaining names are encoded successively with
-    a NUL byte after each into a list of bytes at most `max-len` long. If any of the remaining
+    a NUL byte after each into a list of bytes at most `max_len` long. If any of the remaining
     names don't fit, the returned `option<u32>` is the index of the first name that didn't fit,
-    or `none` if all the remaining names fit. If `max-len` is too small to fit any name, an
+    or `None` if all the remaining names fit. If `max_len` is too small to fit any name, an
     `error.buffer-len` error is returned, providing a recommended buffer size.
+
+    :raises ~fastly_compute.exceptions.http_body.trailer_error.TrailerError:
     """
     return _wit.get_trailer_names(body._wit_resource, max_len, cursor)
 
 @remap_wit_errors(MAPPINGS)
 def get_trailer_value(body: Pollable, name: str, max_len: int) -> bytes | None:
-    """Gets the value for the trailer with the given name, or `none` if the trailer is not present.
+    """Gets the value for the trailer with the given name, or `None` if the trailer is not present.
 
     If there are multiple values for this header, only one is returned, which may be
-    any of the values. See `get-trailer-values` if you need to get all of the values.
+    any of the values. See `get_trailer_values` if you need to get all of the values.
 
-    This functions returns `ok(some(v))` if the trailer with the given name is present,
-    and `ok(none)` if no trailer with the given name is present. If `max-len` is too
+    This functions returns `v` if the trailer with the given name is present,
+    and `None` if no trailer with the given name is present. If `max_len` is too
     small to fit the value, an `error.buffer-len` error is returned, providing a
     recommended buffer size.
+
+    :raises ~fastly_compute.exceptions.http_body.trailer_error.TrailerError:
     """
     return _wit.get_trailer_value(body._wit_resource, name, max_len)
 
@@ -123,13 +145,15 @@ def get_trailer_value(body: Pollable, name: str, max_len: int) -> bytes | None:
 def get_trailer_values(body: Pollable, name: str, max_len: int, cursor: int) -> tuple[bytes, int | None]:
     """Gets multiple values associated with the trailer with the given name.
 
-    As opposed to `get-trailer-value`, this function returns all of the values for this trailer.
+    As opposed to `get_trailer_value`, this function returns all of the values for this trailer.
 
     The first `cursor` values are skipped. The remaining values are encoded successively with
-    a NUL byte after each into a list of bytes at most `max-len` long. If any of the remaining
+    a NUL byte after each into a list of bytes at most `max_len` long. If any of the remaining
     values don't fit, the returned `option<u32>` is the index of the first value that didn't
-    fit, or `none` if all the remaining values fit. If `max-len` is too small to fit any value,
+    fit, or `None` if all the remaining values fit. If `max_len` is too small to fit any value,
     an `error.buffer-len` error is returned, providing a recommended buffer size.
+
+    :raises ~fastly_compute.exceptions.http_body.trailer_error.TrailerError:
     """
     return _wit.get_trailer_values(body._wit_resource, name, max_len, cursor)
 

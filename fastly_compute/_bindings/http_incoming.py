@@ -33,9 +33,9 @@ def handle(request: Request, body: Pollable) -> None:
     sandbox exits. To opt into receiving multiple requests in a single
     sandbox, use `http-downstream.next-request`.
 
-    To send a response for the given `request`, use `send-downstream`, or to
+    To send a response for the given `request`, use `send_downstream`, or to
     stream the response body after the response has been initiated, use
-    `send-downstream-streaming`.
+    `send_downstream_streaming`.
     """
     return _wit.handle(request._wit_resource, body._wit_resource)
 

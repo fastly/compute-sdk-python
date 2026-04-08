@@ -46,7 +46,10 @@ class Request(FastlyResource[_wit.Request]):
     @classmethod
     @remap_wit_errors(MAPPINGS)
     def new(cls) -> Self:
-        """Creates a new `request` with no method, URL, or headers, and an empty body."""
+        """Creates a new `request` with no method, URL, or headers, and an empty body.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
+        """
         return cls(_wit.Request.new())
 
     @remap_wit_errors(MAPPINGS)
@@ -54,6 +57,8 @@ class Request(FastlyResource[_wit.Request]):
         """Sets the cache override behavior for this request.
 
         This setting will override any cache directive headers returned in response to this request.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
         """
         return self._wit_resource.set_cache_override(cache_override)
 
@@ -62,22 +67,26 @@ class Request(FastlyResource[_wit.Request]):
         """Reads the request's header names via a buffer of the provided size.
 
         The first `cursor` names are skipped. The remaining names are encoded successively with
-        a NUL byte after each into a list of bytes at most `max-len` long. If any of the remaining
+        a NUL byte after each into a list of bytes at most `max_len` long. If any of the remaining
         names don't fit, the returned `option<u32>` is the index of the first name that didn't fit,
-        or `none` if all the remaining names fit. If `max-len` is too small to fit any name,
+        or `None` if all the remaining names fit. If `max_len` is too small to fit any name,
         an `error.buffer-len` error is returned, providing a recommended buffer size.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
         """
         return self._wit_resource.get_header_names(max_len, cursor)
 
     @remap_wit_errors(MAPPINGS)
     def get_header_value(self, name: str, max_len: int) -> bytes | None:
-        """Gets the value of a header, or `none` if the header is not present.
+        """Gets the value of a header, or `None` if the header is not present.
 
         If there are multiple values for the header, only one is returned. See
-        `get-header-values` if you need to get all of the values.
+        `get_header_values` if you need to get all of the values.
 
-        If header name requires more than `max-len` bytes, this will return an `error.buffer-len`
+        If header name requires more than `max_len` bytes, this will return an `error.buffer-len`
         containing the required size.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
         """
         return self._wit_resource.get_header_value(name, max_len)
 
@@ -85,13 +94,15 @@ class Request(FastlyResource[_wit.Request]):
     def get_header_values(self, name: str, max_len: int, cursor: int) -> tuple[bytes, int | None]:
         """Gets multiple header values for the given `name` via a buffer of the provided size.
 
-        As opposed to `get-header-value`, this function returns all of the values for this header.
+        As opposed to `get_header_value`, this function returns all of the values for this header.
 
         The first `cursor` values are skipped. The remaining values are encoded successively with
-        a NUL byte after each into a list of bytes at most `max-len` long. If any of the remaining
+        a NUL byte after each into a list of bytes at most `max_len` long. If any of the remaining
         values don't fit, the returned `option<u32>` is the index of the first value that didn't
-        fit, or `none` if all the remaining values fit. If `max-len` is too small to fit any value,
+        fit, or `None` if all the remaining values fit. If `max_len` is too small to fit any value,
         an `error.buffer-len` error is returned, providing a recommended buffer size.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
         """
         return self._wit_resource.get_header_values(name, max_len, cursor)
 
@@ -99,6 +110,8 @@ class Request(FastlyResource[_wit.Request]):
     def set_header_values(self, name: str, values: bytes) -> None:
         """Sets the values for the given header name, replacing any headers that previously existed for
         that name.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
         """
         return self._wit_resource.set_header_values(name, values)
 
@@ -106,6 +119,8 @@ class Request(FastlyResource[_wit.Request]):
     def insert_header(self, name: str, value: bytes) -> None:
         """Sets a request header to the given value, discarding any previous values for the given
         header name.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
         """
         return self._wit_resource.insert_header(name, value)
 
@@ -113,7 +128,9 @@ class Request(FastlyResource[_wit.Request]):
     def append_header(self, name: str, value: bytes) -> None:
         """Adds a request header with given value.
 
-        Unlike `set-header-values`, this does not discard existing values for the same header name.
+        Unlike `set_header_values`, this does not discard existing values for the same header name.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
         """
         return self._wit_resource.append_header(name, value)
 
@@ -122,37 +139,57 @@ class Request(FastlyResource[_wit.Request]):
         """Removes all request headers of the given name
 
         Returns `ok` if any headers were successfully removed.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
         """
         return self._wit_resource.remove_header(name)
 
     @remap_wit_errors(MAPPINGS)
     def get_method(self, max_len: int) -> str:
-        """Gets the request method."""
+        """Gets the request method.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
+        """
         return self._wit_resource.get_method(max_len)
 
     @remap_wit_errors(MAPPINGS)
     def set_method(self, method: str) -> None:
-        """Sets the request method."""
+        """Sets the request method.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
+        """
         return self._wit_resource.set_method(method)
 
     @remap_wit_errors(MAPPINGS)
     def get_uri(self, max_len: int) -> str:
-        """Gets the request URI."""
+        """Gets the request URI.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
+        """
         return self._wit_resource.get_uri(max_len)
 
     @remap_wit_errors(MAPPINGS)
     def set_uri(self, uri: str) -> None:
-        """Sets the request URI."""
+        """Sets the request URI.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
+        """
         return self._wit_resource.set_uri(uri)
 
     @remap_wit_errors(MAPPINGS)
     def get_version(self) -> HttpVersion:
-        """Gets the HTTP version of this request."""
+        """Gets the HTTP version of this request.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
+        """
         return self._wit_resource.get_version()
 
     @remap_wit_errors(MAPPINGS)
     def set_version(self, version: HttpVersion) -> None:
-        """Sets the HTTP version of this request."""
+        """Sets the HTTP version of this request.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
+        """
         return self._wit_resource.set_version(version)
 
     @remap_wit_errors(MAPPINGS)
@@ -163,8 +200,10 @@ class Request(FastlyResource[_wit.Request]):
         response will be presented to the Compute program in decompressed form with the
         `Content-Encoding` and `Content-Length` headers removed.
 
-        Not all of the flags defined in `content-encodings` are supported. Currently the only
+        Not all of the flags defined in `content_encodings` are supported. Currently the only
         supported flag is `content-encodings.gzip`.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
         """
         return self._wit_resource.set_auto_decompress_response(encodings)
 
@@ -181,6 +220,8 @@ class Request(FastlyResource[_wit.Request]):
         See the [WebSockets passthrough] documentation for a high-level description of this feature.
 
         [WebSockets passthrough]: https://www.fastly.com/documentation/guides/concepts/real-time-messaging/websockets-tunnel/
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
         """
         return self._wit_resource.redirect_to_websocket_proxy(backend._wit_resource)
 
@@ -188,12 +229,17 @@ class Request(FastlyResource[_wit.Request]):
     def set_framing_headers_mode(self, mode: FramingHeadersMode) -> None:
         """Sets how the framing headers `Content-Length` and `Transfer-Encoding` will be determined
         when sending this request.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
         """
         return self._wit_resource.set_framing_headers_mode(mode)
 
     @remap_wit_errors(MAPPINGS)
     def redirect_to_grip_proxy(self, backend: Backend) -> None:
-        """redirect_to_grip_proxy."""
+        """redirect_to_grip_proxy.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
+        """
         return self._wit_resource.redirect_to_grip_proxy(backend._wit_resource)
 
 class ExtraCacheOverrideDetails(FastlyResource[_wit.ExtraCacheOverrideDetails]):
@@ -209,6 +255,8 @@ def send(request: Request, body: Pollable, backend: Backend) -> tuple[Response, 
     to the given backend server.
 
     Returns once the response headers have been received, or an error occurs.
+
+    :raises ~fastly_compute.exceptions.http_req.ErrorWithDetail:
     """
     _r = _wit.send(request._wit_resource, body._wit_resource, backend._wit_resource)
     return (Response(_r[0]), Pollable(_r[1]))
@@ -219,6 +267,8 @@ def send_uncached(request: Request, body: Pollable, backend: Backend) -> tuple[R
     caching or inserting any cache-related headers in the response.
 
     Returns once the response headers have been received, or an error occurs.
+
+    :raises ~fastly_compute.exceptions.http_req.ErrorWithDetail:
     """
     _r = _wit.send_uncached(request._wit_resource, body._wit_resource, backend._wit_resource)
     return (Response(_r[0]), Pollable(_r[1]))
@@ -226,42 +276,46 @@ def send_uncached(request: Request, body: Pollable, backend: Backend) -> tuple[R
 @remap_wit_errors(MAPPINGS)
 def send_async(request: Request, body: Pollable, backend: Backend) -> Pollable:
     """Begins sending the request to the given backend server, and returns a
-    `pending-response` that can yield the backend response or an error.
+    `pending_response` that can yield the backend response or an error.
 
     This method returns as soon as the request begins sending to the backend,
     and transmission of the request body and headers will continue in the
     background.
 
     This method allows for sending more than one request at once and receiving
-    their responses in arbitrary orders. See `pending-response` for more
+    their responses in arbitrary orders. See `pending_response` for more
     details on how to wait on, poll, or select between pending responses.
 
     This method is also useful for sending requests where the response is
     unimportant, but the request may take longer than the Compute program is
     able to run, as the request will continue sending even after the program
     that initiated it exits.
+
+    :raises ~fastly_compute.exceptions.types.error.Error:
     """
     return Pollable(_wit.send_async(request._wit_resource, body._wit_resource, backend._wit_resource))
 
 @remap_wit_errors(MAPPINGS)
 def send_async_uncached(request: Request, body: Pollable, backend: Backend) -> Pollable:
-    """This is to `send-async` as `send-uncached` is to `send`.
+    """This is to `send_async` as `send_uncached` is to `send`.
 
-    As with `send-uncached`, this function sends the request directly to the
+    As with `send_uncached`, this function sends the request directly to the
     backend server without performing any caching or inserting any
     cache-related headers in the response.
+
+    :raises ~fastly_compute.exceptions.types.error.Error:
     """
     return Pollable(_wit.send_async_uncached(request._wit_resource, body._wit_resource, backend._wit_resource))
 
 @remap_wit_errors(MAPPINGS)
 def send_async_streaming(request: Request, body: Pollable, backend: Backend) -> Pollable:
     """Begins sending the request to the given backend server, and returns a
-    `pending-response` that can yield the backend response or an error.
+    `pending_response` that can yield the backend response or an error.
 
     The `body` argument is not consumed, so that it can accept further data to send.
 
     The backend connection is only closed once `http-body.close` is called. The
-    `pending-response` will not yield a `response` until the body is finished.
+    `pending_response` will not yield a `response` until the body is finished.
 
     This method is most useful for programs that do some sort of processing or
     inspection of a potentially-large client request body. Streaming allows the
@@ -271,16 +325,20 @@ def send_async_streaming(request: Request, body: Pollable, backend: Backend) -> 
     This method returns as soon as the request begins sending to the backend,
     and transmission of the request body and headers will continue in the
     background.
+
+    :raises ~fastly_compute.exceptions.types.error.Error:
     """
     return Pollable(_wit.send_async_streaming(request._wit_resource, body._wit_resource, backend._wit_resource))
 
 @remap_wit_errors(MAPPINGS)
 def send_async_uncached_streaming(request: Request, body: Pollable, backend: Backend) -> Pollable:
-    """This is to `send-async-streaming` as `send-uncached` is to `send`.
+    """This is to `send_async_streaming` as `send_uncached` is to `send`.
 
-    As with `send-uncached`, this function sends the request directly to the
+    As with `send_uncached`, this function sends the request directly to the
     backend server without performing any caching or inserting any
     cache-related headers in the response.
+
+    :raises ~fastly_compute.exceptions.types.error.Error:
     """
     return Pollable(_wit.send_async_uncached_streaming(request._wit_resource, body._wit_resource, backend._wit_resource))
 
@@ -288,6 +346,8 @@ def send_async_uncached_streaming(request: Request, body: Pollable, backend: Bac
 def await_response(pending: Pollable) -> tuple[Response, Pollable]:
     """Waits until the request is completed, and then returns the resulting
     response and body.
+
+    :raises ~fastly_compute.exceptions.http_req.ErrorWithDetail:
     """
     _r = _wit.await_response(pending._wit_resource)
     return (Response(_r[0]), Pollable(_r[1]))
@@ -298,11 +358,16 @@ def close(request: Request) -> None:
 
     A `request` is automatically consumed when you send a request. You should call `close`
     only if you have a `request` you don't intend to use anymore.
+
+    :raises ~fastly_compute.exceptions.types.error.Error:
     """
     return _wit.close(request._wit_resource)
 
 @remap_wit_errors(MAPPINGS)
 def upgrade_websocket(backend: Backend) -> None:
-    """upgrade_websocket."""
+    """upgrade_websocket.
+
+    :raises ~fastly_compute.exceptions.types.error.Error:
+    """
     return _wit.upgrade_websocket(backend._wit_resource)
 

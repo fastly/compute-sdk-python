@@ -96,11 +96,11 @@ class DynamicBackendOptions(FastlyResource[_wit.DynamicBackendOptions]):
         certificate will cause the backend connection to fail (but read on).
 
         By default, the validity check does not require that the certificate hostname matches the
-        hostname of your request. You can use `cert-hostname` to request a check of the
+        hostname of your request. You can use `cert_hostname` to request a check of the
         certificate hostname.
 
         By default, certificate validity uses a set of public certificate authorities. You can
-        specify an alternative CA using `ca-certificate`.
+        specify an alternative CA using `ca_certificate`.
         """
         return self._wit_resource.use_tls(value)
 
@@ -125,7 +125,7 @@ class DynamicBackendOptions(FastlyResource[_wit.DynamicBackendOptions]):
         You should enable this if you are using TLS, and setting this will enable TLS for the
         connection as a side effect.
 
-        If `cert-hostname` is not provided (default), the server certificate’s hostname may
+        If `cert_hostname` is not provided (default), the server certificate’s hostname may
         have any value.
         """
         return self._wit_resource.cert_hostname(value)
@@ -135,7 +135,7 @@ class DynamicBackendOptions(FastlyResource[_wit.DynamicBackendOptions]):
 
         Setting this will enable TLS for the connection as a side effect.
 
-        If `ca-certificate` is not provided (default), the backends’s certificate is validated
+        If `ca_certificate` is not provided (default), the backends’s certificate is validated
         using a set of public root CAs.
         """
         return self._wit_resource.ca_certificate(value)
@@ -247,7 +247,7 @@ class DynamicBackendOptions(FastlyResource[_wit.DynamicBackendOptions]):
         """Whether to prefer attempting connections to IPv6 addresses over IPv4 addresses when a
         hostname has both A and AAAA records.
 
-        The Compute platform defaults to `true`, and will attempt IPv6 first if a AAAA record
+        The Compute platform defaults to `True`, and will attempt IPv6 first if a AAAA record
         is present.
         """
         return self._wit_resource.prefer_ipv6(value)
@@ -258,7 +258,10 @@ class Backend(FastlyResource[_wit.Backend]):
     @classmethod
     @remap_wit_errors(MAPPINGS)
     def open(cls, name: str) -> Self:
-        """Attempts to open the named static backend."""
+        """Attempts to open the named static backend.
+
+        :raises ~fastly_compute.exceptions.types.open_error.OpenError:
+        """
         return cls(_wit.Backend.open(name))
 
     def get_name(self) -> str:
@@ -271,17 +274,25 @@ class Backend(FastlyResource[_wit.Backend]):
 
         For backends without a configured healthcheck, this will always return
         `backend-health.unknown`.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
         """
         return self._wit_resource.is_healthy()
 
     @remap_wit_errors(MAPPINGS)
     def is_dynamic(self) -> bool:
-        """Returns `true` if the backend is a “dynamic” backend."""
+        """Returns `True` if the backend is a “dynamic” backend.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
+        """
         return self._wit_resource.is_dynamic()
 
     @remap_wit_errors(MAPPINGS)
     def get_host(self, max_len: int) -> str:
-        """Gets the host of this backend."""
+        """Gets the host of this backend.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
+        """
         return self._wit_resource.get_host(max_len)
 
     @remap_wit_errors(MAPPINGS)
@@ -292,17 +303,25 @@ class Backend(FastlyResource[_wit.Backend]):
         [the Fastly documentation on override hosts].
 
         [the Fastly documentation on override hosts]: https://docs.fastly.com/en/guides/specifying-an-override-host
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
         """
         return self._wit_resource.get_override_host(max_len)
 
     @remap_wit_errors(MAPPINGS)
     def get_port(self) -> int:
-        """Gets the remote TCP port of the backend connection for the request."""
+        """Gets the remote TCP port of the backend connection for the request.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
+        """
         return self._wit_resource.get_port()
 
     @remap_wit_errors(MAPPINGS)
     def get_connect_timeout_ms(self) -> int:
-        """Gets the connection timeout of the backend."""
+        """Gets the connection timeout of the backend.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
+        """
         return self._wit_resource.get_connect_timeout_ms()
 
     @remap_wit_errors(MAPPINGS)
@@ -310,6 +329,8 @@ class Backend(FastlyResource[_wit.Backend]):
         """Gets the first byte timeout of the backend.
 
         This timeout applies between the time of connection and the time we get the first byte back.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
         """
         return self._wit_resource.get_first_byte_timeout_ms()
 
@@ -318,45 +339,66 @@ class Backend(FastlyResource[_wit.Backend]):
         """Gets the between byte timeout of the backend.
 
         This timeout applies between any two bytes we receive across the wire.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
         """
         return self._wit_resource.get_between_bytes_timeout_ms()
 
     @remap_wit_errors(MAPPINGS)
     def is_tls(self) -> bool:
-        """Returns `true` if the backend is configured to use TLS."""
+        """Returns `True` if the backend is configured to use TLS.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
+        """
         return self._wit_resource.is_tls()
 
     @remap_wit_errors(MAPPINGS)
     def get_tls_min_version(self) -> int | None:
-        """Gets the minimum TLS version this backend will use."""
+        """Gets the minimum TLS version this backend will use.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
+        """
         return self._wit_resource.get_tls_min_version()
 
     @remap_wit_errors(MAPPINGS)
     def get_tls_max_version(self) -> int | None:
-        """Gets the maximum TLS version this backend will use."""
+        """Gets the maximum TLS version this backend will use.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
+        """
         return self._wit_resource.get_tls_max_version()
 
     @remap_wit_errors(MAPPINGS)
     def get_http_keepalive_time(self) -> int:
         """Returns the time for this backend to hold onto an idle HTTP keepalive connection
         after it was last used before closing it.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
         """
         return self._wit_resource.get_http_keepalive_time()
 
     @remap_wit_errors(MAPPINGS)
     def get_tcp_keepalive_enable(self) -> bool:
-        """Returns `true` if TCP keepalives have been enabled for this backend."""
+        """Returns `True` if TCP keepalives have been enabled for this backend.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
+        """
         return self._wit_resource.get_tcp_keepalive_enable()
 
     @remap_wit_errors(MAPPINGS)
     def get_tcp_keepalive_interval(self) -> int:
-        """Returns the time to wait in between sending each TCP keepalive probe to this backend."""
+        """Returns the time to wait in between sending each TCP keepalive probe to this backend.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
+        """
         return self._wit_resource.get_tcp_keepalive_interval()
 
     @remap_wit_errors(MAPPINGS)
     def get_tcp_keepalive_probes(self) -> int:
         """Returns the time to wait after the last data was sent before starting to send TCP keepalive
         probes to this backend.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
         """
         return self._wit_resource.get_tcp_keepalive_probes()
 
@@ -364,6 +406,8 @@ class Backend(FastlyResource[_wit.Backend]):
     def get_tcp_keepalive_time(self) -> int:
         """Returns the time to wait after the last data was sent before starting to send TCP keepalive
         probes to this backend.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
         """
         return self._wit_resource.get_tcp_keepalive_time()
 
@@ -391,6 +435,8 @@ def register_dynamic_backend(prefix: str, target: str, options: DynamicBackendOp
     `error.unsupported` error result. This error only arises when attempting to use dynamic
     backends with a service that has not had dynamic backends enabled, or dynamic backends have
     been administratively prohibited for the node in response to an ongoing incident.
+
+    :raises ~fastly_compute.exceptions.types.error.Error:
     """
     return Backend(_wit.register_dynamic_backend(prefix, target, options._wit_resource))
 

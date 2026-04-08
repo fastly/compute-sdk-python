@@ -4,6 +4,7 @@ Provides affordances for walking among WIT constructs and translating drawing
 correspondences between them, componentize-py-generated Python code, and
 Fastly's own slightly higher level generated code.
 """
+
 # We override many methods and don't want to clutter the module repeating
 # identical docstrings or tagging each with @override.
 # ruff: noqa D102
@@ -57,6 +58,47 @@ class DocsHaver:
         Strip leading and trailing whitespace.
         """
         return self._me.get("docs", {}).get("contents", "").strip()
+
+    def docs_for_python(self) -> str:
+        """Return docs() with high-confidence WIT-isms rewritten to Python idioms.
+
+        Transformations applied:
+        - ``ok(some(X))`` → ``X``   (unwrapped option inside ok)
+        - ``ok(none)``    → ``None`` (absent option inside ok)
+        - ``ok(X)``       → ``X``   (plain ok value)
+        - ``none``        → ``None``
+        - ``true``        → ``True``
+        - ``false``       → ``False``
+        - kebab-case identifiers inside backticks → snake_case
+          e.g. ``kv-store`` → ``kv_store``
+
+        ``err(...)`` phrases are left untouched — they don't have a clean
+        mechanical replacement and the ``:raises`` block already covers the
+        intent.
+        """
+        text = self.docs()
+        if not text:
+            return text
+
+        # ok(some(X)) → X  (must come before ok(X) so the longer form matches first)
+        text = re.sub(r"`ok\(some\(([^)]+)\)\)`", r"`\1`", text)
+        # ok(none) → None
+        text = re.sub(r"`ok\(none\)`", "`None`", text)
+        # ok(X) → X  (plain ok wrapping a value)
+        text = re.sub(r"`ok\(([^)]+)\)`", r"`\1`", text)
+        # standalone `none` → `None`
+        text = re.sub(r"`none`", "`None`", text)
+        # `true` / `false` → `True` / `False`
+        text = re.sub(r"`true`", "`True`", text)
+        text = re.sub(r"`false`", "`False`", text)
+        # kebab-case identifiers inside backticks → snake_case
+        # Only matches pure kebab identifiers (letters, digits, hyphens).
+        text = re.sub(
+            r"`([a-z][a-z0-9]*(?:-[a-z0-9]+)+)`",
+            lambda m: "`" + m.group(1).replace("-", "_") + "`",
+            text,
+        )
+        return text
 
     def docstring(self, indent=4) -> str:
         """Return a one-level-indented, triple-quoted version of the docs
@@ -339,10 +381,7 @@ class Record(Type):
 
     def fields(self) -> list["RecordField"]:
         """Return the fields of this record."""
-        return [
-            RecordField(f, self._wit)
-            for f in self._me["kind"]["record"]["fields"]
-        ]
+        return [RecordField(f, self._wit) for f in self._me["kind"]["record"]["fields"]]
 
     def wit_class_name(self) -> str:
         """The componentize-py class name for this record (e.g. InsertOptions)."""
@@ -360,11 +399,38 @@ class RecordField:
         """Python snake_case field name, avoiding reserved keywords."""
         n = lower_snake(self._me["name"])
         # Append underscore to avoid clashing with Python reserved words
-        if n in ("from", "import", "class", "def", "return", "pass", "in",
-                 "is", "not", "and", "or", "if", "else", "for", "while",
-                 "with", "as", "try", "except", "finally", "raise", "del",
-                 "global", "nonlocal", "lambda", "yield", "assert", "break",
-                 "continue", "type"):
+        if n in (
+            "from",
+            "import",
+            "class",
+            "def",
+            "return",
+            "pass",
+            "in",
+            "is",
+            "not",
+            "and",
+            "or",
+            "if",
+            "else",
+            "for",
+            "while",
+            "with",
+            "as",
+            "try",
+            "except",
+            "finally",
+            "raise",
+            "del",
+            "global",
+            "nonlocal",
+            "lambda",
+            "yield",
+            "assert",
+            "break",
+            "continue",
+            "type",
+        ):
             return n + "_"
         return n
 
@@ -584,7 +650,9 @@ class Function(Thing):
 
         For result<T, E> the ok type T is returned; errors are handled by the decorator.
         """
-        return Type.from_id(self._me.get("result"), self._wit).py_annotation(self_resource)
+        return Type.from_id(self._me.get("result"), self._wit).py_annotation(
+            self_resource
+        )
 
     def returns_resource_handle(self) -> bool:
         """Return True if the ok return type is an owned resource handle.
@@ -700,6 +768,86 @@ class Function(Thing):
         if isinstance(return_type, Result):
             return return_type.error_type()
 
+    def raises_python(self) -> list[tuple[str, str, str]]:
+        """Return a list of (short_name, qualified_name, description) for each Python
+        exception this function can raise, derived from its WIT result error type.
+
+        short_name: the bare class name, e.g. ``KvError``
+        qualified_name: dotted import path, e.g. ``fastly_compute.exceptions.kv_store.kv_error.KvError``
+        description: the type's docstring (may be empty)
+
+        Emits the parent exception class for the error type rather than each
+        individual case — the parent is the right type to catch, and the module
+        it lives in documents the specific subclasses.
+        """
+        error_type = self.error_type_of_returned_result()
+        if error_type is None:
+            return []
+
+        entries: list[tuple[str, str, str]] = []
+
+        if isinstance(error_type, CaseHaver):
+            short = upper_camel(error_type.name())
+            qualified = error_type.py_module_path() + "." + short
+            desc = error_type.docstring(indent=0) or ""
+            entries.append((short, qualified, desc))
+        elif isinstance(error_type, Record):
+            short = error_type.wit_class_name()
+            qualified = error_type.py_module_path() + "." + short
+            desc = error_type.docstring(indent=0) or ""
+            entries.append((short, qualified, desc))
+
+        return entries
+
+    def docstring_with_raises(
+        self, indent: int = 4, fallback: str | None = None
+    ) -> str:
+        """Return a complete triple-quoted docstring, appending :raises lines.
+
+        If the function has no WIT docs and no raises entries, returns the
+        fallback string (defaulting to the function name followed by a period).
+        """
+        raises = self.raises_python()
+        raw_docs = self.docs_for_python()
+        pad = " " * indent
+
+        if not raw_docs and not raises:
+            return fallback or f'"""{self.py_name()}."""'
+
+        body_parts: list[str] = []
+        if raw_docs:
+            # textwrap.indent adds `pad` to every non-blank line; lstrip()
+            # removes the leading pad from the very first line so it sits
+            # flush against the opening `"""`. rstrip() removes any trailing
+            # newline so there is exactly one blank line before :raises.
+            body_parts.append(textwrap.indent(raw_docs.rstrip(), pad).lstrip())
+        elif raises:
+            # No WIT docs but we have raises — use the function name as a
+            # minimal summary so the :raises lines don't land flush against """.
+            body_parts.append(f"{self.py_name()}.")
+        if raises:
+            if body_parts:
+                body_parts.append("")  # blank line — no trailing whitespace
+            for _short, qualified, _desc in raises:
+                body_parts.append(f":raises ~{qualified}:")
+        # Join lines with newline + pad so continuation lines are indented.
+        # Blank lines must emit only a bare newline (no pad) to satisfy W293.
+        out: list[str] = []
+        for i, part in enumerate(body_parts):
+            if i == 0:
+                out.append(part)
+            elif part == "":
+                out.append("\n")
+            else:
+                out.append("\n" + pad + part)
+        body = "".join(out)
+
+        use_raw = "\\" in body
+        prefix = 'r"""' if use_raw else '"""'
+        if "\n" in body:
+            return f'{prefix}{body}\n{pad}"""'
+        return f'{prefix}{body}"""'
+
 
 class Param:
     """A parameter of a WIT function."""
@@ -786,7 +934,8 @@ class Interface(DocsHaver):
         """Return constructors, static methods, and instance methods for a resource."""
         resource_wit_name = resource.name()
         return [
-            f for f in self.functions()
+            f
+            for f in self.functions()
             if f.resource_name() == resource_wit_name
             and f.kind() in ("constructor", "static", "method")
         ]

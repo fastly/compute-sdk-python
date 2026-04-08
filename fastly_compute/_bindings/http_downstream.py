@@ -67,9 +67,9 @@ def next_request(options: NextRequestOptions) -> Pollable:
 
     By default, each sandbox accepts a single downstream request,
     passed in as an argument to the `http-incoming.handle` call. The
-    `next-request` function enables a sandbox to accept additional
-    downstream requests. `next-request` returns a `pending-request`, which
-    can be passed to `await-request` to wait for the request to become
+    `next_request` function enables a sandbox to accept additional
+    downstream requests. `next_request` returns a `pending_request`, which
+    can be passed to `await_request` to wait for the request to become
     available and return the `request`.
 
     When using this function, be mindful of two considerations:
@@ -83,6 +83,8 @@ def next_request(options: NextRequestOptions) -> Pollable:
        requests from a given client or from a given location. When it is
        necessary to preserve state between multiple requests, store it outside
        of the sandbox.
+
+    :raises ~fastly_compute.exceptions.types.error.Error:
     """
     return Pollable(_wit.next_request(options._wit))
 
@@ -91,7 +93,9 @@ def await_request(pending: Pollable) -> tuple[Request, Pollable] | None:
     """Waits until the next request is available, and then returns the resulting
     request and body.
 
-    Returns `ok(none)` if there are no more requests for this sandbox.
+    Returns `None` if there are no more requests for this sandbox.
+
+    :raises ~fastly_compute.exceptions.types.error.Error:
     """
     _r = _wit.await_request(pending._wit_resource)
     return (Request(_r[0]), Pollable(_r[1])) if _r is not None else None
@@ -104,16 +108,21 @@ def downstream_original_header_names(ds_request: Request, max_len: int, cursor: 
     of the received headers.
 
     The first `cursor` names are skipped. The remaining names are encoded successively with
-    a NUL byte after each into a list of bytes at most `max-len` long. If any of the remaining
+    a NUL byte after each into a list of bytes at most `max_len` long. If any of the remaining
     names don't fit, the returned `option<u32>` is the index of the first name that didn't fit,
-    or `none` if all the remaining names fit. If `max-len` is too small to fit any name,
+    or `None` if all the remaining names fit. If `max_len` is too small to fit any name,
     an `error.buffer-len` error is returned, providing a recommended buffer size.
+
+    :raises ~fastly_compute.exceptions.types.error.Error:
     """
     return _wit.downstream_original_header_names(ds_request._wit_resource, max_len, cursor)
 
 @remap_wit_errors(MAPPINGS)
 def downstream_original_header_count(ds_request: Request) -> int:
-    """Returns the number of headers in the client request as originally received."""
+    """Returns the number of headers in the client request as originally received.
+
+    :raises ~fastly_compute.exceptions.types.error.Error:
+    """
     return _wit.downstream_original_header_count(ds_request._wit_resource)
 
 def downstream_client_ip_addr(ds_request: Request) -> IpAddress | None:
@@ -126,22 +135,34 @@ def downstream_server_ip_addr(ds_request: Request) -> IpAddress | None:
 
 @remap_wit_errors(MAPPINGS)
 def downstream_client_h2_fingerprint(ds_request: Request, max_len: int) -> str:
-    """Gets the HTTP/2 fingerprint of client request if available."""
+    """Gets the HTTP/2 fingerprint of client request if available.
+
+    :raises ~fastly_compute.exceptions.types.error.Error:
+    """
     return _wit.downstream_client_h2_fingerprint(ds_request._wit_resource, max_len)
 
 @remap_wit_errors(MAPPINGS)
 def downstream_client_request_id(ds_request: Request, max_len: int) -> str:
-    """Gets the id of the current request if available."""
+    """Gets the id of the current request if available.
+
+    :raises ~fastly_compute.exceptions.types.error.Error:
+    """
     return _wit.downstream_client_request_id(ds_request._wit_resource, max_len)
 
 @remap_wit_errors(MAPPINGS)
 def downstream_client_oh_fingerprint(ds_request: Request, max_len: int) -> str:
-    """Gets the fingerprint of client request headers if available."""
+    """Gets the fingerprint of client request headers if available.
+
+    :raises ~fastly_compute.exceptions.types.error.Error:
+    """
     return _wit.downstream_client_oh_fingerprint(ds_request._wit_resource, max_len)
 
 @remap_wit_errors(MAPPINGS)
 def downstream_client_ddos_detected(ds_request: Request) -> bool:
-    """Returns whether the request was tagged as contributing to a DDoS attack."""
+    """Returns whether the request was tagged as contributing to a DDoS attack.
+
+    :raises ~fastly_compute.exceptions.types.error.Error:
+    """
     return _wit.downstream_client_ddos_detected(ds_request._wit_resource)
 
 @remap_wit_errors(MAPPINGS)
@@ -150,9 +171,11 @@ def downstream_tls_cipher_openssl_name(ds_request: Request, max_len: int) -> byt
 
     The value returned will be consistent with the [OpenSSL name] for the cipher suite.
 
-    Returns `ok(none)` if the downstream client connection is not a TLS connection.
+    Returns `None` if the downstream client connection is not a TLS connection.
 
     [OpenSSL name]: https://testssl.sh/openssl-iana.mapping.html
+
+    :raises ~fastly_compute.exceptions.types.error.Error:
     """
     return _wit.downstream_tls_cipher_openssl_name(ds_request._wit_resource, max_len)
 
@@ -160,7 +183,9 @@ def downstream_tls_cipher_openssl_name(ds_request: Request, max_len: int) -> byt
 def downstream_tls_protocol(ds_request: Request, max_len: int) -> bytes | None:
     """Gets the TLS protocol version used to secure the downstream client TLS connection.
 
-    Returns `ok(none)` if the downstream client connection is not a TLS connection.
+    Returns `None` if the downstream client connection is not a TLS connection.
+
+    :raises ~fastly_compute.exceptions.types.error.Error:
     """
     return _wit.downstream_tls_protocol(ds_request._wit_resource, max_len)
 
@@ -170,9 +195,11 @@ def downstream_tls_client_hello(ds_request: Request, max_len: int) -> bytes | No
 
     See [RFC 5246] for details.
 
-    Returns `ok(none)` if the downstream client connection is not a TLS connection.
+    Returns `None` if the downstream client connection is not a TLS connection.
 
     [RFC 5246]: https://www.rfc-editor.org/rfc/rfc5246#section-7.4.1.2
+
+    :raises ~fastly_compute.exceptions.types.error.Error:
     """
     return _wit.downstream_tls_client_hello(ds_request._wit_resource, max_len)
 
@@ -182,15 +209,19 @@ def downstream_tls_raw_client_certificate(ds_request: Request, max_len: int) -> 
 
     The value returned will be based on PEM format.
 
-    Returns `ok(none)` if the downstream client connection is not a TLS connection.
+    Returns `None` if the downstream client connection is not a TLS connection.
+
+    :raises ~fastly_compute.exceptions.types.error.Error:
     """
     return _wit.downstream_tls_raw_client_certificate(ds_request._wit_resource, max_len)
 
 @remap_wit_errors(MAPPINGS)
 def downstream_tls_client_cert_verify_result(ds_request: Request) -> ClientCertVerifyResult | None:
-    """Returns the `client-cert-verify-result` from the downstream client mTLS handshake.
+    """Returns the `client_cert_verify_result` from the downstream client mTLS handshake.
 
-    Returns `ok(none)` if the downstream client connection is not a TLS connection.
+    Returns `None` if the downstream client connection is not a TLS connection.
+
+    :raises ~fastly_compute.exceptions.types.error.Error:
     """
     return _wit.downstream_tls_client_cert_verify_result(ds_request._wit_resource)
 
@@ -198,7 +229,9 @@ def downstream_tls_client_cert_verify_result(ds_request: Request) -> ClientCertV
 def downstream_tls_client_servername(ds_request: Request, max_len: int) -> str | None:
     """Returns the Server Name Indication from the downstream client TLS handshake.
 
-    Returns `ok(none)` if not available.
+    Returns `None` if not available.
+
+    :raises ~fastly_compute.exceptions.types.error.Error:
     """
     return _wit.downstream_tls_client_servername(ds_request._wit_resource, max_len)
 
@@ -206,7 +239,9 @@ def downstream_tls_client_servername(ds_request: Request, max_len: int) -> str |
 def downstream_tls_ja3_md5(ds_request: Request) -> bytes | None:
     """Gets the JA3 hash of the TLS ClientHello message.
 
-    Returns `ok(none)` if the downstream client connection is not a TLS connection.
+    Returns `None` if the downstream client connection is not a TLS connection.
+
+    :raises ~fastly_compute.exceptions.types.error.Error:
     """
     return _wit.downstream_tls_ja3_md5(ds_request._wit_resource)
 
@@ -214,13 +249,18 @@ def downstream_tls_ja3_md5(ds_request: Request) -> bytes | None:
 def downstream_tls_ja4(ds_request: Request, max_len: int) -> str | None:
     """Gets the JA4 hash of the TLS ClientHello message.
 
-    Returns `ok(none)` if the downstream client connection is not a TLS connection.
+    Returns `None` if the downstream client connection is not a TLS connection.
+
+    :raises ~fastly_compute.exceptions.types.error.Error:
     """
     return _wit.downstream_tls_ja4(ds_request._wit_resource, max_len)
 
 @remap_wit_errors(MAPPINGS)
 def downstream_compliance_region(ds_request: Request, max_len: int) -> str | None:
-    """Gets the compliance region that the client IP address is in."""
+    """Gets the compliance region that the client IP address is in.
+
+    :raises ~fastly_compute.exceptions.types.error.Error:
+    """
     return _wit.downstream_compliance_region(ds_request._wit_resource, max_len)
 
 @remap_wit_errors(MAPPINGS)
@@ -228,6 +268,8 @@ def fastly_key_is_valid(ds_request: Request) -> bool:
     """Returns whether or not the original client request arrived with a
     Fastly-Key belonging to a user with the rights to purge content on this
     service.
+
+    :raises ~fastly_compute.exceptions.types.error.Error:
     """
     return _wit.fastly_key_is_valid(ds_request._wit_resource)
 

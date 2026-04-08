@@ -79,17 +79,22 @@ class Store(FastlyResource[_wit.Store]):
     @classmethod
     @remap_wit_errors(MAPPINGS)
     def open(cls, name: str) -> Self:
-        """Opens the KV Store with the given name."""
+        """Opens the KV Store with the given name.
+
+        :raises ~fastly_compute.exceptions.types.open_error.OpenError:
+        """
         return cls(_wit.Store.open(name))
 
     @remap_wit_errors(MAPPINGS)
     def lookup(self, key: str) -> Entry | None:
         """Looks up a value in the KV Store.
 
-        Returns `ok(some(v))` with the value `v` that was found, `ok(none)` if no value was
+        Returns `v` with the value `v` that was found, `None` if no value was
         found, or `err(e)` indicating the error `e` occurred.
 
         This function waits until the operation completes.
+
+        :raises ~fastly_compute.exceptions.kv_store.kv_error.KvError:
         """
         return Entry(self._wit_resource.lookup(key))
 
@@ -98,7 +103,9 @@ class Store(FastlyResource[_wit.Store]):
         """Look up a value in the KV Store asynchronously.
 
         This function initiates an async lookup of a value in the KV Store. Use
-        `await-lookup` to finish the lookup.
+        `await_lookup` to finish the lookup.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
         """
         return Pollable(self._wit_resource.lookup_async(key))
 
@@ -110,6 +117,8 @@ class Store(FastlyResource[_wit.Store]):
         of the `options` argument specifies how the existing value is handled.
 
         This function waits until the operation completes.
+
+        :raises ~fastly_compute.exceptions.kv_store.kv_error.KvError:
         """
         return self._wit_resource.insert(key, body._wit_resource, options._wit)
 
@@ -121,7 +130,9 @@ class Store(FastlyResource[_wit.Store]):
         of the `options` argument specifies how the existing value is handled.
 
         This function initiates an async insert of a value in the KV Store. Use
-        `await-insert` to finish the lookup.
+        `await_insert` to finish the lookup.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
         """
         return Pollable(self._wit_resource.insert_async(key, body._wit_resource, options._wit))
 
@@ -129,10 +140,12 @@ class Store(FastlyResource[_wit.Store]):
     def delete(self, key: str) -> bool:
         """Deletes a value in the KV Store.
 
-        Returns `ok(true)` if a value was successfully deleted, `ok(false)` if no value was
+        Returns `True` if a value was successfully deleted, `False` if no value was
         found, or `err(e)` indicating the error `e` occurred.
 
         This function waits until the operation completes.
+
+        :raises ~fastly_compute.exceptions.kv_store.kv_error.KvError:
         """
         return self._wit_resource.delete(key)
 
@@ -141,7 +154,9 @@ class Store(FastlyResource[_wit.Store]):
         """Delete of a value in the KV Store.
 
         This function initiates an async delete of a value in the KV Store. Use
-        `await-delete` to finish the lookup.
+        `await_delete` to finish the lookup.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
         """
         return Pollable(self._wit_resource.delete_async(key))
 
@@ -149,10 +164,12 @@ class Store(FastlyResource[_wit.Store]):
     def list(self, options: ListOptions) -> Pollable:
         """Lists keys in the KV Store.
 
-        Returns `ok(b)` with the body `b` on success, or `err(e)` indicating the error `e`
+        Returns `b` with the body `b` on success, or `err(e)` indicating the error `e`
         occurred.
 
         This function waits until the operation completes.
+
+        :raises ~fastly_compute.exceptions.kv_store.kv_error.KvError:
         """
         return Pollable(self._wit_resource.list(options._wit))
 
@@ -161,7 +178,9 @@ class Store(FastlyResource[_wit.Store]):
         """List of keys in the KV Store.
 
         This function initiates an async list value in the KV Store. Use
-        `await-list` to finish the lookup.
+        `await_list` to finish the lookup.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
         """
         return Pollable(self._wit_resource.list_async(options._wit))
 
@@ -175,7 +194,7 @@ class Entry(FastlyResource[_wit.Entry]):
     """
 
     def take_body(self) -> Pollable | None:
-        """Take and return the body from this `entry`, if it has one; otherwise return `none`.
+        """Take and return the body from this `entry`, if it has one; otherwise return `None`.
 
         After calling this method, this entry will no longer have a body.
         """
@@ -183,7 +202,10 @@ class Entry(FastlyResource[_wit.Entry]):
 
     @remap_wit_errors(MAPPINGS)
     def metadata(self, max_len: int) -> str | None:
-        """Read the metadata of the KV Store item, if present."""
+        """Read the metadata of the KV Store item, if present.
+
+        :raises ~fastly_compute.exceptions.types.error.Error:
+        """
         return self._wit_resource.metadata(max_len)
 
     def generation(self) -> int:
@@ -201,8 +223,10 @@ class ExtraListOptions(FastlyResource[_wit.ExtraListOptions]):
 def await_lookup(handle: Pollable) -> Entry | None:
     """Wait on the async lookup of a value in the KV Store.
 
-    Returns `ok(some(v))` with the value `v` that was found, `ok(none)` if no value was
+    Returns `v` with the value `v` that was found, `None` if no value was
     found, or `err(e)` indicating the error `e` occurred.
+
+    :raises ~fastly_compute.exceptions.kv_store.kv_error.KvError:
     """
     return Entry(_wit.await_lookup(handle._wit_resource))
 
@@ -211,6 +235,8 @@ def await_insert(handle: Pollable) -> None:
     """Wait on the async insert of a value in the KV Store.
 
     Returns `ok` if the `insert` succeeded, or an error code on failure.
+
+    :raises ~fastly_compute.exceptions.kv_store.kv_error.KvError:
     """
     return _wit.await_insert(handle._wit_resource)
 
@@ -218,8 +244,10 @@ def await_insert(handle: Pollable) -> None:
 def await_delete(handle: Pollable) -> bool:
     """Wait on the async delete of a value in the KV Store.
 
-    Returns `ok(true)` if a value was successfully deleted, `ok(false)` if no value was
+    Returns `True` if a value was successfully deleted, `False` if no value was
     found, or `err(e)` indicating the error `e` occurred.
+
+    :raises ~fastly_compute.exceptions.kv_store.kv_error.KvError:
     """
     return _wit.await_delete(handle._wit_resource)
 
@@ -227,8 +255,10 @@ def await_delete(handle: Pollable) -> bool:
 def await_list(handle: Pollable) -> Pollable:
     """Wait on the async list of keys in the KV Store.
 
-    Returns `ok(b)` with the JSON-encoded body `b` on success, or `err(e)` indicating
+    Returns `b` with the JSON-encoded body `b` on success, or `err(e)` indicating
     the error `e` occurred.
+
+    :raises ~fastly_compute.exceptions.kv_store.kv_error.KvError:
     """
     return Pollable(_wit.await_list(handle._wit_resource))
 
