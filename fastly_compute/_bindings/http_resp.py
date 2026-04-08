@@ -27,8 +27,6 @@ __all__ = [
 ]
 
 
-
-
 class Response(FastlyResource[_wit.Response]):
     """An HTTP response."""
 
@@ -72,7 +70,9 @@ class Response(FastlyResource[_wit.Response]):
         return self._wit_resource.get_header_value(name, max_len)
 
     @remap_wit_errors(MAPPINGS)
-    def get_header_values(self, name: str, max_len: int, cursor: int) -> tuple[bytes, int | None]:
+    def get_header_values(
+        self, name: str, max_len: int, cursor: int
+    ) -> tuple[bytes, int | None]:
         """Gets multiple header values for the given `name` via a buffer of the provided size.
 
         As opposed to `get_header_value`, this function returns all of the values for this header.
@@ -197,6 +197,7 @@ def send_downstream(response: Response, body: Pollable) -> None:
     """
     return _wit.send_downstream(response._wit_resource, body._wit_resource)
 
+
 @remap_wit_errors(MAPPINGS)
 def send_downstream_streaming(response: Response, body: Pollable) -> None:
     """Starts a response to the client that made the request passed to `http-incoming.handle`.
@@ -206,6 +207,7 @@ def send_downstream_streaming(response: Response, body: Pollable) -> None:
     :raises ~fastly_compute.exceptions.types.error.Error:
     """
     return _wit.send_downstream_streaming(response._wit_resource, body._wit_resource)
+
 
 @remap_wit_errors(MAPPINGS)
 def close(response: Response) -> None:
@@ -218,4 +220,3 @@ def close(response: Response) -> None:
     :raises ~fastly_compute.exceptions.types.error.Error:
     """
     return _wit.close(response._wit_resource)
-

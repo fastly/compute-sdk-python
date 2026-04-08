@@ -53,7 +53,6 @@ __all__ = [
 ]
 
 
-
 class LookupOptions:
     """Non-required options for cache lookups."""
 
@@ -67,6 +66,7 @@ class LookupOptions:
             backend=backend._wit_resource if backend is not None else None,
             extra=None,
         )
+
 
 class WriteOptions:
     """Options for cache insertions and updates."""
@@ -110,10 +110,14 @@ class Entry(FastlyResource[_wit.Entry]):
 
         :raises ~fastly_compute.exceptions.types.error.Error:
         """
-        return cls(_wit.Entry.transaction_lookup(req_handle._wit_resource, options._wit))
+        return cls(
+            _wit.Entry.transaction_lookup(req_handle._wit_resource, options._wit)
+        )
 
     @remap_wit_errors(MAPPINGS)
-    def transaction_insert(self, resp_handle: Response, options: WriteOptions) -> Pollable:
+    def transaction_insert(
+        self, resp_handle: Response, options: WriteOptions
+    ) -> Pollable:
         """Inserts a response into the cache with the given options, returning a streaming body handle
         that is ready for writing or appending.
 
@@ -123,10 +127,16 @@ class Entry(FastlyResource[_wit.Entry]):
 
         :raises ~fastly_compute.exceptions.types.error.Error:
         """
-        return Pollable(self._wit_resource.transaction_insert(resp_handle._wit_resource, options._wit))
+        return Pollable(
+            self._wit_resource.transaction_insert(
+                resp_handle._wit_resource, options._wit
+            )
+        )
 
     @remap_wit_errors(MAPPINGS)
-    def transaction_insert_and_stream_back(self, resp_handle: Response, options: WriteOptions) -> tuple[Pollable, Self]:
+    def transaction_insert_and_stream_back(
+        self, resp_handle: Response, options: WriteOptions
+    ) -> tuple[Pollable, Self]:
         """Inserts a response into the cache with the given options, and return a fresh cache handle
         that can be used to retrieve and stream the response while it's being inserted.
 
@@ -138,7 +148,9 @@ class Entry(FastlyResource[_wit.Entry]):
 
         :raises ~fastly_compute.exceptions.types.error.Error:
         """
-        _r = self._wit_resource.transaction_insert_and_stream_back(resp_handle._wit_resource, options._wit)
+        _r = self._wit_resource.transaction_insert_and_stream_back(
+            resp_handle._wit_resource, options._wit
+        )
         return (Pollable(_r[0]), Entry(_r[1]))
 
     @remap_wit_errors(MAPPINGS)
@@ -154,10 +166,14 @@ class Entry(FastlyResource[_wit.Entry]):
 
         :raises ~fastly_compute.exceptions.types.error.Error:
         """
-        return self._wit_resource.transaction_update(resp_handle._wit_resource, options._wit)
+        return self._wit_resource.transaction_update(
+            resp_handle._wit_resource, options._wit
+        )
 
     @remap_wit_errors(MAPPINGS)
-    def transaction_update_and_return_fresh(self, resp_handle: Response, options: WriteOptions) -> Self:
+    def transaction_update_and_return_fresh(
+        self, resp_handle: Response, options: WriteOptions
+    ) -> Self:
         """Updates freshness lifetime, response headers, and caching settings without updating the
         response body, and return a fresh cache handle that can be used to retrieve and stream the
         stored response.
@@ -170,7 +186,11 @@ class Entry(FastlyResource[_wit.Entry]):
 
         :raises ~fastly_compute.exceptions.types.error.Error:
         """
-        return Entry(self._wit_resource.transaction_update_and_return_fresh(resp_handle._wit_resource, options._wit))
+        return Entry(
+            self._wit_resource.transaction_update_and_return_fresh(
+                resp_handle._wit_resource, options._wit
+            )
+        )
 
     @remap_wit_errors(MAPPINGS)
     def transaction_record_not_cacheable(self, options: WriteOptions) -> None:
@@ -205,10 +225,14 @@ class Entry(FastlyResource[_wit.Entry]):
 
         :raises ~fastly_compute.exceptions.types.error.Error:
         """
-        return SuggestedWriteOptions(self._wit_resource.get_suggested_write_options(response._wit_resource))
+        return SuggestedWriteOptions(
+            self._wit_resource.get_suggested_write_options(response._wit_resource)
+        )
 
     @remap_wit_errors(MAPPINGS)
-    def prepare_response_for_storage(self, response: Response) -> tuple[StorageAction, Response]:
+    def prepare_response_for_storage(
+        self, response: Response
+    ) -> tuple[StorageAction, Response]:
         """Adjusts a response into the appropriate form for storage and provides a storage action
         recommendation.
 
@@ -223,7 +247,9 @@ class Entry(FastlyResource[_wit.Entry]):
         return (_r[0], Response(_r[1]))
 
     @remap_wit_errors(MAPPINGS)
-    def get_found_response(self, transform_for_client: int) -> tuple[Response, Pollable] | None:
+    def get_found_response(
+        self, transform_for_client: int
+    ) -> tuple[Response, Pollable] | None:
         """Retrieves a stored response from the cache, returning `None` if
         there was no response found.
 
@@ -349,11 +375,14 @@ class Entry(FastlyResource[_wit.Entry]):
         """
         return self._wit_resource.transaction_abandon()
 
+
 class ExtraLookupOptions(FastlyResource[_wit.ExtraLookupOptions]):
     """Extensibility for `lookup-options`"""
 
+
 class ExtraWriteOptions(FastlyResource[_wit.ExtraWriteOptions]):
     """Extensibility for `write-options`"""
+
 
 class SuggestedWriteOptions(FastlyResource[_wit.SuggestedWriteOptions]):
     """The methods in this resource return values that correspond to the fields in a
@@ -415,6 +444,7 @@ def is_request_cacheable(request: Request) -> bool:
     """
     return _wit.is_request_cacheable(request._wit_resource)
 
+
 @remap_wit_errors(MAPPINGS)
 def get_suggested_cache_key(request: Request, max_len: int) -> bytes:
     """Retrieves the default cache key for the request.
@@ -428,6 +458,7 @@ def get_suggested_cache_key(request: Request, max_len: int) -> bytes:
     """
     return _wit.get_suggested_cache_key(request._wit_resource, max_len)
 
+
 @remap_wit_errors(MAPPINGS)
 def close_entry(handle: Entry) -> None:
     """Closes an ongoing interaction with the cache.
@@ -439,4 +470,3 @@ def close_entry(handle: Entry) -> None:
     :raises ~fastly_compute.exceptions.types.error.Error:
     """
     return _wit.close_entry(handle._wit_resource)
-

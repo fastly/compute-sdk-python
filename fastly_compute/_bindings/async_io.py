@@ -27,8 +27,6 @@ __all__ = [
 ]
 
 
-
-
 class Pollable(FastlyResource[_wit.Pollable]):
     """An object supporting generic async operations.
 
@@ -81,6 +79,7 @@ def select(handles: list[Pollable]) -> int:
     """
     return _wit.select(handles)
 
+
 def select_with_timeout(handles: list[Pollable], timeout_ms: int) -> int | None:
     """Blocks until one of the given objects is ready for I/O, or the timeout expires.
 
@@ -96,4 +95,3 @@ def select_with_timeout(handles: list[Pollable], timeout_ms: int) -> int | None:
     timeout expires before any objects are ready for I/O.
     """
     return _wit.select_with_timeout(handles, timeout_ms)
-

@@ -13,9 +13,6 @@ __all__ = [
 ]
 
 
-
-
-
 @remap_wit_errors(MAPPINGS)
 def lookup(user_agent: str, max_len: int) -> str | None:
     """Looks up the data associated with a particular User-Agent string.
@@ -28,4 +25,3 @@ def lookup(user_agent: str, max_len: int) -> str | None:
     :raises ~fastly_compute.exceptions.types.error.Error:
     """
     return _wit.lookup(user_agent, max_len)
-

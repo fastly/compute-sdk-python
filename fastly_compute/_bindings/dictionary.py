@@ -19,8 +19,6 @@ __all__ = [
 ]
 
 
-
-
 class Dictionary(FastlyResource[_wit.Dictionary]):
     """A Compute Dictionary."""
 
@@ -45,5 +43,3 @@ class Dictionary(FastlyResource[_wit.Dictionary]):
         :raises ~fastly_compute.exceptions.types.error.Error:
         """
         return self._wit_resource.lookup(key, max_len)
-
-

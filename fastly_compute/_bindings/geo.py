@@ -18,9 +18,6 @@ __all__ = [
 ]
 
 
-
-
-
 @remap_wit_errors(MAPPINGS)
 def lookup(ip_addr: IpAddress, max_len: int) -> str:
     """Looks up the geographic data associated with a particular IP address.
@@ -33,4 +30,3 @@ def lookup(ip_addr: IpAddress, max_len: int) -> str:
     :raises ~fastly_compute.exceptions.types.error.Error:
     """
     return _wit.lookup(ip_addr, max_len)
-

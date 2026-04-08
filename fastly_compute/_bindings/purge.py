@@ -19,7 +19,6 @@ __all__ = [
 ]
 
 
-
 class PurgeOptions:
     """PurgeOptions."""
 
@@ -49,8 +48,11 @@ def purge_surrogate_key(surrogate_keys: str, purge_options: PurgeOptions) -> Non
     """
     return _wit.purge_surrogate_key(surrogate_keys, purge_options._wit)
 
+
 @remap_wit_errors(MAPPINGS)
-def purge_surrogate_key_verbose(surrogate_keys: str, purge_options: PurgeOptions, max_len: int) -> str:
+def purge_surrogate_key_verbose(
+    surrogate_keys: str, purge_options: PurgeOptions, max_len: int
+) -> str:
     """Purge a surrogate key for the current service, and return the purge id.
 
     This is similar to `purge_surrogate_key`, but on success, returns a
@@ -62,4 +64,3 @@ def purge_surrogate_key_verbose(surrogate_keys: str, purge_options: PurgeOptions
     :raises ~fastly_compute.exceptions.types.error.Error:
     """
     return _wit.purge_surrogate_key_verbose(surrogate_keys, purge_options._wit, max_len)
-

@@ -20,8 +20,6 @@ __all__ = [
 ]
 
 
-
-
 class RateCounter(FastlyResource[_wit.RateCounter]):
     """A rate counter that can be used with a edge rate limiter or
     standalone for counting and rate calculations.
@@ -41,7 +39,15 @@ class RateCounter(FastlyResource[_wit.RateCounter]):
         return self._wit_resource.get_name()
 
     @remap_wit_errors(MAPPINGS)
-    def check_rate(self, entry: str, delta: int, window: int, limit: int, penalty_box: PenaltyBox, ttl: int) -> bool:
+    def check_rate(
+        self,
+        entry: str,
+        delta: int,
+        window: int,
+        limit: int,
+        penalty_box: PenaltyBox,
+        ttl: int,
+    ) -> bool:
         """Increments an entry in a rate counter and check if the client has exceeded some average number
         of requests per second (RPS) over the window.
 
@@ -52,7 +58,9 @@ class RateCounter(FastlyResource[_wit.RateCounter]):
 
         :raises ~fastly_compute.exceptions.types.error.Error:
         """
-        return self._wit_resource.check_rate(entry, delta, window, limit, penalty_box._wit_resource, ttl)
+        return self._wit_resource.check_rate(
+            entry, delta, window, limit, penalty_box._wit_resource, ttl
+        )
 
     @remap_wit_errors(MAPPINGS)
     def increment(self, entry: str, delta: int) -> None:
@@ -77,6 +85,7 @@ class RateCounter(FastlyResource[_wit.RateCounter]):
         :raises ~fastly_compute.exceptions.types.error.Error:
         """
         return self._wit_resource.lookup_count(entry, duration)
+
 
 class PenaltyBox(FastlyResource[_wit.PenaltyBox]):
     """A penaltybox that can be used with the edge rate limiter or
@@ -113,5 +122,3 @@ class PenaltyBox(FastlyResource[_wit.PenaltyBox]):
         :raises ~fastly_compute.exceptions.types.error.Error:
         """
         return self._wit_resource.has(entry)
-
-

@@ -22,9 +22,6 @@ __all__ = [
 ]
 
 
-
-
-
 @remap_wit_errors(MAPPINGS)
 def handle(request: Request, body: Pollable) -> None:
     """Handle the given request.
@@ -38,4 +35,3 @@ def handle(request: Request, body: Pollable) -> None:
     `send_downstream_streaming`.
     """
     return _wit.handle(request._wit_resource, body._wit_resource)
-

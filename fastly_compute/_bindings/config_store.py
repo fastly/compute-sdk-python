@@ -19,8 +19,6 @@ __all__ = [
 ]
 
 
-
-
 class Store(FastlyResource[_wit.Store]):
     """A Config Store."""
 
@@ -42,5 +40,3 @@ class Store(FastlyResource[_wit.Store]):
         :raises ~fastly_compute.exceptions.types.error.Error:
         """
         return self._wit_resource.get(key, max_len)
-
-

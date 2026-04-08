@@ -19,8 +19,6 @@ __all__ = [
 ]
 
 
-
-
 class Endpoint(FastlyResource[_wit.Endpoint]):
     """A logging endpoint."""
 
@@ -49,5 +47,3 @@ class Endpoint(FastlyResource[_wit.Endpoint]):
         Each call to `write` with a non-empty message produces a single log event.
         """
         return self._wit_resource.write(msg)
-
-

@@ -22,8 +22,6 @@ __all__ = [
 ]
 
 
-
-
 class Acl(FastlyResource[_wit.Acl]):
     """An ACL."""
 
@@ -48,5 +46,3 @@ class Acl(FastlyResource[_wit.Acl]):
         :raises ~fastly_compute.exceptions.acl.acl_error.AclError:
         """
         return Pollable(self._wit_resource.lookup(ip_addr))
-
-

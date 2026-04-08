@@ -43,7 +43,6 @@ __all__ = [
 ]
 
 
-
 class NextRequestOptions:
     """Configuration for `next-request`."""
 
@@ -88,6 +87,7 @@ def next_request(options: NextRequestOptions) -> Pollable:
     """
     return Pollable(_wit.next_request(options._wit))
 
+
 @remap_wit_errors(MAPPINGS)
 def await_request(pending: Pollable) -> tuple[Request, Pollable] | None:
     """Waits until the next request is available, and then returns the resulting
@@ -100,8 +100,11 @@ def await_request(pending: Pollable) -> tuple[Request, Pollable] | None:
     _r = _wit.await_request(pending._wit_resource)
     return (Request(_r[0]), Pollable(_r[1])) if _r is not None else None
 
+
 @remap_wit_errors(MAPPINGS)
-def downstream_original_header_names(ds_request: Request, max_len: int, cursor: int) -> tuple[str, int | None]:
+def downstream_original_header_names(
+    ds_request: Request, max_len: int, cursor: int
+) -> tuple[str, int | None]:
     """Returns the client request's header names exactly as they were originally received.
 
     This includes both the original header name characters' cases, as well as the original order
@@ -115,7 +118,10 @@ def downstream_original_header_names(ds_request: Request, max_len: int, cursor: 
 
     :raises ~fastly_compute.exceptions.types.error.Error:
     """
-    return _wit.downstream_original_header_names(ds_request._wit_resource, max_len, cursor)
+    return _wit.downstream_original_header_names(
+        ds_request._wit_resource, max_len, cursor
+    )
+
 
 @remap_wit_errors(MAPPINGS)
 def downstream_original_header_count(ds_request: Request) -> int:
@@ -125,13 +131,16 @@ def downstream_original_header_count(ds_request: Request) -> int:
     """
     return _wit.downstream_original_header_count(ds_request._wit_resource)
 
+
 def downstream_client_ip_addr(ds_request: Request) -> IpAddress | None:
     """Returns the IP address of the client making the HTTP request, if known."""
     return _wit.downstream_client_ip_addr(ds_request._wit_resource)
 
+
 def downstream_server_ip_addr(ds_request: Request) -> IpAddress | None:
     """Returns the IP address on which this server received the HTTP request, if known."""
     return _wit.downstream_server_ip_addr(ds_request._wit_resource)
+
 
 @remap_wit_errors(MAPPINGS)
 def downstream_client_h2_fingerprint(ds_request: Request, max_len: int) -> str:
@@ -141,6 +150,7 @@ def downstream_client_h2_fingerprint(ds_request: Request, max_len: int) -> str:
     """
     return _wit.downstream_client_h2_fingerprint(ds_request._wit_resource, max_len)
 
+
 @remap_wit_errors(MAPPINGS)
 def downstream_client_request_id(ds_request: Request, max_len: int) -> str:
     """Gets the id of the current request if available.
@@ -148,6 +158,7 @@ def downstream_client_request_id(ds_request: Request, max_len: int) -> str:
     :raises ~fastly_compute.exceptions.types.error.Error:
     """
     return _wit.downstream_client_request_id(ds_request._wit_resource, max_len)
+
 
 @remap_wit_errors(MAPPINGS)
 def downstream_client_oh_fingerprint(ds_request: Request, max_len: int) -> str:
@@ -157,6 +168,7 @@ def downstream_client_oh_fingerprint(ds_request: Request, max_len: int) -> str:
     """
     return _wit.downstream_client_oh_fingerprint(ds_request._wit_resource, max_len)
 
+
 @remap_wit_errors(MAPPINGS)
 def downstream_client_ddos_detected(ds_request: Request) -> bool:
     """Returns whether the request was tagged as contributing to a DDoS attack.
@@ -165,8 +177,11 @@ def downstream_client_ddos_detected(ds_request: Request) -> bool:
     """
     return _wit.downstream_client_ddos_detected(ds_request._wit_resource)
 
+
 @remap_wit_errors(MAPPINGS)
-def downstream_tls_cipher_openssl_name(ds_request: Request, max_len: int) -> bytes | None:
+def downstream_tls_cipher_openssl_name(
+    ds_request: Request, max_len: int
+) -> bytes | None:
     """Gets the cipher suite used to secure the downstream client TLS connection.
 
     The value returned will be consistent with the [OpenSSL name] for the cipher suite.
@@ -179,6 +194,7 @@ def downstream_tls_cipher_openssl_name(ds_request: Request, max_len: int) -> byt
     """
     return _wit.downstream_tls_cipher_openssl_name(ds_request._wit_resource, max_len)
 
+
 @remap_wit_errors(MAPPINGS)
 def downstream_tls_protocol(ds_request: Request, max_len: int) -> bytes | None:
     """Gets the TLS protocol version used to secure the downstream client TLS connection.
@@ -188,6 +204,7 @@ def downstream_tls_protocol(ds_request: Request, max_len: int) -> bytes | None:
     :raises ~fastly_compute.exceptions.types.error.Error:
     """
     return _wit.downstream_tls_protocol(ds_request._wit_resource, max_len)
+
 
 @remap_wit_errors(MAPPINGS)
 def downstream_tls_client_hello(ds_request: Request, max_len: int) -> bytes | None:
@@ -203,8 +220,11 @@ def downstream_tls_client_hello(ds_request: Request, max_len: int) -> bytes | No
     """
     return _wit.downstream_tls_client_hello(ds_request._wit_resource, max_len)
 
+
 @remap_wit_errors(MAPPINGS)
-def downstream_tls_raw_client_certificate(ds_request: Request, max_len: int) -> bytes | None:
+def downstream_tls_raw_client_certificate(
+    ds_request: Request, max_len: int
+) -> bytes | None:
     """Gets the raw client certificate used to secure the downstream client mTLS connection.
 
     The value returned will be based on PEM format.
@@ -215,8 +235,11 @@ def downstream_tls_raw_client_certificate(ds_request: Request, max_len: int) -> 
     """
     return _wit.downstream_tls_raw_client_certificate(ds_request._wit_resource, max_len)
 
+
 @remap_wit_errors(MAPPINGS)
-def downstream_tls_client_cert_verify_result(ds_request: Request) -> ClientCertVerifyResult | None:
+def downstream_tls_client_cert_verify_result(
+    ds_request: Request,
+) -> ClientCertVerifyResult | None:
     """Returns the `client_cert_verify_result` from the downstream client mTLS handshake.
 
     Returns `None` if the downstream client connection is not a TLS connection.
@@ -224,6 +247,7 @@ def downstream_tls_client_cert_verify_result(ds_request: Request) -> ClientCertV
     :raises ~fastly_compute.exceptions.types.error.Error:
     """
     return _wit.downstream_tls_client_cert_verify_result(ds_request._wit_resource)
+
 
 @remap_wit_errors(MAPPINGS)
 def downstream_tls_client_servername(ds_request: Request, max_len: int) -> str | None:
@@ -235,6 +259,7 @@ def downstream_tls_client_servername(ds_request: Request, max_len: int) -> str |
     """
     return _wit.downstream_tls_client_servername(ds_request._wit_resource, max_len)
 
+
 @remap_wit_errors(MAPPINGS)
 def downstream_tls_ja3_md5(ds_request: Request) -> bytes | None:
     """Gets the JA3 hash of the TLS ClientHello message.
@@ -244,6 +269,7 @@ def downstream_tls_ja3_md5(ds_request: Request) -> bytes | None:
     :raises ~fastly_compute.exceptions.types.error.Error:
     """
     return _wit.downstream_tls_ja3_md5(ds_request._wit_resource)
+
 
 @remap_wit_errors(MAPPINGS)
 def downstream_tls_ja4(ds_request: Request, max_len: int) -> str | None:
@@ -255,6 +281,7 @@ def downstream_tls_ja4(ds_request: Request, max_len: int) -> str | None:
     """
     return _wit.downstream_tls_ja4(ds_request._wit_resource, max_len)
 
+
 @remap_wit_errors(MAPPINGS)
 def downstream_compliance_region(ds_request: Request, max_len: int) -> str | None:
     """Gets the compliance region that the client IP address is in.
@@ -262,6 +289,7 @@ def downstream_compliance_region(ds_request: Request, max_len: int) -> str | Non
     :raises ~fastly_compute.exceptions.types.error.Error:
     """
     return _wit.downstream_compliance_region(ds_request._wit_resource, max_len)
+
 
 @remap_wit_errors(MAPPINGS)
 def fastly_key_is_valid(ds_request: Request) -> bool:
@@ -272,4 +300,3 @@ def fastly_key_is_valid(ds_request: Request) -> bool:
     :raises ~fastly_compute.exceptions.types.error.Error:
     """
     return _wit.fastly_key_is_valid(ds_request._wit_resource)
-

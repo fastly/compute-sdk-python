@@ -40,8 +40,6 @@ __all__ = [
 ]
 
 
-
-
 class DynamicBackendOptions(FastlyResource[_wit.DynamicBackendOptions]):
     """Options for `register-dynamic-backend`."""
 
@@ -252,6 +250,7 @@ class DynamicBackendOptions(FastlyResource[_wit.DynamicBackendOptions]):
         """
         return self._wit_resource.prefer_ipv6(value)
 
+
 class Backend(FastlyResource[_wit.Backend]):
     """Backend."""
 
@@ -413,7 +412,9 @@ class Backend(FastlyResource[_wit.Backend]):
 
 
 @remap_wit_errors(MAPPINGS)
-def register_dynamic_backend(prefix: str, target: str, options: DynamicBackendOptions) -> Backend:
+def register_dynamic_backend(
+    prefix: str, target: str, options: DynamicBackendOptions
+) -> Backend:
     """Creates a new dynamic backend.
 
     The arguments are the name of the new backend to use, along with a string describing the
@@ -439,4 +440,3 @@ def register_dynamic_backend(prefix: str, target: str, options: DynamicBackendOp
     :raises ~fastly_compute.exceptions.types.error.Error:
     """
     return Backend(_wit.register_dynamic_backend(prefix, target, options._wit_resource))
-

@@ -22,8 +22,6 @@ __all__ = [
 ]
 
 
-
-
 class ShieldBackendOptions(FastlyResource[_wit.ShieldBackendOptions]):
     """Options for `backend-for-shield`."""
 
@@ -49,6 +47,7 @@ def shield_info(name: str, max_len: int) -> str:
     """
     return _wit.shield_info(name, max_len)
 
+
 @remap_wit_errors(MAPPINGS)
 def backend_for_shield(name: str, options: ShieldBackendOptions | None) -> Backend:
     """backend_for_shield.
@@ -56,4 +55,3 @@ def backend_for_shield(name: str, options: ShieldBackendOptions | None) -> Backe
     :raises ~fastly_compute.exceptions.types.error.Error:
     """
     return Backend(_wit.backend_for_shield(name, options))
-

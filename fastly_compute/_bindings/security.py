@@ -22,7 +22,6 @@ __all__ = [
 ]
 
 
-
 class InspectOptions:
     """Configuration for inspecting a `request` using Security."""
 
@@ -45,7 +44,9 @@ class ExtraInspectOptions(FastlyResource[_wit.ExtraInspectOptions]):
 
 
 @remap_wit_errors(MAPPINGS)
-def inspect(request: Request, body: Pollable, options: InspectOptions, max_len: int) -> str:
+def inspect(
+    request: Request, body: Pollable, options: InspectOptions, max_len: int
+) -> str:
     """Inspects request HTTP traffic using the [NGWAF] lookaside service.
 
     Returns a JSON-encoded string.
@@ -54,5 +55,6 @@ def inspect(request: Request, body: Pollable, options: InspectOptions, max_len: 
 
     :raises ~fastly_compute.exceptions.types.error.Error:
     """
-    return _wit.inspect(request._wit_resource, body._wit_resource, options._wit, max_len)
-
+    return _wit.inspect(
+        request._wit_resource, body._wit_resource, options._wit, max_len
+    )

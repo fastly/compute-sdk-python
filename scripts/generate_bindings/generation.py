@@ -3,7 +3,7 @@
 import json
 from dataclasses import dataclass
 from pathlib import Path
-from subprocess import check_output
+from subprocess import check_output, run
 
 from jinja2 import Environment, FileSystemLoader
 
@@ -278,6 +278,31 @@ def generate_binding_module(interface: Interface, env: Environment) -> str:
     )
 
 
+def _format(code: str, filename: str) -> str:
+    """Run ruff import-sort and format on code in a single in-process pass.
+
+    Uses --stdin-filename so ruff applies the correct per-file config.
+    """
+    # Fix import order first (isort equivalent).
+    result = run(
+        ["uv", "run", "--extra", "dev", "ruff", "check", "--fix", "--exit-zero",
+         "--select", "I", "--stdin-filename", filename, "-"],
+        input=code,
+        capture_output=True,
+        text=True,
+    )
+    code = result.stdout or code
+    # Then format.
+    result = run(
+        ["uv", "run", "--extra", "dev", "ruff", "format",
+         "--stdin-filename", filename, "-"],
+        input=code,
+        capture_output=True,
+        text=True,
+    )
+    return result.stdout or code
+
+
 def generate() -> None:
     """Generate all _bindings modules for the Fastly Compute package."""
     wit_text = check_output(["wasm-tools", "component", "wit", WIT_DIR, "--json"])
@@ -303,8 +328,6 @@ def generate() -> None:
         module_name = interface.py_module()
         dest = BINDINGS_DIR / f"{module_name}.py"
         code = generate_binding_module(interface, env)
+        code = _format(code, str(dest))
         dest.write_text(code)
         print(f"  wrote {dest}")
-
-    # Sort imports in all generated files so ruff is happy with the output.
-    check_output(["uv", "run", "--extra", "dev", "ruff", "check", "--fix", "--exit-zero", "--select", "I", str(BINDINGS_DIR)])

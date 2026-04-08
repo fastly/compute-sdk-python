@@ -3,9 +3,3 @@
 """Types used by many interfaces in this package."""
 
 from __future__ import annotations
-
-
-
-
-
-

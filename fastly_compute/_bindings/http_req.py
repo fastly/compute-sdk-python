@@ -38,8 +38,6 @@ __all__ = [
 ]
 
 
-
-
 class Request(FastlyResource[_wit.Request]):
     """An HTTP request."""
 
@@ -91,7 +89,9 @@ class Request(FastlyResource[_wit.Request]):
         return self._wit_resource.get_header_value(name, max_len)
 
     @remap_wit_errors(MAPPINGS)
-    def get_header_values(self, name: str, max_len: int, cursor: int) -> tuple[bytes, int | None]:
+    def get_header_values(
+        self, name: str, max_len: int, cursor: int
+    ) -> tuple[bytes, int | None]:
         """Gets multiple header values for the given `name` via a buffer of the provided size.
 
         As opposed to `get_header_value`, this function returns all of the values for this header.
@@ -242,15 +242,19 @@ class Request(FastlyResource[_wit.Request]):
         """
         return self._wit_resource.redirect_to_grip_proxy(backend._wit_resource)
 
+
 class ExtraCacheOverrideDetails(FastlyResource[_wit.ExtraCacheOverrideDetails]):
     """Extensibility for `cache-override-details`"""
+
 
 class ExtraSendErrorDetail(FastlyResource[_wit.ExtraSendErrorDetail]):
     """Extensibility for `send-error-detail`"""
 
 
 @remap_wit_errors(MAPPINGS)
-def send(request: Request, body: Pollable, backend: Backend) -> tuple[Response, Pollable]:
+def send(
+    request: Request, body: Pollable, backend: Backend
+) -> tuple[Response, Pollable]:
     """Retrieves a response for the request, either from cache or by sending it
     to the given backend server.
 
@@ -261,8 +265,11 @@ def send(request: Request, body: Pollable, backend: Backend) -> tuple[Response, 
     _r = _wit.send(request._wit_resource, body._wit_resource, backend._wit_resource)
     return (Response(_r[0]), Pollable(_r[1]))
 
+
 @remap_wit_errors(MAPPINGS)
-def send_uncached(request: Request, body: Pollable, backend: Backend) -> tuple[Response, Pollable]:
+def send_uncached(
+    request: Request, body: Pollable, backend: Backend
+) -> tuple[Response, Pollable]:
     """Sends the request directly to the backend server without performing any
     caching or inserting any cache-related headers in the response.
 
@@ -270,8 +277,11 @@ def send_uncached(request: Request, body: Pollable, backend: Backend) -> tuple[R
 
     :raises ~fastly_compute.exceptions.http_req.ErrorWithDetail:
     """
-    _r = _wit.send_uncached(request._wit_resource, body._wit_resource, backend._wit_resource)
+    _r = _wit.send_uncached(
+        request._wit_resource, body._wit_resource, backend._wit_resource
+    )
     return (Response(_r[0]), Pollable(_r[1]))
+
 
 @remap_wit_errors(MAPPINGS)
 def send_async(request: Request, body: Pollable, backend: Backend) -> Pollable:
@@ -293,7 +303,12 @@ def send_async(request: Request, body: Pollable, backend: Backend) -> Pollable:
 
     :raises ~fastly_compute.exceptions.types.error.Error:
     """
-    return Pollable(_wit.send_async(request._wit_resource, body._wit_resource, backend._wit_resource))
+    return Pollable(
+        _wit.send_async(
+            request._wit_resource, body._wit_resource, backend._wit_resource
+        )
+    )
+
 
 @remap_wit_errors(MAPPINGS)
 def send_async_uncached(request: Request, body: Pollable, backend: Backend) -> Pollable:
@@ -305,10 +320,17 @@ def send_async_uncached(request: Request, body: Pollable, backend: Backend) -> P
 
     :raises ~fastly_compute.exceptions.types.error.Error:
     """
-    return Pollable(_wit.send_async_uncached(request._wit_resource, body._wit_resource, backend._wit_resource))
+    return Pollable(
+        _wit.send_async_uncached(
+            request._wit_resource, body._wit_resource, backend._wit_resource
+        )
+    )
+
 
 @remap_wit_errors(MAPPINGS)
-def send_async_streaming(request: Request, body: Pollable, backend: Backend) -> Pollable:
+def send_async_streaming(
+    request: Request, body: Pollable, backend: Backend
+) -> Pollable:
     """Begins sending the request to the given backend server, and returns a
     `pending_response` that can yield the backend response or an error.
 
@@ -328,10 +350,17 @@ def send_async_streaming(request: Request, body: Pollable, backend: Backend) -> 
 
     :raises ~fastly_compute.exceptions.types.error.Error:
     """
-    return Pollable(_wit.send_async_streaming(request._wit_resource, body._wit_resource, backend._wit_resource))
+    return Pollable(
+        _wit.send_async_streaming(
+            request._wit_resource, body._wit_resource, backend._wit_resource
+        )
+    )
+
 
 @remap_wit_errors(MAPPINGS)
-def send_async_uncached_streaming(request: Request, body: Pollable, backend: Backend) -> Pollable:
+def send_async_uncached_streaming(
+    request: Request, body: Pollable, backend: Backend
+) -> Pollable:
     """This is to `send_async_streaming` as `send_uncached` is to `send`.
 
     As with `send_uncached`, this function sends the request directly to the
@@ -340,7 +369,12 @@ def send_async_uncached_streaming(request: Request, body: Pollable, backend: Bac
 
     :raises ~fastly_compute.exceptions.types.error.Error:
     """
-    return Pollable(_wit.send_async_uncached_streaming(request._wit_resource, body._wit_resource, backend._wit_resource))
+    return Pollable(
+        _wit.send_async_uncached_streaming(
+            request._wit_resource, body._wit_resource, backend._wit_resource
+        )
+    )
+
 
 @remap_wit_errors(MAPPINGS)
 def await_response(pending: Pollable) -> tuple[Response, Pollable]:
@@ -351,6 +385,7 @@ def await_response(pending: Pollable) -> tuple[Response, Pollable]:
     """
     _r = _wit.await_response(pending._wit_resource)
     return (Response(_r[0]), Pollable(_r[1]))
+
 
 @remap_wit_errors(MAPPINGS)
 def close(request: Request) -> None:
@@ -363,6 +398,7 @@ def close(request: Request) -> None:
     """
     return _wit.close(request._wit_resource)
 
+
 @remap_wit_errors(MAPPINGS)
 def upgrade_websocket(backend: Backend) -> None:
     """upgrade_websocket.
@@ -370,4 +406,3 @@ def upgrade_websocket(backend: Backend) -> None:
     :raises ~fastly_compute.exceptions.types.error.Error:
     """
     return _wit.upgrade_websocket(backend._wit_resource)
-

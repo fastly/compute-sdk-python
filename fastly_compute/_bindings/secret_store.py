@@ -20,8 +20,6 @@ __all__ = [
 ]
 
 
-
-
 class Secret(FastlyResource[_wit.Secret]):
     """An individual secret."""
 
@@ -54,6 +52,7 @@ class Secret(FastlyResource[_wit.Secret]):
         """
         return self._wit_resource.plaintext(max_len)
 
+
 class Store(FastlyResource[_wit.Store]):
     """A Secret Store."""
 
@@ -76,5 +75,3 @@ class Store(FastlyResource[_wit.Store]):
         :raises ~fastly_compute.exceptions.types.error.Error:
         """
         return Secret(self._wit_resource.get(key))
-
-

@@ -35,7 +35,6 @@ __all__ = [
 ]
 
 
-
 class LookupOptions:
     """Options for cache lookup operations; currently used for both `lookup` and
     `transaction-lookup`.
@@ -47,10 +46,13 @@ class LookupOptions:
         always_use_requested_range: bool = False,
     ) -> None:
         self._wit = _wit.LookupOptions(
-            request_headers=request_headers._wit_resource if request_headers is not None else None,
+            request_headers=request_headers._wit_resource
+            if request_headers is not None
+            else None,
             always_use_requested_range=always_use_requested_range,
             extra=None,
         )
+
 
 class WriteOptions:
     """Configuration for several functions that write to the cache:
@@ -78,7 +80,9 @@ class WriteOptions:
     ) -> None:
         self._wit = _wit.WriteOptions(
             max_age_ns=max_age_ns,
-            request_headers=request_headers._wit_resource if request_headers is not None else None,
+            request_headers=request_headers._wit_resource
+            if request_headers is not None
+            else None,
             vary_rule=vary_rule,
             initial_age_ns=initial_age_ns,
             stale_while_revalidate_ns=stale_while_revalidate_ns,
@@ -89,6 +93,7 @@ class WriteOptions:
             sensitive_data=sensitive_data,
             extra=None,
         )
+
 
 class GetBodyOptions:
     """GetBodyOptions."""
@@ -104,6 +109,7 @@ class GetBodyOptions:
             extra=None,
         )
 
+
 class ReplaceOptions:
     """Options for cache replace operations"""
 
@@ -114,7 +120,9 @@ class ReplaceOptions:
         always_use_requested_range: bool = False,
     ) -> None:
         self._wit = _wit.ReplaceOptions(
-            request_headers=request_headers._wit_resource if request_headers is not None else None,
+            request_headers=request_headers._wit_resource
+            if request_headers is not None
+            else None,
             replace_strategy=replace_strategy,
             always_use_requested_range=always_use_requested_range,
             extra=None,
@@ -174,7 +182,9 @@ class Entry(FastlyResource[_wit.Entry]):
         return Pollable(self._wit_resource.transaction_insert(options._wit))
 
     @remap_wit_errors(MAPPINGS)
-    def transaction_insert_and_stream_back(self, options: WriteOptions) -> tuple[Pollable, Self]:
+    def transaction_insert_and_stream_back(
+        self, options: WriteOptions
+    ) -> tuple[Pollable, Self]:
         """Inserts an object into the cache with the given metadata, and return a readable stream of the
         bytes as they are stored.
 
@@ -296,6 +306,7 @@ class Entry(FastlyResource[_wit.Entry]):
         """
         return self._wit_resource.transaction_cancel()
 
+
 class ReplaceEntry(FastlyResource[_wit.ReplaceEntry]):
     """A replace operation."""
 
@@ -391,6 +402,7 @@ class ReplaceEntry(FastlyResource[_wit.ReplaceEntry]):
         """
         return self._wit_resource.get_user_metadata(max_len)
 
+
 class ExtraLookupOptions(FastlyResource[_wit.ExtraLookupOptions]):
     """Extensibility for `lookup-options`"""
 
@@ -398,6 +410,7 @@ class ExtraLookupOptions(FastlyResource[_wit.ExtraLookupOptions]):
     def new(cls) -> Self:
         """Construct a new instance with default values."""
         return cls(_wit.ExtraLookupOptions())
+
 
 class ExtraWriteOptions(FastlyResource[_wit.ExtraWriteOptions]):
     """Extensibility for `write-options`"""
@@ -407,8 +420,10 @@ class ExtraWriteOptions(FastlyResource[_wit.ExtraWriteOptions]):
         """Construct a new instance with default values."""
         return cls(_wit.ExtraWriteOptions())
 
+
 class ExtraGetBodyOptions(FastlyResource[_wit.ExtraGetBodyOptions]):
     """Extensibility for `get-body-options`"""
+
 
 class ExtraReplaceOptions(FastlyResource[_wit.ExtraReplaceOptions]):
     """Extensibility for `replace-options`"""
@@ -430,6 +445,7 @@ def insert(key: bytes, options: WriteOptions) -> Pollable:
     """
     return Pollable(_wit.insert(key, options._wit))
 
+
 @remap_wit_errors(MAPPINGS)
 def await_entry(handle: Pollable) -> Entry:
     """Continues the lookup transaction from which the given busy handle was returned,
@@ -439,6 +455,7 @@ def await_entry(handle: Pollable) -> Entry:
     """
     return Entry(_wit.await_entry(handle._wit_resource))
 
+
 @remap_wit_errors(MAPPINGS)
 def close_pending_entry(handle: Pollable) -> None:
     """Closes an interaction with the cache that has not yet finished request collapsing.
@@ -446,6 +463,7 @@ def close_pending_entry(handle: Pollable) -> None:
     :raises ~fastly_compute.exceptions.types.error.Error:
     """
     return _wit.close_pending_entry(handle._wit_resource)
+
 
 @remap_wit_errors(MAPPINGS)
 def close_entry(handle: Entry) -> None:
@@ -459,6 +477,7 @@ def close_entry(handle: Entry) -> None:
     """
     return _wit.close_entry(handle._wit_resource)
 
+
 @remap_wit_errors(MAPPINGS)
 def replace_insert(handle: ReplaceEntry, options: WriteOptions) -> Pollable:
     """Replace an object in the cache with the given metadata
@@ -469,6 +488,7 @@ def replace_insert(handle: ReplaceEntry, options: WriteOptions) -> Pollable:
     :raises ~fastly_compute.exceptions.types.error.Error:
     """
     return Pollable(_wit.replace_insert(handle._wit_resource, options._wit))
+
 
 @remap_wit_errors(MAPPINGS)
 def close_replace_entry(handle: ReplaceEntry) -> None:
@@ -481,4 +501,3 @@ def close_replace_entry(handle: ReplaceEntry) -> None:
     :raises ~fastly_compute.exceptions.types.error.Error:
     """
     return _wit.close_replace_entry(handle._wit_resource)
-

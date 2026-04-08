@@ -33,7 +33,6 @@ __all__ = [
 ]
 
 
-
 class InsertOptions:
     """Options for configuring the behavior of the `insert` function."""
 
@@ -53,6 +52,7 @@ class InsertOptions:
             mode=mode,
             extra=None,
         )
+
 
 class ListOptions:
     """Options for `list` and `list-async`."""
@@ -123,7 +123,9 @@ class Store(FastlyResource[_wit.Store]):
         return self._wit_resource.insert(key, body._wit_resource, options._wit)
 
     @remap_wit_errors(MAPPINGS)
-    def insert_async(self, key: str, body: Pollable, options: InsertOptions) -> Pollable:
+    def insert_async(
+        self, key: str, body: Pollable, options: InsertOptions
+    ) -> Pollable:
         """Insert a value into the KV Store asynchronously.
 
         If the KV Store already contains a value for this key, the `mode` field
@@ -134,7 +136,9 @@ class Store(FastlyResource[_wit.Store]):
 
         :raises ~fastly_compute.exceptions.types.error.Error:
         """
-        return Pollable(self._wit_resource.insert_async(key, body._wit_resource, options._wit))
+        return Pollable(
+            self._wit_resource.insert_async(key, body._wit_resource, options._wit)
+        )
 
     @remap_wit_errors(MAPPINGS)
     def delete(self, key: str) -> bool:
@@ -184,8 +188,10 @@ class Store(FastlyResource[_wit.Store]):
         """
         return Pollable(self._wit_resource.list_async(options._wit))
 
+
 class ExtraKvError(FastlyResource[_wit.ExtraKvError]):
     """Extensibility for `kv-error`"""
+
 
 class Entry(FastlyResource[_wit.Entry]):
     """A response from a KV Store Lookup operation.
@@ -212,8 +218,10 @@ class Entry(FastlyResource[_wit.Entry]):
         """Read the current generation of the KV Store item."""
         return self._wit_resource.generation()
 
+
 class ExtraInsertOptions(FastlyResource[_wit.ExtraInsertOptions]):
     """Extensibility for `insert-options`"""
+
 
 class ExtraListOptions(FastlyResource[_wit.ExtraListOptions]):
     """Extensibility for `list-options`"""
@@ -230,6 +238,7 @@ def await_lookup(handle: Pollable) -> Entry | None:
     """
     return Entry(_wit.await_lookup(handle._wit_resource))
 
+
 @remap_wit_errors(MAPPINGS)
 def await_insert(handle: Pollable) -> None:
     """Wait on the async insert of a value in the KV Store.
@@ -239,6 +248,7 @@ def await_insert(handle: Pollable) -> None:
     :raises ~fastly_compute.exceptions.kv_store.kv_error.KvError:
     """
     return _wit.await_insert(handle._wit_resource)
+
 
 @remap_wit_errors(MAPPINGS)
 def await_delete(handle: Pollable) -> bool:
@@ -251,6 +261,7 @@ def await_delete(handle: Pollable) -> bool:
     """
     return _wit.await_delete(handle._wit_resource)
 
+
 @remap_wit_errors(MAPPINGS)
 def await_list(handle: Pollable) -> Pollable:
     """Wait on the async list of keys in the KV Store.
@@ -261,4 +272,3 @@ def await_list(handle: Pollable) -> Pollable:
     :raises ~fastly_compute.exceptions.kv_store.kv_error.KvError:
     """
     return Pollable(_wit.await_list(handle._wit_resource))
-
