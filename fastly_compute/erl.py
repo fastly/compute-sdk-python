@@ -38,14 +38,11 @@ Example::
 
 from __future__ import annotations
 
-from typing import Self
-
-from wit_world.imports import erl as wit_erl
-
-from ._resource import FastlyResource
+from fastly_compute._bindings.erl import PenaltyBox as _PenaltyBox
+from fastly_compute._bindings.erl import RateCounter as _RateCounter
 
 
-class RateCounter(FastlyResource[wit_erl.RateCounter]):
+class RateCounter(_RateCounter):
     """Interface to Fastly Edge Rate Limiter counter.
 
     Rate counters track request counts and calculate rates for rate limiting
@@ -58,116 +55,8 @@ class RateCounter(FastlyResource[wit_erl.RateCounter]):
             rate = counter.lookup_rate("192.168.1.1", window=60)
     """
 
-    @classmethod
-    def open(cls, name: str) -> Self:
-        """Open a rate counter by name.
 
-        :param name: The name of the rate counter
-        :raises ~fastly_compute.exceptions.types.open_error.OpenError
-
-        Example::
-
-            counter = RateCounter.open("my-counter")
-        """
-        counter = wit_erl.RateCounter.open(name)
-        return cls(counter)
-
-    def get_name(self) -> str:
-        """Return the name of this rate counter."""
-        return self._wit_resource.get_name()
-
-    def check_rate(
-        self,
-        entry: str,
-        delta: int,
-        window: int,
-        limit: int,
-        penalty_box: PenaltyBox,
-        ttl: int,
-    ) -> bool:
-        """Check if entry exceeds rate limit and penalize if necessary.
-
-        Increments the counter for the entry and checks if the average requests
-        per second (RPS) over the specified window exceeds the limit. If the
-        limit is exceeded, the entry is added to the penalty box for the
-        specified time-to-live.
-
-        :param entry: Identifier for the client (e.g., IP address)
-        :param delta: Amount to increment the counter by
-        :param window: Time window in seconds for rate calculation. The host validates
-                       this parameter; consult Fastly documentation for valid values.
-        :param limit: Maximum requests per second allowed
-        :param penalty_box: Penalty box to add entry to if rate limited
-        :param ttl: Time-to-live in seconds for penalty box entry. The host validates
-                    this parameter and rounds to the nearest minute; consult Fastly
-                    documentation for valid range.
-        :return: True if the entry is rate limited, False otherwise
-        :raises ~fastly_compute.exceptions.FastlyError
-
-        Example::
-
-            with RateCounter.open("api-limiter") as counter:
-                with PenaltyBox.open("api-penalty") as penalty:
-                    # Check 100 req/sec over 10 second window
-                    is_limited = counter.check_rate(
-                        entry="192.168.1.1",
-                        delta=1,
-                        window=10,
-                        limit=100,
-                        penalty_box=penalty,
-                        ttl=300
-                    )
-        """
-        return self._wit_resource.check_rate(
-            entry, delta, window, limit, penalty_box._wit_resource, ttl
-        )
-
-    def increment(self, entry: str, delta: int) -> None:
-        """Increment the counter for an entry.
-
-        :param entry: Identifier to increment (e.g., IP address)
-        :param delta: Amount to increment the counter by
-        :raises ~fastly_compute.exceptions.FastlyError
-
-        Example::
-
-            with RateCounter.open("tracker") as counter:
-                counter.increment("192.168.1.1", delta=1)
-        """
-        self._wit_resource.increment(entry, delta)
-
-    def lookup_rate(self, entry: str, window: int) -> int:
-        """Get the current rate for an entry over a time window.
-
-        :param entry: Identifier to look up
-        :param window: Time window in seconds
-        :return: Current rate (requests per second) for the entry
-        :raises ~fastly_compute.exceptions.FastlyError
-
-        Example::
-
-            with RateCounter.open("tracker") as counter:
-                rate = counter.lookup_rate("192.168.1.1", window=60)
-        """
-        return self._wit_resource.lookup_rate(entry, window)
-
-    def lookup_count(self, entry: str, duration: int) -> int:
-        """Get the total count for an entry over a duration.
-
-        :param entry: Identifier to look up
-        :param duration: Duration in seconds
-        :return: Total count for the entry over the duration
-        :raises ~fastly_compute.exceptions.FastlyError
-
-        Example::
-
-            with RateCounter.open("tracker") as counter:
-                count = counter.lookup_count("192.168.1.1", duration=30)
-        """
-        return self._wit_resource.lookup_count(entry, duration)
-
-
-class PenaltyBox(FastlyResource[wit_erl.PenaltyBox]):
+class PenaltyBox(_PenaltyBox):
     """Interface to Fastly Edge Rate Limiter penalty box.
 
     Penalty boxes maintain a set of blocked entries (e.g., IP addresses).
@@ -180,42 +69,8 @@ class PenaltyBox(FastlyResource[wit_erl.PenaltyBox]):
                 return Response("Blocked", status=403)
     """
 
-    @classmethod
-    def open(cls, name: str) -> Self:
-        """Open a penalty box by name.
-
-        :param name: The name of the penalty box
-        :raises ~fastly_compute.exceptions.types.open_error.OpenError
-
-        Example::
-
-            penalty = PenaltyBox.open("my-penalty-box")
-        """
-        box = wit_erl.PenaltyBox.open(name)
-        return cls(box)
-
-    def get_name(self) -> str:
-        """Return the name of this penalty box."""
-        return self._wit_resource.get_name()
-
-    def add(self, entry: str, ttl: int) -> None:
-        """Add entry to the penalty box.
-
-        :param entry: Identifier to block (e.g., IP address)
-        :param ttl: Time-to-live in seconds. The host validates this parameter
-                    and rounds to the nearest minute; consult Fastly documentation
-                    for valid range.
-        :raises ~fastly_compute.exceptions.FastlyError
-
-        Example::
-
-            with PenaltyBox.open("blocklist") as penalty:
-                penalty.add("192.168.1.1", ttl=600)  # Block for 10 minutes
-        """
-        self._wit_resource.add(entry, ttl)
-
     def __contains__(self, entry: str) -> bool:
-        """Check if entry is in the penalty box using the 'in' operator.
+        """Check if entry is in the penalty box using the ``in`` operator.
 
         :param entry: Identifier to check
         :return: True if the entry is blocked, False otherwise
@@ -227,7 +82,7 @@ class PenaltyBox(FastlyResource[wit_erl.PenaltyBox]):
                 if "192.168.1.1" in penalty:
                     return Response("Blocked", status=403)
         """
-        return self._wit_resource.has(entry)
+        return self.has(entry)
 
 
 class EdgeRateLimiter:

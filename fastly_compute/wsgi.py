@@ -16,14 +16,14 @@ from urllib.parse import urlparse
 from wsgiref.types import InputStream
 
 from wit_world.exports import HttpIncoming
-from wit_world.imports import async_io, http_body, http_req, http_resp
-from wit_world.imports.http_downstream import (
+
+from fastly_compute._bindings import async_io, http_body, http_req, http_resp
+from fastly_compute._bindings.http_downstream import (
     NextRequestOptions,
     await_request,
     next_request,
 )
-from wit_world.imports.http_resp import send_downstream
-
+from fastly_compute._bindings.http_resp import send_downstream
 from fastly_compute.exceptions.types.error import CannotRead
 from fastly_compute.utils import create_body_reader
 
@@ -203,8 +203,12 @@ class WsgiHttpIncoming(HttpIncoming):
         """
         return self
 
-    def handle(self, request: http_req.Request, body: async_io.Pollable) -> None:
+    def handle(self, request: http_req.Request, body: async_io.Pollable) -> None:  # pyrefly: ignore[bad-override]
         """Handle incoming HTTP requests by serving them through the WSGI app."""
+        # The WIT export machinery passes raw resource handles; wrap them for
+        # use with the _bindings API layer.
+        request = http_req.Request(request)  # pyrefly: ignore[bad-argument-type]
+        body = async_io.Pollable(body)  # pyrefly: ignore[bad-argument-type]
         with request:  # Ensure dropping of request resource before trying to get another one. This dodges a crash.
             serve_wsgi_request(
                 request,
@@ -216,7 +220,7 @@ class WsgiHttpIncoming(HttpIncoming):
         if not self.reuse_sandboxes_for_ms:
             return
 
-        options = NextRequestOptions(timeout_ms=self.reuse_sandboxes_for_ms, extra=None)
+        options = NextRequestOptions(timeout_ms=self.reuse_sandboxes_for_ms)
         while True:
             pending_request = next_request(options)
             try:

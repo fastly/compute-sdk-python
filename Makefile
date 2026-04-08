@@ -51,15 +51,24 @@ $(STUBS_DIR): $(COMPUTE_WIT)
 	uv run --extra dev componentize-py -d wit --world-module wit_world -w $(TARGET_WORLD) bindings $(STUBS_DIR)
 
 # Build our composed wasm using fastly-compute-py build
-$(BUILD_DIR)/%.composed.wasm: wit/viceroy.wit wit/deps/fastly/compute.wit fastly_compute/wsgi.py fastly_compute/runtime_patching/patches.py | $(BUILD_DIR) $(STUBS_DIR)
+$(BUILD_DIR)/%.composed.wasm: wit/viceroy.wit wit/deps/fastly/compute.wit fastly_compute/wsgi.py fastly_compute/_bindings/__init__.py | $(BUILD_DIR) $(STUBS_DIR)
 	@echo "Building $* example with fastly-compute-py..."
 	@test -d $(EXAMPLES_DIR)/$* || (echo "Error: Example directory $(EXAMPLES_DIR)/$* not found" && exit 1)
 	cd $(EXAMPLES_DIR)/$* && $(FASTLY_COMPUTE_PY) build --output ../../$@
 
-# The script that writes the exceptions and the patches always rewrites
-# everything, so we can depend on the mod date of only 1 file. We choose
-# patches.py, because its name doesn't depend on the WIT contents.
-fastly_compute/runtime_patching/patches.py: scripts/generate_patches/*.py $(shell find scripts/generate_patches/templates -name "*.jinja") $(COMPUTE_WIT)
+# The generate_bindings script regenerates all _bindings/ modules and
+# _error_mapping.py together.  We depend on _bindings/__init__.py as the
+# sentinel since the script always rewrites every file.
+fastly_compute/_bindings/__init__.py: scripts/generate_bindings/*.py \
+    $(shell find scripts/generate_bindings/templates -name "*.jinja") \
+    $(COMPUTE_WIT)
+	uv run python -m scripts.generate_bindings
+
+# The generate_patches script still generates the exception hierarchy.
+# It no longer generates patches.py.
+fastly_compute/exceptions/types/error.py: scripts/generate_patches/*.py \
+    $(shell find scripts/generate_patches/templates -name "*.jinja") \
+    $(COMPUTE_WIT)
 	uv run python -m scripts.generate_patches
 
 # Create build directory
@@ -86,13 +95,12 @@ list-examples:
 
 # Clean build artifacts
 clean:
-	rm -rf $(BUILD_DIR) $(STUBS_DIR)
-	rm -f fastly_compute/runtime_patching/patches.py
+	rm -rf $(BUILD_DIR) $(STUBS_DIR) fastly_compute/_bindings
 	cd fastly_compute/exceptions && rm -rf acl http_body http_req kv_store types
 	cd crates/fastly-compute-py && cargo clean
 
 # Development tools
-lint: fastly_compute/runtime_patching/patches.py | $(STUBS_DIR)
+lint: fastly_compute/_bindings/__init__.py fastly_compute/exceptions/types/error.py | $(STUBS_DIR)
 	@echo "Checking version synchronization..."
 	uv run python scripts/check_version_sync.py
 	@echo "Linting Python code..."
@@ -101,7 +109,7 @@ lint: fastly_compute/runtime_patching/patches.py | $(STUBS_DIR)
 	@echo "Linting Rust code..."
 	cd crates/fastly-compute-py && cargo clippy -- -D warnings
 
-lint-fix: fastly_compute/runtime_patching/patches.py
+lint-fix: fastly_compute/_bindings/__init__.py fastly_compute/exceptions/types/error.py
 	@echo "Fixing Python code..."
 	uv run --extra dev ruff check --fix .
 	@echo "Fixing Rust code..."

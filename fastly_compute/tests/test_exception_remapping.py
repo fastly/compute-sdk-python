@@ -6,11 +6,11 @@ from componentize_py_types import Err
 from pytest import raises
 from wit_world.imports.types import Error_BufferLen, OpenError
 
+from fastly_compute._error_mapping import remap_wit_errors
 from fastly_compute.exceptions import (
     FastlyError,
     UnexpectedFastlyError,
 )
-from fastly_compute.runtime_patching.decorators import remap_wit_errors
 from fastly_compute.testing import AutoViceroyTestBase, on_viceroy
 
 
