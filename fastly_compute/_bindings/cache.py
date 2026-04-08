@@ -45,6 +45,9 @@ class LookupOptions:
         request_headers: Request | None = None,
         always_use_requested_range: bool = False,
     ) -> None:
+        """
+        :param request_headers: A full request handle, but used only for its headers May be `None` if the `request_headers` option isn't enabled.
+        """
         self._wit = _wit.LookupOptions(
             request_headers=request_headers._wit_resource
             if request_headers is not None
@@ -78,6 +81,13 @@ class WriteOptions:
         edge_max_age_ns: int | None = None,
         sensitive_data: bool = False,
     ) -> None:
+        """
+        :param max_age_ns: this is a required field
+        :param request_headers: a full request handle, but used only for its headers Only allowed for non-transactional `insert`
+        :param vary_rule: a list of header names separated by spaces
+        :param initial_age_ns: The initial age of the object in nanoseconds (default: 0). This age is used to determine the freshness lifetime of the object as well as to prioritize which variant to return if a subsequent lookup matches more than one vary rule
+        :param surrogate_keys: a list of surrogate keys separated by spaces
+        """
         self._wit = _wit.WriteOptions(
             max_age_ns=max_age_ns,
             request_headers=request_headers._wit_resource
@@ -119,6 +129,9 @@ class ReplaceOptions:
         replace_strategy: ReplaceStrategy | None = None,
         always_use_requested_range: bool = False,
     ) -> None:
+        """
+        :param request_headers: a full request handle, but used only for its headers
+        """
         self._wit = _wit.ReplaceOptions(
             request_headers=request_headers._wit_resource
             if request_headers is not None

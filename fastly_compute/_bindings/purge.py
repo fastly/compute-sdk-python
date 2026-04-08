@@ -26,6 +26,9 @@ class PurgeOptions:
         self,
         soft_purge: bool = False,
     ) -> None:
+        """
+        :param soft_purge: Perform a [soft purge] instead of a hard purge. [soft purge]: https://www.fastly.com/documentation/guides/concepts/edge-state/cache/purging/#soft-vs-hard-purging
+        """
         self._wit = _wit.PurgeOptions(
             soft_purge=soft_purge,
             extra=None,

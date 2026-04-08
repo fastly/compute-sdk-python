@@ -29,6 +29,9 @@ class ImageOptimizerTransformOptions:
         self,
         sdk_claims_opts: str | None = None,
     ) -> None:
+        """
+        :param sdk_claims_opts: Contains any Image Optimizer API parameters that were set as well as the Image Optimizer region the request is meant for.
+        """
         self._wit = _wit.ImageOptimizerTransformOptions(
             sdk_claims_opts=sdk_claims_opts,
             extra=None,

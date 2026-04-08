@@ -44,6 +44,13 @@ class InsertOptions:
         time_to_live_sec: int | None = None,
         mode: InsertMode = InsertMode.OVERWRITE,
     ) -> None:
+        """
+        :param background_fetch: If set, allows fetching from the origin to occur in the background, enabling a faster response with stale content. The cache will be updated with fresh content after the request is completed.
+        :param if_generation_match: Requests for keys will return a “generation” header specific to the version of a key. The generation header is a unique, non-serial 64-bit unsigned integer that can be used for testing against a specific KV store value.
+        :param metadata: Sets an arbitrary data field which can contain up to 2000B of data.
+        :param time_to_live_sec: Sets a time for the key to expire. Deletion will take place up to 24 hours after the ttl reaches 0.
+        :param mode: Select the behavior in the case when the new key matches an existing key.
+        """
         self._wit = _wit.InsertOptions(
             background_fetch=background_fetch,
             if_generation_match=if_generation_match,
@@ -64,6 +71,12 @@ class ListOptions:
         limit: int | None = None,
         prefix: str | None = None,
     ) -> None:
+        """
+        :param mode: The level of synchronization to perform.
+        :param cursor: The item to start the list at.
+        :param limit: The maximum number of items included the response.
+        :param prefix: The prefix match for items to include in the resultset.
+        """
         self._wit = _wit.ListOptions(
             mode=mode,
             cursor=cursor,

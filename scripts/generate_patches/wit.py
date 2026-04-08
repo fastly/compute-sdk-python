@@ -388,11 +388,11 @@ class Record(Type):
         return upper_camel(self._me["name"])
 
 
-class RecordField:
+class RecordField(DocsHaver):
     """A field of a WIT record."""
 
     def __init__(self, field_json: dict, wit_json: dict):
-        self._me = field_json
+        super().__init__(field_json)
         self._wit = wit_json
 
     def name(self) -> str:
@@ -464,6 +464,17 @@ class RecordField:
         if isinstance(t, Option):
             return isinstance(t.inner_type(), Record)
         return isinstance(t, Record)
+
+    def param_doc(self) -> str:
+        """Return docs_for_python() normalized for use as a single-line :param entry.
+
+        Collapses newlines and runs of whitespace to a single space so that the
+        full field description fits on one line without breaking Sphinx parsing.
+        """
+        text = self.docs_for_python()
+        if not text:
+            return ""
+        return re.sub(r"\s+", " ", text).strip()
 
     def default(self) -> str:
         """Python literal for a sensible default value for this field."""

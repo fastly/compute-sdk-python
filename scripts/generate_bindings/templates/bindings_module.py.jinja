@@ -77,6 +77,21 @@ class {{ record.wit_class_name() }}:
         {% endif %}
         {% endfor %}
     ) -> None:
+        {% set ns = namespace(has_param_docs=false) %}
+        {% for field in record.fields() %}
+        {% if not field.is_extra() and field.docs() %}
+        {% set ns.has_param_docs = true %}
+        {% endif %}
+        {% endfor %}
+        {% if ns.has_param_docs %}
+        """
+        {% for field in record.fields() %}
+        {% if not field.is_extra() and field.param_doc() %}
+        :param {{ field.name() }}: {{ field.param_doc() }}
+        {% endif %}
+        {% endfor %}
+        """
+        {% endif %}
         self._wit = _wit.{{ record.wit_class_name() }}(
             {% for field in record.fields() %}
             {% if field.is_extra() %}

@@ -61,6 +61,10 @@ class LookupOptions:
         override_key: bytes | None = None,
         backend: Backend | None = None,
     ) -> None:
+        """
+        :param override_key: Cache key to use in lieu of the automatically-generated cache key based on the request's properties. The cache key must be exactly 32 bytes long.
+        :param backend: Backend that will be used for the eventual request.
+        """
         self._wit = _wit.LookupOptions(
             override_key=override_key,
             backend=backend._wit_resource if backend is not None else None,
@@ -82,6 +86,15 @@ class WriteOptions:
         length: int | None = None,
         sensitive_data: bool = False,
     ) -> None:
+        """
+        :param max_age_ns: The maximum age of the response before it is considered stale, in nanoseconds. This field is required.
+        :param vary_rule: A list of header names to use when calculating variants for this response. The format is a string containing header names separated by spaces.
+        :param initial_age_ns: The initial age of the response in nanoseconds. If this field is not set, the default value is zero. This age is used to determine the freshness lifetime of the response as well as to prioritize which variant to return if a subsequent lookup matches more than one vary rule
+        :param stale_while_revalidate_ns: The maximum duration after `max_age` during which the response may be delivered stale while being revalidated, in nanoseconds. If this field is not set, the default value is zero.
+        :param surrogate_keys: A list of surrogate keys that may be used to purge this response. The format is a string containing [valid surrogate keys] separated by spaces. If this field is not set, no surrogate keys will be associated with the response. This means that the response cannot be purged except via a purge-all operation. [valid surrogate keys]: https://www.fastly.com/documentation/reference/http/http-headers/Surrogate-Key/
+        :param length: The length of the response body. If this field is not set, the length of the body is treated as unknown. When possible, this field should be set so that other clients waiting to retrieve the body have enough information to synthesize a `content_length` even before the complete body is inserted to the cache.
+        :param sensitive_data: Enable or disable PCI/HIPAA-compliant non-volatile caching. See the [Fastly PCI-Compliant Caching and Delivery documentation] for details. [Fastly PCI-Compliant Caching and Delivery documentation]: https://docs.fastly.com/products/pci-compliant-caching-and-delivery
+        """
         self._wit = _wit.WriteOptions(
             max_age_ns=max_age_ns,
             vary_rule=vary_rule,
