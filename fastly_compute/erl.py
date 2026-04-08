@@ -63,10 +63,7 @@ class RateCounter(FastlyResource[wit_erl.RateCounter]):
         """Open a rate counter by name.
 
         :param name: The name of the rate counter
-        :return: RateCounter instance
-        :raises ~fastly_compute.exceptions.types.open_error.NotFound: If the rate counter doesn't exist
-        :raises ~fastly_compute.exceptions.types.open_error.InvalidSyntax: If the name is invalid
-        :raises ~fastly_compute.exceptions.types.open_error.NameTooLong: If the name is too long
+        :raises ~fastly_compute.exceptions.types.open_error.OpenError
 
         Example::
 
@@ -76,10 +73,7 @@ class RateCounter(FastlyResource[wit_erl.RateCounter]):
         return cls(counter)
 
     def get_name(self) -> str:
-        """Return the name of this rate counter.
-
-        :return: The name of the rate counter
-        """
+        """Return the name of this rate counter."""
         return self._wit_resource.get_name()
 
     def check_rate(
@@ -108,8 +102,7 @@ class RateCounter(FastlyResource[wit_erl.RateCounter]):
                     this parameter and rounds to the nearest minute; consult Fastly
                     documentation for valid range.
         :return: True if the entry is rate limited, False otherwise
-        :raises ~fastly_compute.exceptions.types.error.InvalidArgument: If parameters are invalid
-        :raises ~fastly_compute.exceptions.types.error.GenericError: If an unexpected error occurs
+        :raises ~fastly_compute.exceptions.FastlyError
 
         Example::
 
@@ -134,8 +127,7 @@ class RateCounter(FastlyResource[wit_erl.RateCounter]):
 
         :param entry: Identifier to increment (e.g., IP address)
         :param delta: Amount to increment the counter by
-        :raises ~fastly_compute.exceptions.types.error.InvalidArgument: If parameters are invalid
-        :raises ~fastly_compute.exceptions.types.error.GenericError: If an unexpected error occurs
+        :raises ~fastly_compute.exceptions.FastlyError
 
         Example::
 
@@ -148,11 +140,9 @@ class RateCounter(FastlyResource[wit_erl.RateCounter]):
         """Get the current rate for an entry over a time window.
 
         :param entry: Identifier to look up
-        :param window: Time window in seconds. The host validates this parameter;
-                       consult Fastly documentation for valid values.
+        :param window: Time window in seconds
         :return: Current rate (requests per second) for the entry
-        :raises ~fastly_compute.exceptions.types.error.InvalidArgument: If parameters are invalid
-        :raises ~fastly_compute.exceptions.types.error.GenericError: If an unexpected error occurs
+        :raises ~fastly_compute.exceptions.FastlyError
 
         Example::
 
@@ -165,11 +155,9 @@ class RateCounter(FastlyResource[wit_erl.RateCounter]):
         """Get the total count for an entry over a duration.
 
         :param entry: Identifier to look up
-        :param duration: Duration in seconds. The host validates this parameter;
-                         consult Fastly documentation for valid values.
+        :param duration: Duration in seconds
         :return: Total count for the entry over the duration
-        :raises ~fastly_compute.exceptions.types.error.InvalidArgument: If parameters are invalid
-        :raises ~fastly_compute.exceptions.types.error.GenericError: If an unexpected error occurs
+        :raises ~fastly_compute.exceptions.FastlyError
 
         Example::
 
@@ -197,10 +185,7 @@ class PenaltyBox(FastlyResource[wit_erl.PenaltyBox]):
         """Open a penalty box by name.
 
         :param name: The name of the penalty box
-        :return: PenaltyBox instance
-        :raises ~fastly_compute.exceptions.types.open_error.NotFound: If the penalty box doesn't exist
-        :raises ~fastly_compute.exceptions.types.open_error.InvalidSyntax: If the name is invalid
-        :raises ~fastly_compute.exceptions.types.open_error.NameTooLong: If the name is too long
+        :raises ~fastly_compute.exceptions.types.open_error.OpenError
 
         Example::
 
@@ -210,10 +195,7 @@ class PenaltyBox(FastlyResource[wit_erl.PenaltyBox]):
         return cls(box)
 
     def get_name(self) -> str:
-        """Return the name of this penalty box.
-
-        :return: The name of the penalty box
-        """
+        """Return the name of this penalty box."""
         return self._wit_resource.get_name()
 
     def add(self, entry: str, ttl: int) -> None:
@@ -223,8 +205,7 @@ class PenaltyBox(FastlyResource[wit_erl.PenaltyBox]):
         :param ttl: Time-to-live in seconds. The host validates this parameter
                     and rounds to the nearest minute; consult Fastly documentation
                     for valid range.
-        :raises ~fastly_compute.exceptions.types.error.InvalidArgument: If parameters are invalid
-        :raises ~fastly_compute.exceptions.types.error.GenericError: If an unexpected error occurs
+        :raises ~fastly_compute.exceptions.FastlyError
 
         Example::
 
@@ -238,8 +219,7 @@ class PenaltyBox(FastlyResource[wit_erl.PenaltyBox]):
 
         :param entry: Identifier to check
         :return: True if the entry is blocked, False otherwise
-        :raises ~fastly_compute.exceptions.types.error.InvalidArgument: If parameters are invalid
-        :raises ~fastly_compute.exceptions.types.error.GenericError: If an unexpected error occurs
+        :raises ~fastly_compute.exceptions.FastlyError: on invalid inputs or other error conditions.
 
         Example::
 
@@ -295,15 +275,13 @@ class EdgeRateLimiter:
 
         :param entry: Identifier for the client (e.g., IP address)
         :param delta: Amount to increment the counter by
-        :param window: Time window in seconds for rate calculation. The host validates
-                       this parameter; consult Fastly documentation for valid values.
+        :param window: Time window in seconds for rate calculation
         :param limit: Maximum requests per second allowed
         :param ttl: Time-to-live in seconds for penalty box entry. The host validates
                     this parameter and rounds to the nearest minute; consult Fastly
                     documentation for valid range.
         :return: True if the entry is rate limited, False otherwise
-        :raises ~fastly_compute.exceptions.types.error.InvalidArgument: If parameters are invalid
-        :raises ~fastly_compute.exceptions.types.error.GenericError: If an unexpected error occurs
+        :raises ~fastly_compute.exceptions.FastlyError
 
         Example::
 
