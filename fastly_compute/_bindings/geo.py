@@ -12,6 +12,14 @@ from wit_world.imports.types import IpAddress
 
 from fastly_compute._error_mapping import MAPPINGS, remap_wit_errors
 
+__all__ = [
+    "IpAddress",
+    "lookup",
+]
+
+
+
+
 
 @remap_wit_errors(MAPPINGS)
 def lookup(ip_addr: IpAddress, max_len: int) -> str:

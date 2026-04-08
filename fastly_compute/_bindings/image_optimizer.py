@@ -16,6 +16,12 @@ from fastly_compute._bindings.http_resp import Response
 from fastly_compute._error_mapping import MAPPINGS, remap_wit_errors
 from fastly_compute._resource import FastlyResource
 
+__all__ = [
+    "ImageOptimizerTransformOptions",
+    "transform_image_optimizer_request",
+]
+
+
 
 class ImageOptimizerTransformOptions:
     """ImageOptimizerTransformOptions."""

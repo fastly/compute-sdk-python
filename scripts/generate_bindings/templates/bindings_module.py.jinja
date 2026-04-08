@@ -30,6 +30,14 @@ from fastly_compute._resource import FastlyResource
 from fastly_compute._error_mapping import MAPPINGS, remap_wit_errors
 {% endif %}
 
+{% if public_names %}
+__all__ = [
+{% for name in public_names %}
+    "{{ name }}",
+{% endfor %}
+]
+{% endif %}
+
 {#
   wit_args: comma-separated argument list for a raw WIT call, unwrapping
   resource handles (._wit_resource) and record wrappers (._wit) as needed.

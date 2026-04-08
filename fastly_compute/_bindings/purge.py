@@ -12,6 +12,13 @@ from wit_world.imports import purge as _wit
 from fastly_compute._error_mapping import MAPPINGS, remap_wit_errors
 from fastly_compute._resource import FastlyResource
 
+__all__ = [
+    "PurgeOptions",
+    "purge_surrogate_key",
+    "purge_surrogate_key_verbose",
+]
+
+
 
 class PurgeOptions:
     """PurgeOptions."""

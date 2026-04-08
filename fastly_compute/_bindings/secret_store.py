@@ -14,6 +14,13 @@ from wit_world.imports import secret_store as _wit
 from fastly_compute._error_mapping import MAPPINGS, remap_wit_errors
 from fastly_compute._resource import FastlyResource
 
+__all__ = [
+    "Secret",
+    "Store",
+]
+
+
+
 
 class Secret(FastlyResource[_wit.Secret]):
     """An individual secret."""

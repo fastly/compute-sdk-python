@@ -16,6 +16,13 @@ from fastly_compute._bindings.async_io import Pollable
 from fastly_compute._error_mapping import MAPPINGS, remap_wit_errors
 from fastly_compute._resource import FastlyResource
 
+__all__ = [
+    "Acl",
+    "IpAddress",
+]
+
+
+
 
 class Acl(FastlyResource[_wit.Acl]):
     """An ACL."""

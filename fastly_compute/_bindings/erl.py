@@ -14,6 +14,13 @@ from wit_world.imports import erl as _wit
 from fastly_compute._error_mapping import MAPPINGS, remap_wit_errors
 from fastly_compute._resource import FastlyResource
 
+__all__ = [
+    "PenaltyBox",
+    "RateCounter",
+]
+
+
+
 
 class RateCounter(FastlyResource[_wit.RateCounter]):
     """A rate counter that can be used with a edge rate limiter or

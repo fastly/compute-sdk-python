@@ -32,6 +32,15 @@ from fastly_compute._bindings.secret_store import Secret
 from fastly_compute._error_mapping import MAPPINGS, remap_wit_errors
 from fastly_compute._resource import FastlyResource
 
+__all__ = [
+    "Backend",
+    "BackendHealth",
+    "DynamicBackendOptions",
+    "register_dynamic_backend",
+]
+
+
+
 
 class DynamicBackendOptions(FastlyResource[_wit.DynamicBackendOptions]):
     """Options for `register-dynamic-backend`."""

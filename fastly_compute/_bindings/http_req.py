@@ -20,6 +20,25 @@ from fastly_compute._bindings.http_resp import Response
 from fastly_compute._error_mapping import MAPPINGS, remap_wit_errors
 from fastly_compute._resource import FastlyResource
 
+__all__ = [
+    "CacheOverride",
+    "ContentEncodings",
+    "FramingHeadersMode",
+    "HttpVersion",
+    "Request",
+    "await_response",
+    "close",
+    "send",
+    "send_async",
+    "send_async_streaming",
+    "send_async_uncached",
+    "send_async_uncached_streaming",
+    "send_uncached",
+    "upgrade_websocket",
+]
+
+
+
 
 class Request(FastlyResource[_wit.Request]):
     """An HTTP request."""

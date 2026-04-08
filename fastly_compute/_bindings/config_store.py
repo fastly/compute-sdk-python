@@ -14,6 +14,12 @@ from wit_world.imports import config_store as _wit
 from fastly_compute._error_mapping import MAPPINGS, remap_wit_errors
 from fastly_compute._resource import FastlyResource
 
+__all__ = [
+    "Store",
+]
+
+
+
 
 class Store(FastlyResource[_wit.Store]):
     """A Config Store."""

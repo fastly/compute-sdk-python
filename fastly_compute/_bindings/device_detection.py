@@ -8,6 +8,13 @@ from wit_world.imports import device_detection as _wit
 
 from fastly_compute._error_mapping import MAPPINGS, remap_wit_errors
 
+__all__ = [
+    "lookup",
+]
+
+
+
+
 
 @remap_wit_errors(MAPPINGS)
 def lookup(user_agent: str, max_len: int) -> str | None:

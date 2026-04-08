@@ -189,6 +189,48 @@ def _records_for_interface(interface: Interface) -> list[Record]:
     return records
 
 
+def _public_names(
+    records: list,
+    resources_and_methods: list,
+    freestanding: list,
+    reexports: list[str],
+    extra_imports: list[ExtraImport],
+) -> list[str]:
+    """Compute the sorted __all__ list for a generated binding module.
+
+    Includes: non-Extra records, non-Extra resources, freestanding functions,
+    own-interface enum/flags/variant re-exports, and cross-module enum/variant
+    imports from wit_world (they have no public module of their own yet).
+
+    Excludes: Extra* extensibility types, infrastructure names
+    (MAPPINGS, remap_wit_errors, FastlyResource, _wit alias), and foreign
+    resource types imported from other _bindings modules (their canonical
+    home is their own public module, e.g. Pollable belongs in async_io).
+    """
+    names: list[str] = []
+    for record in records:
+        name = record.wit_class_name()
+        if not name.startswith("Extra"):
+            names.append(name)
+    for resource, _ in resources_and_methods:
+        name = resource.bindings_class_name()
+        if not name.startswith("Extra"):
+            names.append(name)
+    for func in freestanding:
+        names.append(func.py_name())
+    names.extend(reexports)
+    for imp in extra_imports:
+        # Foreign resources imported from other _bindings modules are excluded —
+        # they belong in their own public module (e.g. Pollable → async_io).
+        # Enums/variants from wit_world are included since they have no public
+        # module of their own.
+        if imp.module.startswith("fastly_compute._bindings"):
+            continue
+        if not imp.name.startswith("Extra"):
+            names.append(imp.name)
+    return sorted(set(names))
+
+
 def generate_binding_module(interface: Interface, env: Environment) -> str:
     """Render the binding module for a single WIT interface."""
     resources_and_methods = [
@@ -199,6 +241,7 @@ def generate_binding_module(interface: Interface, env: Environment) -> str:
     module_docstring = interface.docstring(indent=0) or ""
     reexports = _reexports_for_interface(interface)
     extra_imports = _extra_imports_for_interface(interface)
+    public_names = _public_names(records, resources_and_methods, freestanding, reexports, extra_imports)
 
     needs_resource = bool(resources_and_methods)
     needs_decorator = (
@@ -228,6 +271,7 @@ def generate_binding_module(interface: Interface, env: Environment) -> str:
         records=records,
         reexports=reexports,
         extra_imports=extra_imports,
+        public_names=public_names,
         needs_resource=needs_resource,
         needs_decorator=needs_decorator,
         needs_self=needs_self,

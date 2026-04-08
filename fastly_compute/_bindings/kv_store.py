@@ -19,6 +19,20 @@ from fastly_compute._bindings.async_io import Pollable
 from fastly_compute._error_mapping import MAPPINGS, remap_wit_errors
 from fastly_compute._resource import FastlyResource
 
+__all__ = [
+    "Entry",
+    "InsertMode",
+    "InsertOptions",
+    "ListMode",
+    "ListOptions",
+    "Store",
+    "await_delete",
+    "await_insert",
+    "await_list",
+    "await_lookup",
+]
+
+
 
 class InsertOptions:
     """Options for configuring the behavior of the `insert` function."""

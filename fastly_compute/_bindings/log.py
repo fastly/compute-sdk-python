@@ -14,6 +14,12 @@ from wit_world.imports import log as _wit
 from fastly_compute._error_mapping import MAPPINGS, remap_wit_errors
 from fastly_compute._resource import FastlyResource
 
+__all__ = [
+    "Endpoint",
+]
+
+
+
 
 class Endpoint(FastlyResource[_wit.Endpoint]):
     """A logging endpoint."""

@@ -17,6 +17,13 @@ from fastly_compute._bindings.async_io import Pollable
 from fastly_compute._bindings.http_req import Request
 from fastly_compute._error_mapping import MAPPINGS, remap_wit_errors
 
+__all__ = [
+    "handle",
+]
+
+
+
+
 
 @remap_wit_errors(MAPPINGS)
 def handle(request: Request, body: Pollable) -> None:

@@ -9,6 +9,23 @@ from wit_world.imports import http_body as _wit
 from fastly_compute._bindings.async_io import Pollable
 from fastly_compute._error_mapping import MAPPINGS, remap_wit_errors
 
+__all__ = [
+    "append",
+    "append_trailer",
+    "close",
+    "get_known_length",
+    "get_trailer_names",
+    "get_trailer_value",
+    "get_trailer_values",
+    "new",
+    "read",
+    "write",
+    "write_front",
+]
+
+
+
+
 
 @remap_wit_errors(MAPPINGS)
 def new() -> Pollable:

@@ -6,6 +6,24 @@ from __future__ import annotations
 
 from wit_world.imports import compute_runtime as _wit
 
+__all__ = [
+    "get_cache_generation",
+    "get_customer_id",
+    "get_heap_mib",
+    "get_hostname",
+    "get_is_staging",
+    "get_namespace_id",
+    "get_pop",
+    "get_region",
+    "get_sandbox_id",
+    "get_service_id",
+    "get_service_version",
+    "get_vcpu_ms",
+]
+
+
+
+
 
 def get_vcpu_ms() -> int:
     """Gets the amount of vCPU time that has passed since this sandbox was started, in

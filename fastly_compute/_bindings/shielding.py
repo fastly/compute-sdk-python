@@ -15,6 +15,14 @@ from fastly_compute._bindings.backend import Backend
 from fastly_compute._error_mapping import MAPPINGS, remap_wit_errors
 from fastly_compute._resource import FastlyResource
 
+__all__ = [
+    "ShieldBackendOptions",
+    "backend_for_shield",
+    "shield_info",
+]
+
+
+
 
 class ShieldBackendOptions(FastlyResource[_wit.ShieldBackendOptions]):
     """Options for `backend-for-shield`."""

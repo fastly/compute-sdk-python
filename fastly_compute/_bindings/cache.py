@@ -17,6 +17,24 @@ from fastly_compute._bindings.http_req import Request
 from fastly_compute._error_mapping import MAPPINGS, remap_wit_errors
 from fastly_compute._resource import FastlyResource
 
+__all__ = [
+    "Entry",
+    "GetBodyOptions",
+    "LookupOptions",
+    "LookupState",
+    "ReplaceEntry",
+    "ReplaceOptions",
+    "ReplaceStrategy",
+    "WriteOptions",
+    "await_entry",
+    "close_entry",
+    "close_pending_entry",
+    "close_replace_entry",
+    "insert",
+    "replace_insert",
+]
+
+
 
 class LookupOptions:
     """Options for cache lookup operations; currently used for both `lookup` and

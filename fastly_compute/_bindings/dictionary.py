@@ -14,6 +14,12 @@ from wit_world.imports import dictionary as _wit
 from fastly_compute._error_mapping import MAPPINGS, remap_wit_errors
 from fastly_compute._resource import FastlyResource
 
+__all__ = [
+    "Dictionary",
+]
+
+
+
 
 class Dictionary(FastlyResource[_wit.Dictionary]):
     """A Compute Dictionary."""

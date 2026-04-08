@@ -15,6 +15,13 @@ from fastly_compute._bindings.http_req import Request
 from fastly_compute._error_mapping import MAPPINGS, remap_wit_errors
 from fastly_compute._resource import FastlyResource
 
+__all__ = [
+    "InspectOptions",
+    "IpAddress",
+    "inspect",
+]
+
+
 
 class InspectOptions:
     """Configuration for inspecting a `request` using Security."""

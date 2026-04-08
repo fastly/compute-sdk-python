@@ -40,6 +40,19 @@ from fastly_compute._bindings.http_resp import Response
 from fastly_compute._error_mapping import MAPPINGS, remap_wit_errors
 from fastly_compute._resource import FastlyResource
 
+__all__ = [
+    "Entry",
+    "LookupOptions",
+    "LookupState",
+    "StorageAction",
+    "SuggestedWriteOptions",
+    "WriteOptions",
+    "close_entry",
+    "get_suggested_cache_key",
+    "is_request_cacheable",
+]
+
+
 
 class LookupOptions:
     """Non-required options for cache lookups."""

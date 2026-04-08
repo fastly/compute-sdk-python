@@ -16,6 +16,33 @@ from fastly_compute._bindings.http_req import Request
 from fastly_compute._error_mapping import MAPPINGS, remap_wit_errors
 from fastly_compute._resource import FastlyResource
 
+__all__ = [
+    "ClientCertVerifyResult",
+    "IpAddress",
+    "NextRequestOptions",
+    "await_request",
+    "downstream_client_ddos_detected",
+    "downstream_client_h2_fingerprint",
+    "downstream_client_ip_addr",
+    "downstream_client_oh_fingerprint",
+    "downstream_client_request_id",
+    "downstream_compliance_region",
+    "downstream_original_header_count",
+    "downstream_original_header_names",
+    "downstream_server_ip_addr",
+    "downstream_tls_cipher_openssl_name",
+    "downstream_tls_client_cert_verify_result",
+    "downstream_tls_client_hello",
+    "downstream_tls_client_servername",
+    "downstream_tls_ja3_md5",
+    "downstream_tls_ja4",
+    "downstream_tls_protocol",
+    "downstream_tls_raw_client_certificate",
+    "fastly_key_is_valid",
+    "next_request",
+]
+
+
 
 class NextRequestOptions:
     """Configuration for `next-request`."""

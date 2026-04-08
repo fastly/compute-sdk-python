@@ -20,6 +20,14 @@ from wit_world.imports import async_io as _wit
 
 from fastly_compute._resource import FastlyResource
 
+__all__ = [
+    "Pollable",
+    "select",
+    "select_with_timeout",
+]
+
+
+
 
 class Pollable(FastlyResource[_wit.Pollable]):
     """An object supporting generic async operations.
