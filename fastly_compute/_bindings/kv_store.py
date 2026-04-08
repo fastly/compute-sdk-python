@@ -13,6 +13,7 @@ from __future__ import annotations
 from typing import Self
 
 from wit_world.imports import kv_store as _wit
+from wit_world.imports.kv_store import InsertMode, ListMode
 
 from fastly_compute._bindings.async_io import Pollable
 from fastly_compute._error_mapping import MAPPINGS, remap_wit_errors

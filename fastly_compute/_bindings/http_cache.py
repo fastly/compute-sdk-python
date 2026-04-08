@@ -34,6 +34,7 @@ from wit_world.imports.cache import LookupState
 from wit_world.imports.http_cache import StorageAction
 
 from fastly_compute._bindings.async_io import Pollable
+from fastly_compute._bindings.backend import Backend
 from fastly_compute._bindings.http_req import Request
 from fastly_compute._bindings.http_resp import Response
 from fastly_compute._error_mapping import MAPPINGS, remap_wit_errors

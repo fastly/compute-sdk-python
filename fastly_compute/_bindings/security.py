@@ -8,6 +8,7 @@
 from __future__ import annotations
 
 from wit_world.imports import security as _wit
+from wit_world.imports.types import IpAddress
 
 from fastly_compute._bindings.async_io import Pollable
 from fastly_compute._bindings.http_req import Request

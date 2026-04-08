@@ -10,9 +10,10 @@ from __future__ import annotations
 from typing import Self
 
 from wit_world.imports import cache as _wit
-from wit_world.imports.cache import LookupState
+from wit_world.imports.cache import LookupState, ReplaceStrategy
 
 from fastly_compute._bindings.async_io import Pollable
+from fastly_compute._bindings.http_req import Request
 from fastly_compute._error_mapping import MAPPINGS, remap_wit_errors
 from fastly_compute._resource import FastlyResource
 

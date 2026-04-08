@@ -76,9 +76,8 @@ convention = "google"
 "examples/*" = ["D"]
 # What can one say about __main__?
 "__main__.py" = ["D100"]
-# Generated bindings reference record types not yet wrapped (F821).
-# D is suppressed because docstrings come verbatim from WIT.
-"fastly_compute/_bindings/*" = ["F821", "D"]
+# Generated bindings: D is suppressed because docstrings come verbatim from WIT.
+"fastly_compute/_bindings/*" = ["D"]
 
 [build-system]
 requires = ["maturin>=1.0,<2.0"]

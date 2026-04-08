@@ -17,6 +17,7 @@ from scripts.generate_patches.wit import (
     Record,
     Resource,
     Result,
+    TupleType,
     Type,
     Variant,
     Wit,
@@ -39,9 +40,10 @@ def _all_type_refs(interface: Interface) -> list[Type]:
 
     Error types from result arms are excluded — those are handled by the
     exception hierarchy and MAPPINGS, not by generated imports.
-    """
-    from scripts.generate_patches.wit import TupleType
 
+    Record field types are included recursively so that any enum/variant/resource
+    types that appear only as record fields still get their imports generated.
+    """
     seen: set[int | str] = set()
     result: list[Type] = []
 
@@ -67,6 +69,10 @@ def _all_type_refs(interface: Interface) -> list[Type]:
             return
         seen.add(t._id)
         result.append(t)
+        # Recurse into record fields so field-level type deps get imports generated.
+        if isinstance(t, Record):
+            for field in t.fields():
+                _collect(field._me["type"])
 
     for func in interface.functions():
         for raw_p in func._me.get("params", []):
