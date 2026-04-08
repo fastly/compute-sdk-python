@@ -15,6 +15,8 @@ from typing import Any
 from urllib.parse import urlparse
 from wsgiref.types import InputStream
 
+import wit_world.imports.async_io as _wit_async_io
+import wit_world.imports.http_req as _wit_http_req
 from wit_world.exports import HttpIncoming
 
 from fastly_compute._bindings import async_io, http_body, http_req, http_resp
@@ -203,16 +205,16 @@ class WsgiHttpIncoming(HttpIncoming):
         """
         return self
 
-    def handle(self, request: http_req.Request, body: async_io.Pollable) -> None:  # pyrefly: ignore[bad-override]
+    def handle(self, request: _wit_http_req.Request, body: _wit_async_io.Pollable) -> None:
         """Handle incoming HTTP requests by serving them through the WSGI app."""
-        # The WIT export machinery passes raw resource handles; wrap them for
-        # use with the _bindings API layer.
-        request = http_req.Request(request)  # pyrefly: ignore[bad-argument-type]
-        body = async_io.Pollable(body)  # pyrefly: ignore[bad-argument-type]
-        with request:  # Ensure dropping of request resource before trying to get another one. This dodges a crash.
+        # Wrap the raw WIT export-boundary resources into _bindings wrapper
+        # types before passing them to the rest of the SDK.
+        wrapped_request = http_req.Request(request)
+        wrapped_body = async_io.Pollable(body)
+        with wrapped_request:  # Ensure dropping of request resource before trying to get another one. This dodges a crash.
             serve_wsgi_request(
-                request,
-                create_body_reader(body),
+                wrapped_request,
+                create_body_reader(wrapped_body),
                 self.wsgi_app,
                 handle_errors=self.handle_errors,
             )
