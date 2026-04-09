@@ -60,6 +60,7 @@ def resolve_backend(
 
     # static backend
     if fastly_backend is not None:
+        # Check if backend exists by trying to open it
         try:
             backend_obj = Backend.open(fastly_backend)
         except OpenError as e:
@@ -73,6 +74,7 @@ def resolve_backend(
                 f"Invalid URL {url!r}: No scheme supplied. Perhaps you meant https://{url}?"
             )
 
+        # Register dynamic backend if not already registered
         backend_name = parsed.netloc.lower()
         timeout_config = timeout_config or TimeoutConfig()
         if backend_name not in _dynamic_backends:
@@ -105,6 +107,7 @@ def _register_dynamic_backend(
     options.between_bytes_timeout(timeout_config.between_bytes_ms)
 
     try:
+        # Register the backend
         return _register_dynamic_backend_wit(
             prefix=backend_name, target=parsed_url.netloc, options=options
         )

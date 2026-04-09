@@ -145,13 +145,23 @@ def generate():
     wit_json = json.loads(wit_text)
     wit = Wit(wit_json)
 
-    # A dict preserves order, for comprehensibility and determinism:
+    # Hunt through our whole fastly-compute package to find the result error
+    # types we return. Each inspires the generation of one exception class (in
+    # the case of records) or more (in the case of variants or enums).
+    # A dict preserves order, for comprehensibility and determinism.
     exceptions_to_generate: dict[Type, bool] = {}
 
     for interface in wit.fastly_compute_package().interfaces():
         for function in interface.functions():
             if error_type := function.error_type_of_returned_result():
                 if not isinstance(error_type, NullType):
+                    # Null errors (result<whatever, _>) are handled by a static
+                    # entry mapping them to FastlyError.
+
+                    # We don't need to go any deeper than the top-level type of
+                    # the result's error arm. That represents the whole universe
+                    # of Err values the componentize-py-generated code may raise,
+                    # and those values are what we promote to exceptions.
                     exceptions_to_generate[error_type] = True
 
     generate_exceptions(exceptions_to_generate.keys())

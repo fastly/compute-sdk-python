@@ -43,7 +43,14 @@ def remap_wit_errors(
         Enum members may also be used as mapping keys.  Exceptions raised from those
         receive no constructor arguments, since enum member values are generated and
         carry no user-meaningful information.
+
+    Goals: Be idiomatic. Be reasonably efficient. Be readable as documentation.
+    In that order.
     """
+    # Someday, if we need more flexibility than class-by-class mapping, we can
+    # take a fallback callable that can do further thinking. Also, only the type
+    # signature keeps you from passing along an arbitrary callable that can
+    # emit, say, different exception classes for even and odd ints.
     if idiomatic_exceptions is None:
         idiomatic_exceptions = {}
 
@@ -54,6 +61,8 @@ def remap_wit_errors(
                 return func(*args, **kwargs)
             except Err as e:
                 error_value = e.value
+                # Look up ordinary instances by class but enum fields by value
+                # so we can easily give each enum member its own exception class:
                 if isinstance(error_value, Enum):
                     key = error_value
                     exc_args = ()
