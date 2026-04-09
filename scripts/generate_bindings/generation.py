@@ -31,8 +31,9 @@ TEMPLATES_DIR = Path(__file__).parent / "templates"
 @dataclass
 class ExtraImport:
     """A single import line to emit at the top of a generated module."""
-    module: str   # e.g. "wit_world.imports.http_types"
-    name: str     # e.g. "HttpVersion"
+
+    module: str  # e.g. "wit_world.imports.http_types"
+    name: str  # e.g. "HttpVersion"
 
 
 def _all_type_refs(interface: Interface) -> list[Type]:
@@ -111,15 +112,19 @@ def _extra_imports_for_interface(interface: Interface) -> list[ExtraImport]:
         seen_names.add(type_name)
 
         if isinstance(t, Resource):
-            imports.append(ExtraImport(
-                module=f"fastly_compute._bindings.{owner_module}",
-                name=type_name,
-            ))
+            imports.append(
+                ExtraImport(
+                    module=f"fastly_compute._bindings.{owner_module}",
+                    name=type_name,
+                )
+            )
         elif isinstance(t, Enum | Variant | Flags):
-            imports.append(ExtraImport(
-                module=f"wit_world.imports.{owner_module}",
-                name=type_name,
-            ))
+            imports.append(
+                ExtraImport(
+                    module=f"wit_world.imports.{owner_module}",
+                    name=type_name,
+                )
+            )
 
     return sorted(imports, key=lambda i: (i.module, i.name))
 
@@ -241,25 +246,23 @@ def generate_binding_module(interface: Interface, env: Environment) -> str:
     module_docstring = interface.docstring(indent=0) or ""
     reexports = _reexports_for_interface(interface)
     extra_imports = _extra_imports_for_interface(interface)
-    public_names = _public_names(records, resources_and_methods, freestanding, reexports, extra_imports)
+    public_names = _public_names(
+        records, resources_and_methods, freestanding, reexports, extra_imports
+    )
 
     needs_resource = bool(resources_and_methods)
-    needs_decorator = (
-        any(f.raises_errors() for _, methods in resources_and_methods for f in methods)
-        or any(f.raises_errors() for f in freestanding)
-    )
-    needs_self = (
-        any(
-            f.return_annotation(r) == "Self"
-            for r, methods in resources_and_methods
-            for f in methods
-            if f.kind() == "static"
-        )
-        or any(
-            f.kind() == "constructor"
-            for _, methods in resources_and_methods
-            for f in methods
-        )
+    needs_decorator = any(
+        f.raises_errors() for _, methods in resources_and_methods for f in methods
+    ) or any(f.raises_errors() for f in freestanding)
+    needs_self = any(
+        f.return_annotation(r) == "Self"
+        for r, methods in resources_and_methods
+        for f in methods
+        if f.kind() == "static"
+    ) or any(
+        f.kind() == "constructor"
+        for _, methods in resources_and_methods
+        for f in methods
     )
 
     template = env.get_template("bindings_module.py.jinja")
@@ -285,8 +288,21 @@ def _format(code: str, filename: str) -> str:
     """
     # Fix import order first (isort equivalent).
     result = run(
-        ["uv", "run", "--extra", "dev", "ruff", "check", "--fix", "--exit-zero",
-         "--select", "I", "--stdin-filename", filename, "-"],
+        [
+            "uv",
+            "run",
+            "--extra",
+            "dev",
+            "ruff",
+            "check",
+            "--fix",
+            "--exit-zero",
+            "--select",
+            "I",
+            "--stdin-filename",
+            filename,
+            "-",
+        ],
         input=code,
         capture_output=True,
         text=True,
@@ -294,8 +310,17 @@ def _format(code: str, filename: str) -> str:
     code = result.stdout or code
     # Then format.
     result = run(
-        ["uv", "run", "--extra", "dev", "ruff", "format",
-         "--stdin-filename", filename, "-"],
+        [
+            "uv",
+            "run",
+            "--extra",
+            "dev",
+            "ruff",
+            "format",
+            "--stdin-filename",
+            filename,
+            "-",
+        ],
         input=code,
         capture_output=True,
         text=True,

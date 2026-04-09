@@ -206,7 +206,9 @@ class WsgiHttpIncoming(HttpIncoming):
         """
         return self
 
-    def handle(self, request: _wit_http_req.Request, body: _wit_async_io.Pollable) -> None:
+    def handle(
+        self, request: _wit_http_req.Request, body: _wit_async_io.Pollable
+    ) -> None:
         """Handle incoming HTTP requests by serving them through the WSGI app."""
         # Wrap the raw WIT export-boundary resources into _bindings wrapper
         # types before passing them to the rest of the SDK.

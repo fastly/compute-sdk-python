@@ -66,4 +66,3 @@ class ConfigStore(_Store):
         if not isinstance(key, str):
             raise KeyError("Key must be a str")
         return self.get(key) is not None
-
