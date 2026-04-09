@@ -1,5 +1,4 @@
-"""Top level of the code-generation that makes exception-raising more idiomatic
-in Fastly SDK routines
+"""Generate fastly_compute/exceptions/ from WIT result error types.
 
 Handles high-level logic and writing to the filesystem.
 """
@@ -14,14 +13,16 @@ from typing import Any
 
 from jinja2 import Environment, PackageLoader, Template, TemplateNotFound
 
-from .wit import Function, NullType, Type, Wit
+from scripts.wit import NullType, Type, Wit
 
 WIT_DIR = "wit"
 FASTLY_COMPUTE = Path(__file__).parent.parent.parent / "fastly_compute"
 
 
 jinja_env = Environment(
-    loader=PackageLoader("scripts.generate_patches"), autoescape=False
+    loader=PackageLoader("scripts.generate_exceptions"),
+    autoescape=False,
+    keep_trailing_newline=True,
 )
 
 
@@ -91,63 +92,6 @@ def generate_exceptions(error_types: Iterable[Type]):
                 },
                 jinja_env.get_template("default_exception.py.jinja"),
             )
-
-
-def generate_patches(
-    error_types: Iterable[Type], functions_to_patch: Iterable[Function]
-):
-    """Generate code which makes componentize-py-generated routines raise more
-    specific, idiomatically shaped exceptions.
-
-    Map componentize-py's Err values to specific exceptions. Generate
-    monkeypatches that wrap componentize-py's generated Python routines to raise
-    them.
-    """
-    # Collect info:
-    mappings = set()
-    wit_imports = set()
-    fastly_imports = set()
-    for error_type in error_types:
-        # Get where it is found in wit_world. Use shallow imports to avoid collisions.
-        wit_imports.add(error_type.wit_module_path())
-        fastly_imports.add(error_type.py_module_path())
-        if error_type.has_cases():
-            # We need only add the cases; it doesn't make sense in WIT to return
-            # the Enum or Variant itself in a result.
-            for case in error_type.cases():
-                mappings.add(
-                    (
-                        case.wit_path(),
-                        error_type.py_module_path(),
-                        case.py_exception_name(),
-                    )
-                )
-        else:
-            mappings.add(
-                (
-                    error_type.wit_path(),
-                    error_type.py_module_path(),
-                    error_type.py_exception_name(),
-                )
-            )
-
-    # Collect import paths for the functions themselves:
-    for func in functions_to_patch:
-        wit_imports.add(func.wit_module_path())
-
-    # TODO: Maybe automatically improve the docstring of each method to list the
-    # exceptions it raises.
-
-    write_templated_file(
-        FASTLY_COMPUTE / "runtime_patching" / "patches.py",
-        {
-            "fastly_imports": sorted(fastly_imports),
-            "wit_imports": sorted(wit_imports),
-            "mappings": sorted(mappings),
-            "functions_to_patch": functions_to_patch,
-        },
-        jinja_env.get_template("patches.py.jinja"),
-    )
 
 
 def join_named_chunks(

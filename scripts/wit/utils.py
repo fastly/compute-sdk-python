@@ -1,4 +1,4 @@
-"""Little helpers used in patch generation"""
+"""Little helpers used in WIT-based code generation."""
 
 
 def only(iterable):

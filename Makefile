@@ -60,17 +60,17 @@ $(BUILD_DIR)/%.composed.wasm: wit/viceroy.wit wit/deps/fastly/compute.wit fastly
 # _error_mapping.py together.  We depend on _bindings/__init__.py as the
 # sentinel since the script always rewrites every file.
 fastly_compute/_bindings/__init__.py: scripts/generate_bindings/*.py \
-    scripts/generate_patches/*.py \
+    scripts/wit/*.py \
     $(shell find scripts/generate_bindings/templates -name "*.jinja") \
     $(COMPUTE_WIT)
 	uv run python -m scripts.generate_bindings
 
-# The generate_patches script still generates the exception hierarchy.
-# It no longer generates patches.py.
-fastly_compute/exceptions/types/error.py: scripts/generate_patches/*.py \
-    $(shell find scripts/generate_patches/templates -name "*.jinja") \
+# The generate_exceptions script generates the exception hierarchy.
+fastly_compute/exceptions/types/error.py: scripts/generate_exceptions/*.py \
+    scripts/wit/*.py \
+    $(shell find scripts/generate_exceptions/templates -name "*.jinja") \
     $(COMPUTE_WIT)
-	uv run python -m scripts.generate_patches
+	uv run python -m scripts.generate_exceptions
 
 # Create build directory
 $(BUILD_DIR):

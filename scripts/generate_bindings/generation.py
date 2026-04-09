@@ -7,8 +7,7 @@ from subprocess import check_output, run
 
 from jinja2 import Environment, FileSystemLoader
 
-from scripts.generate_patches.utils import lower_snake, upper_camel
-from scripts.generate_patches.wit import (
+from scripts.wit import (
     Enum,
     Flags,
     Handle,
@@ -22,6 +21,7 @@ from scripts.generate_patches.wit import (
     Variant,
     Wit,
 )
+from scripts.wit.utils import lower_snake, upper_camel
 
 WIT_DIR = "wit"
 BINDINGS_DIR = Path("fastly_compute/_bindings")
