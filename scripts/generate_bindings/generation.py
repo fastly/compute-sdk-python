@@ -7,11 +7,10 @@ from subprocess import check_output, run
 
 from jinja2 import Environment, FileSystemLoader
 
-from scripts.wit import (
+from scripts.wit.types import (
     Enum,
     Flags,
     Handle,
-    Interface,
     Option,
     Record,
     Resource,
@@ -19,9 +18,9 @@ from scripts.wit import (
     TupleType,
     Type,
     Variant,
-    Wit,
 )
 from scripts.wit.utils import lower_snake, upper_camel
+from scripts.wit.wit import Interface, Wit
 
 WIT_DIR = "wit"
 BINDINGS_DIR = Path("fastly_compute/_bindings")

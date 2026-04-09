@@ -13,7 +13,8 @@ from typing import Any
 
 from jinja2 import Environment, PackageLoader, Template, TemplateNotFound
 
-from scripts.wit import NullType, Type, Wit
+from scripts.wit.types import NullType, Type
+from scripts.wit.wit import Wit
 
 WIT_DIR = "wit"
 FASTLY_COMPUTE = Path(__file__).parent.parent.parent / "fastly_compute"
@@ -57,7 +58,7 @@ def generate_exceptions(error_types: Iterable[Type]):
 
         # Create package's __init__.py if not already there:
         if package not in package_docstrings:
-            package_docstrings[package] = error_type.interface().docstring(indent=0)
+            package_docstrings[package] = error_type.interface_docstring(indent=0)
 
         # Common superclass for exceptions based on the enum or variant's
         # members. Or the raised exception itself for records.
