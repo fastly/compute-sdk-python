@@ -4,7 +4,7 @@ import json
 from http import HTTPStatus
 from typing import Any, override
 
-from fastly_compute._bindings import async_io, http_resp
+from fastly_compute import async_io, http_resp
 
 from ..utils import create_body_reader
 from .exceptions import HTTPError

@@ -10,8 +10,8 @@ import urllib.parse
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from fastly_compute._bindings.backend import Backend, DynamicBackendOptions
-from fastly_compute._bindings.backend import (
+from fastly_compute.backend import Backend, DynamicBackendOptions
+from fastly_compute.backend import (
     register_dynamic_backend as _register_dynamic_backend_wit,
 )
 from fastly_compute.exceptions.types.error import Error

@@ -19,14 +19,15 @@ import wit_world.imports.async_io as _wit_async_io
 import wit_world.imports.http_req as _wit_http_req
 from wit_world.exports import HttpIncoming
 
-from fastly_compute._bindings import async_io, http_body, http_req, http_resp
-from fastly_compute._bindings.http_downstream import (
+from fastly_compute import async_io, http_req, http_resp
+from fastly_compute._bindings import http_body
+from fastly_compute.exceptions.types.error import CannotRead
+from fastly_compute.http_downstream import (
     NextRequestOptions,
     await_request,
     next_request,
 )
-from fastly_compute._bindings.http_resp import send_downstream
-from fastly_compute.exceptions.types.error import CannotRead
+from fastly_compute.http_resp import send_downstream
 from fastly_compute.utils import create_body_reader
 
 
