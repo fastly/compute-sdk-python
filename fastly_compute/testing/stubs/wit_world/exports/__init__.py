@@ -8,8 +8,8 @@ from abc import abstractmethod
 import weakref
 
 from componentize_py_types import Result, Ok, Err, Some
-from ..imports import async_io
 from ..imports import http_req
+from ..imports import async_io
 
 class HttpIncoming(Protocol):
 

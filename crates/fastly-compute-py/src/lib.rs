@@ -139,21 +139,23 @@ pub fn build(output: PathBuf, entry_name: String, virtualenv: Option<PathBuf>) -
 
     log::info!("  Componentizing Python application...");
     futures::executor::block_on(async {
-        componentize_py::componentize(
-            &[merged_wit_path.as_path()],
-            Some("fastly:compute/service@0.1.0"),
-            &[],
-            false,
-            Some("wit_world"),
-            &python_path_refs,
-            &[],
-            &entry_name,
-            &temp_component_wasm_path,
-            None,
-            false,
-            &HashMap::new(),
-            &HashMap::new(),
-        )
+        componentize_py::ComponentGenerator {
+            wit_path: &[merged_wit_path.as_path()],
+            worlds: &["fastly:compute/service@0.1.0"],
+            features: &[],
+            all_features: false,
+            world_module: Some("wit_world"),
+            python_path: &python_path_refs,
+            module_worlds: &[],
+            app_name: &entry_name,
+            output_path: &temp_component_wasm_path,
+            add_to_linker: None,
+            stub_wasi: false,
+            import_interface_names: &HashMap::new(),
+            export_interface_names: &HashMap::new(),
+            full_names: false,
+        }
+        .generate()
         .await
     })?;
 
