@@ -98,11 +98,7 @@ jobs:
     - name: Check formatting
       run: make format-check
     - name: Run linting
-      run: |
-        uv run python scripts/check_version_sync.py
-        uv run --extra dev ruff check .
-        uv run --extra dev --extra test pyrefly check
-        cd crates/fastly-compute-py && cargo clippy --release --no-default-features --features binary -- -D warnings
+      run: make lint
     - name: Run tests
       # Use DEV_MODE=0 to use the installed fastly-compute-py binary instead of rebuilding with cargo
       run: DEV_MODE=0 make test

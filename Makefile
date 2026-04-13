@@ -99,13 +99,13 @@ lint: fastly_compute/runtime_patching/patches.py | $(STUBS_DIR)
 	uv run --extra dev ruff check .
 	uv run --extra dev --extra test pyrefly check
 	@echo "Linting Rust code..."
-	cd crates/fastly-compute-py && cargo clippy -- -D warnings
+	cd crates/fastly-compute-py && cargo clippy --release --no-default-features --features binary -- -D warnings
 
 lint-fix: fastly_compute/runtime_patching/patches.py
 	@echo "Fixing Python code..."
 	uv run --extra dev ruff check --fix .
 	@echo "Fixing Rust code..."
-	cd crates/fastly-compute-py && cargo clippy --fix --allow-dirty --allow-staged
+	cd crates/fastly-compute-py && cargo clippy --release --no-default-features --features binary --fix --allow-dirty --allow-staged
 
 format:
 	@echo "Formatting Python code..."
