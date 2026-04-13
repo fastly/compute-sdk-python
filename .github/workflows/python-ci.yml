@@ -1,10 +1,10 @@
 name: Python CI
 
 on:
-  push:  # Runs on pushes to all branches
-  pull_request:
+  push:
     branches:
       - main
+  pull_request:
   workflow_dispatch:  # Allows manual triggering from GitHub Actions UI
 
 env:
@@ -21,7 +21,7 @@ jobs:
         toolchain: 1.92.0
         target: wasm32-unknown-unknown
         components: rustfmt, clippy
-        # Disable the built-in cargo cache - we'll use a more sophisticated setup below
+        # Disable the built-in cargo cache - we use our own below
         cache: false
     - name: Set up nightly Rust toolchain with rust-src
       run: |
@@ -33,7 +33,7 @@ jobs:
         python-version: '3.12'
     - name: Install uv
       run: pip install uv
-    
+
     # Cache cargo binaries (viceroy, wasm-tools, etc.)
     - name: Cache cargo binaries
       id: cache-cargo-bins
@@ -41,19 +41,25 @@ jobs:
       with:
         key: cargo-bins-${{ runner.os }}-${{ env.VICEROY_TAG }}
         path: |
-            ~/.cargo/bin/viceroy*
-            ~/.cargo/bin/wasm-tools*
-            ~/.cargo/bin/wac*
+          ~/.cargo/bin/viceroy*
+          ~/.cargo/bin/wasm-tools*
+          ~/.cargo/bin/wac*
     - name: Install wasm-tools and wac
       if: steps.cache-cargo-bins.outputs.cache-hit != 'true'
       run: cargo install wasm-tools wac-cli
     - name: Install viceroy
       if: steps.cache-cargo-bins.outputs.cache-hit != 'true'
       run: cargo install --git https://github.com/fastly/Viceroy.git --tag "$VICEROY_TAG" viceroy
-    
-    # Cache Rust dependencies and build artifacts
-    # CRITICAL: ~/.cargo/git/checkouts/ contains componentize-py source + built CPython (5+ min build)
-    - name: Cache Rust dependencies
+
+    # Cache Rust registry and git sources separately from build artifacts.
+    #
+    # Sources are keyed only on Cargo.lock so they survive a clean target/
+    # and are shared across build profiles (release, clippy, etc.).
+    #
+    # Build artifacts (target/) are cached separately per Cargo.lock AND
+    # Rust toolchain version, because different toolchain versions produce
+    # incompatible artifacts.
+    - name: Cache Rust sources
       uses: actions/cache@v4
       with:
         path: |
@@ -61,21 +67,24 @@ jobs:
           ~/.cargo/registry/cache/
           ~/.cargo/git/db/
           ~/.cargo/git/checkouts/
-          target/
-        key: cargo-deps-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}-v3
+        key: cargo-sources-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}-v1
         restore-keys: |
-          cargo-deps-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}-
-          cargo-deps-${{ runner.os }}-
-    
-    # Setup sccache for Rust compilation caching
-    - name: Run sccache-cache
-      uses: mozilla-actions/sccache-action@v0.0.8
-    - name: Configure sccache
-      run: |
-        echo "SCCACHE_GHA_ENABLED=true" >> $GITHUB_ENV
-        echo "RUSTC_WRAPPER=sccache" >> $GITHUB_ENV
+          cargo-sources-${{ runner.os }}-
 
-    # Build the Rust native extension (this is the slow part - builds componentize-py + CPython)
+    # Build artifacts are cached per Cargo.lock + toolchain.  We cache both
+    # release and debug/clippy profiles together since they share most deps.
+    - name: Cache Rust build artifacts
+      uses: actions/cache@v4
+      with:
+        path: target/
+        key: cargo-target-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}-${{ env.RUSTUP_TOOLCHAIN }}-v1
+        restore-keys: |
+          cargo-target-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}-
+          cargo-target-${{ runner.os }}-
+
+    # Build the native extension in release mode first so the release
+    # artifacts are in target/.  Clippy reuses these artifacts for deps
+    # that don't change between profiles.
     - name: Build native extension
       run: uv run maturin develop --release
 
@@ -83,7 +92,9 @@ jobs:
     - name: Install Python dependencies
       run: uv sync --extra dev --extra test --extra examples
 
-    # Finally, do our final checks
+    # Run clippy using the same --release flag and features as the build
+    # above so that Cargo can reuse the already-compiled dependency
+    # artifacts and only checks our own crate.
     - name: Check formatting
       run: make format-check
     - name: Run linting
