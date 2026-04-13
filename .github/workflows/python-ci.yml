@@ -1,10 +1,10 @@
 name: Python CI
 
 on:
-  push:  # Runs on pushes to all branches
-  pull_request:
+  push:
     branches:
       - main
+  pull_request:
   workflow_dispatch:  # Allows manual triggering from GitHub Actions UI
 
 env:
