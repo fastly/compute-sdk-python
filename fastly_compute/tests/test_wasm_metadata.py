@@ -58,9 +58,11 @@ def _libpython_version(metadata) -> str | None:
         kind = next(iter(node))
         data = node[kind]
         if kind == "module":
-            m = re.match(r"libpython(\d+\.\d+)\.so", data.get("name", ""))
-            if m:
-                return m.group(1)
+            name = data.get("name")  # may be None or ""
+            if name:
+                m = re.match(r"libpython(\d+\.\d+)\.so", name)
+                if m:
+                    return m.group(1)
         else:
             nodes.extend(data.get("children", []))
 
