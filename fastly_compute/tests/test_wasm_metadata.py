@@ -50,7 +50,7 @@ def producers(metadata):
     return dict(raw) if raw else {}
 
 
-def _libpython_version(metadata):
+def _libpython_version(metadata) -> str | None:
     """Return the version from the first libpython*.so module name in the tree."""
     nodes = [metadata]
     while nodes:
@@ -58,12 +58,11 @@ def _libpython_version(metadata):
         kind = next(iter(node))
         data = node[kind]
         if kind == "module":
-            m = re.match(r"libpython(\d+\.\d+)\.so", data.get("name") or "")
+            m = re.match(r"libpython(\d+\.\d+)\.so", data.get("name", ""))
             if m:
                 return m.group(1)
         else:
             nodes.extend(data.get("children", []))
-    return None
 
 
 def test_language_python(producers):
