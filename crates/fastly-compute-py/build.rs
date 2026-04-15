@@ -8,6 +8,7 @@ fn main() -> Result<()> {
     println!("cargo:rerun-if-changed=../../wit");
     println!("cargo:rerun-if-changed=../../crates/wasiless");
     println!("cargo:rerun-if-changed=../../wrap_app_in_wasiless.wac");
+    println!("cargo:rerun-if-changed=../../Cargo.lock");
 
     let root_dir = PathBuf::from("../../");
     let wit_dir = root_dir.join("wit");
@@ -24,6 +25,20 @@ fn main() -> Result<()> {
         root_dir.join("wrap_app_in_wasiless.wac"),
         out_dir.join("wrap_app_in_wasiless.wac"),
     )?;
+
+    // Expose the componentize-py version for embedding in Wasm producers metadata.
+    let metadata = cargo_metadata::MetadataCommand::new()
+        .manifest_path(root_dir.join("Cargo.toml"))
+        .exec()
+        .context("Failed to run `cargo metadata`")?;
+    let componentize_py_version = metadata
+        .packages
+        .iter()
+        .find(|p| p.name == "componentize-py")
+        .with_context(|| "componentize-py not found in cargo metadata")?
+        .version
+        .to_string();
+    println!("cargo:rustc-env=COMPONENTIZE_PY_VERSION={componentize_py_version}");
 
     Ok(())
 }
@@ -71,7 +86,7 @@ fn build_wasiless_wasm(root_dir: impl AsRef<Path>, out_dir: impl AsRef<Path>) ->
         anyhow::bail!("Failed to build wasiless");
     }
 
-    // Transform wasiless into a component using wasm-tools compnent new
+    // Transform wasiless into a component using wasm-tools component new
     let input_wasm = target_dir.join("wasm32-unknown-unknown/release/wasiless.wasm");
     let output_wasm = out_dir.as_ref().join("wasiless.wasm");
 

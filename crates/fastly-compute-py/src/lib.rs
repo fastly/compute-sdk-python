@@ -10,6 +10,7 @@ use wac_graph::EncodeOptions;
 use wac_parser::Document;
 use wac_types::BorrowedPackageKey;
 use wac_types::Package;
+use wasm_metadata::AddMetadata;
 
 pub mod cli;
 pub mod config;
@@ -168,7 +169,10 @@ pub fn build(output: PathBuf, entry_name: String, virtualenv: Option<PathBuf>) -
     let composed =
         compose_with_wasiless(&temp_component_wasm_path, WASILESS_WASM, WRAP_WAC, &output)?;
 
-    fs::write(&output, composed)
+    log::info!("  Injecting Fastly metadata...");
+    let annotated = inject_fastly_metadata(composed)?;
+
+    fs::write(&output, annotated)
         .with_context(|| format!("Failed to write output: {}", output.display()))?;
 
     log::debug!("Composed output: {}", output.display());
@@ -230,4 +234,57 @@ fn compose_with_wasiless(
     log::debug!("Successfully composed to: {}", output.display());
 
     Ok(encoded)
+}
+
+/// Inject build tool metadata into the Wasm component's standard `producers`
+/// custom section.
+///
+/// Follows the WebAssembly [Producers Section spec] field conventions:
+///
+/// - `language: Python <version>` — the source language and the CPython
+///   version bundled by componentize-py. Update this when upgrading to a
+///   componentize-py release that bundles a different CPython version.
+/// - `sdk: fastly-compute-py <version>` — the SDK library the user's code is
+///   written against, analogous to `@fastly/js-compute` for the JS SDK.
+/// - `processed-by: componentize-py <version>` — the tool that performed the
+///   core Wasm transformation. `fastly-compute-py` also adds itself here as
+///   the build orchestrator.
+///
+/// Note: the Fastly-proprietary `fastly.manifest.*` custom sections
+/// (language, version, service_id, etc.) are **not** written here. Those are
+/// injected during package ingestion, sourced from the `fastly.toml` manifest
+/// that the CLI bundles alongside the Wasm in the upload package.
+/// Dependency lists, build scripts, and machine info are similarly the CLI's
+/// responsibility via its `fastly_data` producers entry.
+///
+/// [Producers Section spec]: https://github.com/WebAssembly/tool-conventions/blob/main/ProducersSection.md
+fn inject_fastly_metadata(wasm: Vec<u8>) -> Result<Vec<u8>> {
+    let mut add_metadata = AddMetadata::default();
+
+    // Source language. The version is the CPython version bundled by
+    // componentize-py — update this when upgrading to a componentize-py
+    // release that bundles a different CPython version.
+    add_metadata
+        .language
+        .push(("Python".to_owned(), "3.14".to_owned()));
+
+    // The SDK the user's code is written against.
+    add_metadata.sdk.push((
+        "fastly-compute-py".to_owned(),
+        env!("CARGO_PKG_VERSION").to_owned(),
+    ));
+
+    // Tools that performed the Wasm transformation.
+    add_metadata.processed_by.push((
+        "componentize-py".to_owned(),
+        env!("COMPONENTIZE_PY_VERSION").to_owned(),
+    ));
+    add_metadata.processed_by.push((
+        "fastly-compute-py".to_owned(),
+        env!("CARGO_PKG_VERSION").to_owned(),
+    ));
+
+    add_metadata
+        .to_wasm(&wasm)
+        .context("Failed to add producers metadata to Wasm component")
 }
