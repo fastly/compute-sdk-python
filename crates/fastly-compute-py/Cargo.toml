@@ -23,6 +23,7 @@ wac-graph = "0.8"
 wac-parser = "0.8"
 wit-parser = "0.244"
 wit-component = "0.244"
+wasm-metadata = { version = "0.245", default-features = false }
 tempfile = "3"
 componentize-py = { git = "https://github.com/bytecodealliance/componentize-py" }
 futures = { version = "0.3", default-features = false, features = ["executor"] }
@@ -35,5 +36,6 @@ indexmap = "2"
 
 [build-dependencies]
 anyhow = "1"
+cargo_metadata = "0.23.1"
 wit-parser = "0.219"
 wit-component = "0.219"
