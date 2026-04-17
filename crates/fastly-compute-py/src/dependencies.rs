@@ -42,38 +42,39 @@ struct PylockPackage {
 
 /// Get dependencies using UV's PEP 751 export.
 ///
-/// Errors are bubbled up when UV is known to be available (i.e. the `UV`
-/// environment variable is set, which `uv run` always provides).  If UV is
-/// not discoverable at all we warn and return an empty list, since the project
-/// may not be using UV as its package manager.
+/// Dependency collection only runs when both conditions are met:
+///
+/// 1. A `pyproject.toml` exists in the current directory — confirming this is
+///    a Python project that could have a lockfile.  Without this, `uv export`
+///    would fail with "no pyproject.toml found" (e.g. the Viceroy test
+///    framework builds in a temp dir with no project files).
+///
+/// 2. The `UV` environment variable is set — confirming the tool was invoked
+///    via `uv run` or similar.  We don't guess that `uv` should be used just
+///    because a `uv` binary happens to be on PATH; the user may be using pip,
+///    poetry, or another tool entirely.
+///
+/// When both conditions are met, errors from `uv export` are bubbled up since
+/// something genuinely went wrong in a context where UV is expected to work.
 pub fn get_dependencies(_virtualenv: &Option<PathBuf>) -> Result<Vec<Dependency>> {
+    if !std::fs::exists("pyproject.toml").unwrap_or_default() {
+        log::debug!("No pyproject.toml found, skipping dependency collection");
+        return Ok(Vec::new());
+    }
+
+    let uv_bin = match std::env::var("UV") {
+        Ok(bin) => bin,
+        Err(_) => {
+            log::debug!("UV env var not set, skipping dependency collection");
+            return Ok(Vec::new());
+        }
+    };
+
     log::info!("Collecting dependencies from project environment...");
 
-    let uv_bin = std::env::var("UV").unwrap_or_else(|_| "uv".to_string());
-    let uv_from_env = std::env::var("UV").is_ok();
-
-    match get_dependencies_from_uv(&uv_bin) {
-        Ok(deps) => {
-            log::info!("Found {} dependencies via UV", deps.len());
-            Ok(deps)
-        }
-        Err(e) if !uv_from_env && is_not_found(&e) => {
-            // UV not on PATH and not provided by the environment — not a UV project.
-            log::warn!("UV not found, skipping dependency collection: {}", e);
-            Ok(Vec::new())
-        }
-        Err(e) => Err(e),
-    }
-}
-
-/// Returns true if the error chain contains an OS "not found" error.
-fn is_not_found(e: &anyhow::Error) -> bool {
-    e.chain().any(|cause| {
-        cause
-            .downcast_ref::<std::io::Error>()
-            .map(|io| io.kind() == std::io::ErrorKind::NotFound)
-            .unwrap_or(false)
-    })
+    let deps = get_dependencies_from_uv(&uv_bin)?;
+    log::info!("Found {} dependencies via UV", deps.len());
+    Ok(deps)
 }
 
 /// Serialize dependencies as fastly_data JSON, matching the CLI's DataCollection format.
