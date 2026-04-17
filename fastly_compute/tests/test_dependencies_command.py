@@ -6,6 +6,7 @@ map that matches what gets injected into fastly_data metadata.
 
 import json
 import subprocess
+import tempfile
 from pathlib import Path
 
 import pytest
@@ -15,15 +16,29 @@ BOTTLE_APP_DIR = Path(__file__).parent.parent.parent / "examples" / "bottle-app"
 
 @pytest.fixture(scope="module")
 def dependencies_output():
-    """Run fastly-compute-py dependencies and return parsed JSON output."""
-    result = subprocess.run(
-        ["uv", "run", "fastly-compute-py", "dependencies", "--format", "json"],
-        cwd=BOTTLE_APP_DIR,
-        capture_output=True,
-        text=True,
-        check=True,
-    )
-    return json.loads(result.stdout)
+    """Run fastly-compute-py dependencies and return parsed JSON output.
+
+    Uses --output to write JSON to a temp file, avoiding any ambiguity from
+    uv or logging infrastructure writing to stdout.
+    """
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        output_path = Path(tmp_dir) / "dependencies.json"
+
+        subprocess.run(
+            [
+                "uv",
+                "run",
+                "fastly-compute-py",
+                "dependencies",
+                "--format",
+                "json",
+                "--output",
+                str(output_path),
+            ],
+            cwd=BOTTLE_APP_DIR,
+            check=True,
+        )
+        return json.loads(output_path.read_text())
 
 
 def test_dependencies_includes_bottle(dependencies_output):

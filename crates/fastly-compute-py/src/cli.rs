@@ -59,6 +59,10 @@ pub enum Command {
         #[arg(short, long, default_value = "json")]
         format: DependencyFormat,
 
+        /// Write output to this file instead of stdout
+        #[arg(short, long)]
+        output: Option<PathBuf>,
+
         /// Virtual environment in which to look for modules (default:
         /// VIRTUAL_ENV env var or .venv)
         #[arg(short, long)]

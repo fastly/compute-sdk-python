@@ -114,7 +114,11 @@ pub fn run_main(cli: &Cli) -> Result<()> {
                 output_dir,
             )?;
         }
-        cli::Command::Dependencies { format, virtualenv } => {
+        cli::Command::Dependencies {
+            format,
+            output,
+            virtualenv,
+        } => {
             let deps = dependencies::get_dependencies(virtualenv)?;
 
             match format {
@@ -127,7 +131,14 @@ pub fn run_main(cli: &Cli) -> Result<()> {
 
                     let json = serde_json::to_string_pretty(&packages)
                         .context("Failed to serialize dependencies to JSON")?;
-                    println!("{}", json);
+
+                    match output {
+                        Some(path) => {
+                            fs::write(path, &json)
+                                .context("Failed to write dependencies to output file")?;
+                        }
+                        None => println!("{}", json),
+                    }
                 }
             }
         }
