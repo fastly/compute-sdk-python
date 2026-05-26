@@ -15,16 +15,19 @@ from typing import Any
 from urllib.parse import urlparse
 from wsgiref.types import InputStream
 
+import wit_world.imports.async_io as _wit_async_io
+import wit_world.imports.http_req as _wit_http_req
 from wit_world.exports import HttpIncoming
-from wit_world.imports import async_io, http_body, http_req, http_resp
-from wit_world.imports.http_downstream import (
+
+from fastly_compute import async_io, http_req, http_resp
+from fastly_compute._bindings import http_body
+from fastly_compute.exceptions.types.error import CannotRead
+from fastly_compute.http_downstream import (
     NextRequestOptions,
     await_request,
     next_request,
 )
-from wit_world.imports.http_resp import send_downstream
-
-from fastly_compute.exceptions.types.error import CannotRead
+from fastly_compute.http_resp import send_downstream
 from fastly_compute.utils import create_body_reader
 
 
@@ -203,12 +206,18 @@ class WsgiHttpIncoming(HttpIncoming):
         """
         return self
 
-    def handle(self, request: http_req.Request, body: async_io.Pollable) -> None:
+    def handle(
+        self, request: _wit_http_req.Request, body: _wit_async_io.Pollable
+    ) -> None:
         """Handle incoming HTTP requests by serving them through the WSGI app."""
-        with request:  # Ensure dropping of request resource before trying to get another one. This dodges a crash.
+        # Wrap the raw WIT export-boundary resources into _bindings wrapper
+        # types before passing them to the rest of the SDK.
+        wrapped_request = http_req.Request(request)
+        wrapped_body = async_io.Pollable(body)
+        with wrapped_request:  # Ensure dropping of request resource before trying to get another one. This dodges a crash.
             serve_wsgi_request(
-                request,
-                create_body_reader(body),
+                wrapped_request,
+                create_body_reader(wrapped_body),
                 self.wsgi_app,
                 handle_errors=self.handle_errors,
             )
@@ -216,7 +225,7 @@ class WsgiHttpIncoming(HttpIncoming):
         if not self.reuse_sandboxes_for_ms:
             return
 
-        options = NextRequestOptions(timeout_ms=self.reuse_sandboxes_for_ms, extra=None)
+        options = NextRequestOptions(timeout_ms=self.reuse_sandboxes_for_ms)
         while True:
             pending_request = next_request(options)
             try:

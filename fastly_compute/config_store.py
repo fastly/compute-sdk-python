@@ -11,11 +11,7 @@ Example::
         api_url = config.get("api_url", "https://api.example.com")
 """
 
-from typing import Self
-
-from wit_world.imports import config_store as wit_config_store
-
-from ._resource import FastlyResource
+from fastly_compute._bindings.config_store import Store as _Store
 
 # The maximum value for a u32, used to signal that we don't want to cap
 # the length of values returned by the host.  In practice, this limit
@@ -23,7 +19,7 @@ from ._resource import FastlyResource
 _MAX_U32 = 0xFFFFFFFF
 
 
-class ConfigStore(FastlyResource[wit_config_store.Store]):
+class ConfigStore(_Store):
     """Interface to Fastly Config Store.
 
     Config Stores provide read-only access to configuration data that can be
@@ -34,23 +30,6 @@ class ConfigStore(FastlyResource[wit_config_store.Store]):
         with ConfigStore.open("app-config") as config:
             api_url = config.get("api_url", "https://api.example.com")
     """
-
-    @classmethod
-    def open(cls, name: str) -> Self:
-        """Open a config store by name.
-
-        :arg name: The name of the config store
-        :return: ConfigStore instance
-        :raise ~fastly_compute.exceptions.types.open_error.NotFound: If the config store doesn't exist
-        :raise ~fastly_compute.exceptions.types.open_error.InvalidSyntax: If the name is invalid
-        :raise ~fastly_compute.exceptions.types.open_error.NameTooLong: If the name is too long
-
-        Example::
-
-            config = ConfigStore.open("my-config")
-        """
-        store = wit_config_store.Store.open(name)
-        return cls(store)
 
     def get(self, key: str, default: str | None = None) -> str | None:
         """Get a configuration value.
@@ -65,10 +44,9 @@ class ConfigStore(FastlyResource[wit_config_store.Store]):
             config = ConfigStore.open("app-config")
             api_url = config.get("api_url", "https://api.example.com")
         """
-        result = self._wit_resource.get(key, _MAX_U32)
+        result = super().get(key, _MAX_U32)
         if result is None:
             result = default
-
         return result
 
     def __contains__(self, key: str) -> bool:

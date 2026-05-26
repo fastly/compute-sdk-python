@@ -66,7 +66,6 @@ quote-style = "double"
 indent-style = "space"
 skip-magic-trailing-comma = false
 line-ending = "auto"
-exclude = ["fastly_compute/runtime_patching/patches.py"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
@@ -77,6 +76,8 @@ convention = "google"
 "examples/*" = ["D"]
 # What can one say about __main__?
 "__main__.py" = ["D100"]
+# Generated bindings: D is suppressed because docstrings come verbatim from WIT.
+"fastly_compute/_bindings/*" = ["D"]
 
 [build-system]
 requires = ["maturin>=1.0,<2.0"]
@@ -114,4 +115,5 @@ project-excludes = [
     # CLI wrapper imports from native extension that doesn't exist until built
     "fastly_compute/fastly_compute_py.py",
     "fastly_compute/testing/stubs",
+    "fastly_compute/_bindings",
 ]

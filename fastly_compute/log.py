@@ -24,14 +24,11 @@ Example::
 
 import logging
 from collections.abc import Callable
-from typing import Self
 
-from wit_world.imports import log as wit_log
-
-from ._resource import FastlyResource
+from fastly_compute._bindings.log import Endpoint as _Endpoint
 
 
-class LogEndpoint(FastlyResource[wit_log.Endpoint]):
+class LogEndpoint(_Endpoint):
     """Interface to a Fastly logging endpoint.
 
     Logging endpoints send log data to configured Real-Time Log Streaming
@@ -43,33 +40,6 @@ class LogEndpoint(FastlyResource[wit_log.Endpoint]):
             endpoint.write("Application started")
             endpoint.write(b"Binary log data")
     """
-
-    @classmethod
-    def open(cls, name: str) -> Self:
-        r"""Open a logging endpoint by name.
-
-        Names are case sensitive. Calling open() with a name that doesn't
-        correspond to any logging endpoint available in your service will
-        still return a usable endpoint, and writes to that endpoint will
-        succeed. Refer to your service dashboard to diagnose missing log events.
-
-        Currently, the conditions on an endpoint name are:
-        - It must not be empty.
-        - It must not contain newlines (\n) or colons (:).
-        - It must not be `stdout` or `stderr`, which are reserved for debugging.
-
-        :arg name: The name of the logging endpoint
-        :return: LogEndpoint instance
-        :raise ~fastly_compute.exceptions.types.open_error.NotFound: If the endpoint doesn't exist or can't be created.
-        :raise ~fastly_compute.exceptions.types.open_error.NameTooLong: If the name is too long.
-        :raise ~fastly_compute.exceptions.types.open_error.InvalidSyntax: If the name is invalid.
-
-        Example::
-
-            endpoint = LogEndpoint.open("my_logs")
-        """
-        endpoint = wit_log.Endpoint.open(name)
-        return cls(endpoint)
 
     def write(self, msg: bytes | str) -> None:
         """Write data to the logging endpoint.

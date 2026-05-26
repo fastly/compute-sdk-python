@@ -2,7 +2,8 @@
 
 from io import BufferedReader, RawIOBase
 
-from wit_world.imports import async_io, http_body
+from fastly_compute import async_io
+from fastly_compute._bindings import http_body
 
 
 class _RawBodyReader(RawIOBase):

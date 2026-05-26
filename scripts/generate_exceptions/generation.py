@@ -1,5 +1,4 @@
-"""Top level of the code-generation that makes exception-raising more idiomatic
-in Fastly SDK routines
+"""Generate fastly_compute/exceptions/ from WIT result error types.
 
 Handles high-level logic and writing to the filesystem.
 """
@@ -14,14 +13,17 @@ from typing import Any
 
 from jinja2 import Environment, PackageLoader, Template, TemplateNotFound
 
-from .wit import Function, NullType, Type, Wit
+from scripts.wit.types import NullType, Type
+from scripts.wit.wit import Wit
 
 WIT_DIR = "wit"
 FASTLY_COMPUTE = Path(__file__).parent.parent.parent / "fastly_compute"
 
 
 jinja_env = Environment(
-    loader=PackageLoader("scripts.generate_patches"), autoescape=False
+    loader=PackageLoader("scripts.generate_exceptions"),
+    autoescape=False,
+    keep_trailing_newline=True,
 )
 
 
@@ -56,7 +58,7 @@ def generate_exceptions(error_types: Iterable[Type]):
 
         # Create package's __init__.py if not already there:
         if package not in package_docstrings:
-            package_docstrings[package] = error_type.interface().docstring(indent=0)
+            package_docstrings[package] = error_type.interface_docstring(indent=0)
 
         # Common superclass for exceptions based on the enum or variant's
         # members. Or the raised exception itself for records.
@@ -91,63 +93,6 @@ def generate_exceptions(error_types: Iterable[Type]):
                 },
                 jinja_env.get_template("default_exception.py.jinja"),
             )
-
-
-def generate_patches(
-    error_types: Iterable[Type], functions_to_patch: Iterable[Function]
-):
-    """Generate code which makes componentize-py-generated routines raise more
-    specific, idiomatically shaped exceptions.
-
-    Map componentize-py's Err values to specific exceptions. Generate
-    monkeypatches that wrap componentize-py's generated Python routines to raise
-    them.
-    """
-    # Collect info:
-    mappings = set()
-    wit_imports = set()
-    fastly_imports = set()
-    for error_type in error_types:
-        # Get where it is found in wit_world. Use shallow imports to avoid collisions.
-        wit_imports.add(error_type.wit_module_path())
-        fastly_imports.add(error_type.py_module_path())
-        if error_type.has_cases():
-            # We need only add the cases; it doesn't make sense in WIT to return
-            # the Enum or Variant itself in a result.
-            for case in error_type.cases():
-                mappings.add(
-                    (
-                        case.wit_path(),
-                        error_type.py_module_path(),
-                        case.py_exception_name(),
-                    )
-                )
-        else:
-            mappings.add(
-                (
-                    error_type.wit_path(),
-                    error_type.py_module_path(),
-                    error_type.py_exception_name(),
-                )
-            )
-
-    # Collect import paths for the functions themselves:
-    for func in functions_to_patch:
-        wit_imports.add(func.wit_module_path())
-
-    # TODO: Maybe automatically improve the docstring of each method to list the
-    # exceptions it raises.
-
-    write_templated_file(
-        FASTLY_COMPUTE / "runtime_patching" / "patches.py",
-        {
-            "fastly_imports": sorted(fastly_imports),
-            "wit_imports": sorted(wit_imports),
-            "mappings": sorted(mappings),
-            "functions_to_patch": functions_to_patch,
-        },
-        jinja_env.get_template("patches.py.jinja"),
-    )
 
 
 def join_named_chunks(
@@ -191,44 +136,33 @@ def write_templated_file(
 
 
 def generate():
-    """Generate idiomatic exceptions and monkeypatches to get WIT functions to
-    raise them.
+    """Generate idiomatic exception classes from WIT result error types.
 
-    Currently, this handles only ``result`` error types that are variants,
-    enums, records, or the unit type. It doesn't handle options or primitives,
-    but it would be straightfoward to expand as necessary. The only interesting
-    decision to make when expanding is what kind of exception to raise: for
-    enums, variants, and records, we generate an exception class corresponding
-    to each case and raise that. But you can't raise a plain int. Maybe raise a
-    generic FastlyError? We throw a NotImplementedError during generation if we
-    do encounter something unsupported.
+    Currently handles ``result`` error types that are variants, enums, records,
+    or the unit type.  Primitives and options are not yet supported but would be
+    straightforward to add.
     """
     wit_text = check_output(["wasm-tools", "component", "wit", WIT_DIR, "--json"])
     wit_json = json.loads(wit_text)
     wit = Wit(wit_json)
 
-    # A dict preserves order, for comprehensibility and determinism of generated code:
-    exceptions_to_generate: dict[Type, bool] = {}
-    functions_to_patch = []
-
     # Hunt through our whole fastly-compute package to find the result error
     # types we return. Each inspires the generation of one exception class (in
     # the case of records) or more (in the case of variants or enums).
+    # A dict preserves order, for comprehensibility and determinism.
+    exceptions_to_generate: dict[Type, bool] = {}
+
     for interface in wit.fastly_compute_package().interfaces():
         for function in interface.functions():
             if error_type := function.error_type_of_returned_result():
                 if not isinstance(error_type, NullType):
                     # Null errors (result<whatever, _>) are handled by a static
-                    # entry mapping it to FastlyError.
+                    # entry mapping them to FastlyError.
 
                     # We don't need to go any deeper than the top-level type of
-                    # the result's error. That represents the whole universe of
-                    # Err values the componentize-py-generated bits may raise.
-                    # Those values are what we will promote to exceptions.
+                    # the result's error arm. That represents the whole universe
+                    # of Err values the componentize-py-generated code may raise,
+                    # and those values are what we promote to exceptions.
                     exceptions_to_generate[error_type] = True
-                    # Resource methods are shoved in here too but are
-                    # identifiable:
-                    functions_to_patch.append(function)
 
     generate_exceptions(exceptions_to_generate.keys())
-    generate_patches(exceptions_to_generate.keys(), functions_to_patch)

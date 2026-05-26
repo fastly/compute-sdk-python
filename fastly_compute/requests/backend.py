@@ -10,8 +10,10 @@ import urllib.parse
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from wit_world.imports import backend as wit_backend
-
+from fastly_compute.backend import Backend, DynamicBackendOptions
+from fastly_compute.backend import (
+    register_dynamic_backend as _register_dynamic_backend_wit,
+)
 from fastly_compute.exceptions.types.error import Error
 from fastly_compute.exceptions.types.open_error import OpenError
 
@@ -29,7 +31,7 @@ class BackendResolution:
     """Result of a successful backend resolution."""
 
     url_parsed: urllib.parse.ParseResult
-    backend: wit_backend.Backend
+    backend: Backend
 
 
 def resolve_backend(
@@ -54,13 +56,13 @@ def resolve_backend(
     :raise MissingSchema: If URL is missing scheme (subclass of RequestException)
     """
     parsed = urllib.parse.urlparse(url)
-    backend_obj: wit_backend.Backend
+    backend_obj: Backend
 
     # static backend
     if fastly_backend is not None:
         # Check if backend exists by trying to open it
         try:
-            backend_obj = wit_backend.Backend.open(fastly_backend)
+            backend_obj = Backend.open(fastly_backend)
         except OpenError as e:
             raise RequestException(
                 f"Static backend '{fastly_backend}' does not exist"
@@ -81,7 +83,7 @@ def resolve_backend(
             )
             _dynamic_backends.add(backend_name)
         else:
-            backend_obj = wit_backend.Backend.open(backend_name)
+            backend_obj = Backend.open(backend_name)
 
     return BackendResolution(parsed, backend_obj)
 
@@ -90,8 +92,8 @@ def _register_dynamic_backend(
     backend_name: str,
     parsed_url: urllib.parse.ParseResult,
     timeout_config: TimeoutConfig,
-) -> wit_backend.Backend:
-    options = wit_backend.DynamicBackendOptions()
+) -> Backend:
+    options = DynamicBackendOptions.new()
 
     # Configure TLS for HTTPS
     if parsed_url.scheme == "https":
@@ -104,9 +106,9 @@ def _register_dynamic_backend(
     options.first_byte_timeout(timeout_config.first_byte_ms)
     options.between_bytes_timeout(timeout_config.between_bytes_ms)
 
-    # Register the backend
     try:
-        return wit_backend.register_dynamic_backend(
+        # Register the backend
+        return _register_dynamic_backend_wit(
             prefix=backend_name, target=parsed_url.netloc, options=options
         )
     except Error as e:
