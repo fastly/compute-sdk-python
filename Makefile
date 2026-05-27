@@ -92,6 +92,13 @@ clean:
 	cd crates/fastly-compute-py && cargo clean
 
 # Development tools
+check-version:
+	uv run python scripts/check_version_sync.py
+
+check-version-tag:
+	@test -n "$(TAG)" || (echo "Usage: make check-version-tag TAG=v0.1.0" && exit 1)
+	uv run python scripts/check_version_sync.py --tag $(TAG)
+
 lint: fastly_compute/runtime_patching/patches.py | $(STUBS_DIR)
 	@echo "Checking version synchronization..."
 	uv run python scripts/check_version_sync.py
@@ -156,4 +163,4 @@ help:
 	@echo ""
 	@echo "Available examples: $(EXAMPLES)"
 
-.PHONY: all serve test test-update-snapshots list-examples build-all clean lint lint-fix format format-check help
+.PHONY: all serve test test-update-snapshots list-examples build-all clean lint lint-fix format format-check check-version check-version-tag help
