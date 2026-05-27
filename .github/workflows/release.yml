@@ -21,6 +21,27 @@ permissions:
 
 jobs:
   # ---------------------------------------------------------------------------
+  # Verify that the versions in pyproject.toml and Cargo.toml match the tag
+  # (or the manually-supplied version label) before spending time on builds.
+  # For workflow_dispatch runs the version input is used; for tag pushes the
+  # tag itself is used.
+  # ---------------------------------------------------------------------------
+  check-version:
+    name: "Check version consistency"
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Verify versions match
+        run: |
+          python scripts/check_version_sync.py --tag "${{ github.event_name == 'workflow_dispatch' && inputs.version || github.ref_name }}"
+
+  # ---------------------------------------------------------------------------
   # Linux wheels — built inside manylinux_2_28 containers via maturin-action.
   # Cross-compilation for aarch64 is handled by the action's built-in container;
   # no QEMU or explicit cross-toolchain setup is needed.
@@ -28,6 +49,7 @@ jobs:
   build-linux:
     name: "Linux ${{ matrix.target }}"
     runs-on: ubuntu-24.04
+    needs: [check-version]
     strategy:
       fail-fast: false
       matrix:
@@ -75,6 +97,7 @@ jobs:
   build-macos:
     name: "macOS ${{ matrix.target }}"
     runs-on: ${{ matrix.runner }}
+    needs: [check-version]
     strategy:
       fail-fast: false
       matrix:
@@ -154,6 +177,7 @@ jobs:
   build-windows:
     name: "Windows x86_64"
     runs-on: windows-latest
+    needs: [check-version]
 
     steps:
       - uses: actions/checkout@v4
