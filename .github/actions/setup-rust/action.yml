@@ -28,5 +28,12 @@ runs:
     - name: Set up nightly Rust toolchain with rust-src
       shell: bash
       run: |
+        # Install the pinned dated nightly. componentize-py's build.rs also
+        # invokes `rustup run nightly cargo build` using the bare 'nightly'
+        # name; rustup rejects that name for `toolchain link`, so we install
+        # the dated toolchain and also install the bare nightly channel.
+        # Cargo.lock pins all crate versions regardless of compiler date.
         rustup toolchain install ${{ inputs.rust-nightly }} --component rust-src
         rustup target add wasm32-wasip1 --toolchain ${{ inputs.rust-nightly }}
+        rustup toolchain install nightly --component rust-src
+        rustup target add wasm32-wasip1 --toolchain nightly

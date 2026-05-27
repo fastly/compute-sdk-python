@@ -138,8 +138,13 @@ Understanding the build process helps when debugging issues:
 The CI workflow (`.github/workflows/python-ci.yml`) validates formatting,
 linting, and tests on every push and pull request. The release workflow
 (`.github/workflows/release.yml`) builds binary wheels for all supported
-platforms (Linux x86_64/aarch64, macOS x86_64/aarch64, Windows x86_64)
-and attaches them to a GitHub pre-release.
+platforms (Linux x86_64/aarch64, macOS x86_64/aarch64) and attaches them
+to a GitHub pre-release.
+
+Windows is not currently supported: the pinned version of `componentize-py`
+calls a POSIX `configure` script unconditionally when building CPython for
+WASI. Newer releases of `componentize-py` have resolved this; Windows support
+can be re-enabled when upgrading the dependency.
 
 ## Performing a Release
 

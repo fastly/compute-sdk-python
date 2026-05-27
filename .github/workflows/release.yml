@@ -75,13 +75,17 @@ jobs:
           target: ${{ matrix.target }}
           manylinux: ${{ matrix.manylinux }}
           rust-toolchain: ${{ env.RUST_STABLE }}
-          rustup-components: "rustfmt,clippy"
           # abi3-py312 is set in [tool.maturin] features; no -i needed.
           args: --release --locked --compatibility pypi
           before-script-linux: |
             rustup toolchain install ${{ env.RUST_NIGHTLY }} --component rust-src
             rustup target add wasm32-wasip1 --toolchain ${{ env.RUST_NIGHTLY }}
             rustup target add wasm32-unknown-unknown
+            # componentize-py's build.rs invokes `rustup run nightly cargo build`.
+            # rustup rejects 'nightly' as a custom link name, so install the
+            # bare nightly channel separately. Cargo.lock pins crate versions.
+            rustup toolchain install nightly --component rust-src
+            rustup target add wasm32-wasip1 --toolchain nightly
 
       - name: Upload wheels
         uses: actions/upload-artifact@v4
@@ -161,69 +165,15 @@ jobs:
           path: target/wheels/*.whl
           if-no-files-found: error
 
-  # Windows wheel — native build on windows-latest (x86_64).
-  # Windows support is currently untested; this is a hard failure intentionally
-  # so that any Windows-specific build issues surface immediately.
-  build-windows:
-    name: "Windows x86_64"
-    runs-on: windows-latest
-    needs: [check-version]
-
-    steps:
-      - uses: actions/checkout@v6
-
-      - name: Set up Rust toolchains
-        uses: ./.github/actions/setup-rust
-        with:
-          rust-stable: ${{ env.RUST_STABLE }}
-          rust-nightly: ${{ env.RUST_NIGHTLY }}
-
-      - name: Cache Rust sources
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~\.cargo\registry\index\
-            ~\.cargo\registry\cache\
-            ~\.cargo\git\db\
-            ~\.cargo\git\checkouts\
-          key: cargo-sources-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}-v1
-          restore-keys: |
-            cargo-sources-${{ runner.os }}-
-
-      - name: Cache Rust build artifacts
-        uses: actions/cache@v4
-        with:
-          path: target\
-          key: cargo-target-${{ runner.os }}-x86_64-pc-windows-msvc-${{ hashFiles('**/Cargo.lock') }}-${{ env.RUST_STABLE }}-v1
-          restore-keys: |
-            cargo-target-${{ runner.os }}-x86_64-pc-windows-msvc-${{ hashFiles('**/Cargo.lock') }}-
-            cargo-target-${{ runner.os }}-x86_64-pc-windows-msvc-
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-
-      - name: Build wheels
-        uses: PyO3/maturin-action@v1
-        with:
-          maturin-version: ${{ env.MATURIN_VERSION }}
-          target: x86_64-pc-windows-msvc
-          container: "off"
-          # abi3-py312 is set in [tool.maturin] features; no -i needed.
-          args: --release --locked
-
-      - name: Upload wheels
-        uses: actions/upload-artifact@v4
-        with:
-          name: wheels-windows-x86_64
-          path: target/wheels/*.whl
-          if-no-files-found: error
+  # Windows is not supported at the currently pinned componentize-py commit:
+  # its build.rs calls a POSIX configure script unconditionally when building
+  # CPython for WASI. Newer releases of componentize-py have Windows support;
+  # re-enable this job when upgrading componentize-py.
 
   # Collect all wheels into a single artifact for convenient download.
   collect-wheels:
     name: "Collect all wheels"
-    needs: [build-linux, build-macos, build-windows]
+    needs: [build-linux, build-macos]
     runs-on: ubuntu-24.04
 
     steps:
