@@ -1,0 +1,32 @@
+name: "Setup Rust toolchains"
+description: >
+  Installs the pinned stable and nightly Rust toolchains required by this
+  project. Nightly is needed solely because componentize-py's build.rs uses
+  `-Z build-std` to compile its wasm32-wasip1 runtime with PIC, which is a
+  nightly-only Cargo flag.
+
+inputs:
+  rust-stable:
+    description: "Stable toolchain version"
+    default: "1.92.0"
+  rust-nightly:
+    description: "Nightly toolchain date (e.g. nightly-2026-04-27)"
+    default: "nightly-2026-04-27"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set up stable Rust toolchain
+      uses: actions-rust-lang/setup-rust-toolchain@v1
+      with:
+        toolchain: ${{ inputs.rust-stable }}
+        target: wasm32-unknown-unknown
+        components: rustfmt,clippy
+        # Disable the built-in cargo cache — callers manage their own.
+        cache: false
+
+    - name: Set up nightly Rust toolchain with rust-src
+      shell: bash
+      run: |
+        rustup toolchain install ${{ inputs.rust-nightly }} --component rust-src
+        rustup target add wasm32-wasip1 --toolchain ${{ inputs.rust-nightly }}

@@ -9,25 +9,14 @@ on:
 
 env:
   VICEROY_TAG: v0.16.4
-  RUST_STABLE: "1.92.0"  # pinned; see comment in release.yml build-linux
 
 jobs:
   build:
     runs-on: ubuntu-24.04
     steps:
     - uses: actions/checkout@v4
-    - name: Set up Rust toolchain
-      uses: actions-rust-lang/setup-rust-toolchain@v1
-      with:
-        toolchain: ${{ env.RUST_STABLE }}
-        target: wasm32-unknown-unknown
-        components: rustfmt, clippy
-        # Disable the built-in cargo cache - we use our own below
-        cache: false
-    - name: Set up nightly Rust toolchain with rust-src
-      run: |
-        rustup toolchain install nightly --component rust-src
-        rustup target add wasm32-wasip1 --toolchain nightly
+    - name: Set up Rust toolchains
+      uses: ./.github/actions/setup-rust
     - name: Set up Python
       uses: actions/setup-python@v5
       with:

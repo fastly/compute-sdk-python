@@ -21,15 +21,16 @@ permissions:
 
 env:
   # Bump these in one place when upgrading toolchains or maturin.
+  # RUST_STABLE and RUST_NIGHTLY must also be kept in sync with the defaults
+  # in .github/actions/setup-rust/action.yml.
   PYTHON_VERSION: "3.12"
-  RUST_STABLE: "1.92.0"  # pinned; see comment in build-linux
+  RUST_STABLE: "1.92.0"
+  RUST_NIGHTLY: "nightly-2026-04-27"
   MATURIN_VERSION: "v1.13.3"
 
 jobs:
   # Verify that the versions in pyproject.toml and Cargo.toml match the tag
   # (or the manually-supplied version label) before spending time on builds.
-  # For workflow_dispatch runs the version input is used; for tag pushes the
-  # tag itself is used.
   check-version:
     name: "Check version consistency"
     runs-on: ubuntu-24.04
@@ -48,6 +49,9 @@ jobs:
   # Linux wheels are built inside manylinux_2_28 containers via maturin-action.
   # We explicitly target manylinux 2_28; auto likely would too but pinning
   # avoids unexpected wheel renames. See https://github.com/pypa/manylinux.
+  #
+  # The composite setup-rust action cannot run inside the maturin-action
+  # container, so toolchain setup is handled via before-script-linux instead.
   build-linux:
     name: "Linux ${{ matrix.target }}"
     runs-on: ubuntu-24.04
@@ -64,25 +68,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # maturin-action runs inside a manylinux container for Linux builds.
-      # We need both stable (for the extension) and nightly (for wasiless /
-      # componentize-py which requires wasm32-wasip1 + rust-src).
-      # The before-script-linux hook runs inside the container before maturin.
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
           maturin-version: ${{ env.MATURIN_VERSION }}
           target: ${{ matrix.target }}
           manylinux: ${{ matrix.manylinux }}
-          # Pinned to avoid wasm32-wasip2 semver issues with newer stable releases.
           rust-toolchain: ${{ env.RUST_STABLE }}
           rustup-components: "rustfmt,clippy"
           # abi3-py312 is set in [tool.maturin] features; no -i needed.
           args: --release --locked --compatibility pypi
-          # Install nightly + wasm targets inside the container before the build.
           before-script-linux: |
-            rustup toolchain install nightly --component rust-src
-            rustup target add wasm32-wasip1 --toolchain nightly
+            rustup toolchain install ${{ env.RUST_NIGHTLY }} --component rust-src
+            rustup target add wasm32-wasip1 --toolchain ${{ env.RUST_NIGHTLY }}
             rustup target add wasm32-unknown-unknown
 
       - name: Upload wheels
@@ -110,18 +108,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Rust toolchain
-        uses: actions-rust-lang/setup-rust-toolchain@v1
+      - name: Set up Rust toolchains
+        uses: ./.github/actions/setup-rust
         with:
-          toolchain: ${{ env.RUST_STABLE }}
-          target: wasm32-unknown-unknown
-          components: rustfmt,clippy
-          cache: false
-
-      - name: Set up nightly Rust toolchain with rust-src
-        run: |
-          rustup toolchain install nightly --component rust-src
-          rustup target add wasm32-wasip1 --toolchain nightly
+          rust-stable: ${{ env.RUST_STABLE }}
+          rust-nightly: ${{ env.RUST_NIGHTLY }}
 
       # Cache Rust registry/git sources — keyed on Cargo.lock only so they
       # are shared across runs with the same lockfile.
@@ -181,18 +172,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Rust toolchain
-        uses: actions-rust-lang/setup-rust-toolchain@v1
+      - name: Set up Rust toolchains
+        uses: ./.github/actions/setup-rust
         with:
-          toolchain: ${{ env.RUST_STABLE }}
-          target: wasm32-unknown-unknown
-          components: rustfmt,clippy
-          cache: false
-
-      - name: Set up nightly Rust toolchain with rust-src
-        run: |
-          rustup toolchain install nightly --component rust-src
-          rustup target add wasm32-wasip1 --toolchain nightly
+          rust-stable: ${{ env.RUST_STABLE }}
+          rust-nightly: ${{ env.RUST_NIGHTLY }}
 
       - name: Cache Rust sources
         uses: actions/cache@v4
