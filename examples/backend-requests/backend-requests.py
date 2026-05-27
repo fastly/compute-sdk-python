@@ -7,7 +7,7 @@ from typing import Any
 
 from bottle import Bottle, request
 
-import fastly_compute.requests as requests
+from fastly_compute import requests
 from fastly_compute.wsgi import WsgiHttpIncoming
 
 app = Bottle()

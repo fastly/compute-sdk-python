@@ -15,7 +15,7 @@ The build process requires several tools to be installed:
 
 2. **uv** - Python package manager
 3. **Rust toolchain** (stable)
-4. **wasm32-unknown-unknown target** (required by build.rs)
+4. **wasm32-unknown-unknown Rust target** (required by build.rs)
    ```bash
    rustup target add wasm32-unknown-unknown
    ```
@@ -23,82 +23,47 @@ The build process requires several tools to be installed:
 5. **wasm-tools** (required by build.rs for WIT merging and componentization)
 6. **Viceroy** - Fastly's local testing server
 
-## Getting Started
-
-1. **Clone the repository**
-   ```bash
-   git clone <repo-url>
-   cd compute-sdk-python/build-tool-impl
-   ```
-
-2. **Initialize submodules** (if applicable)
-   ```bash
-   git submodule update --init --recursive
-   ```
-
-3. **Install Python dependencies**
-   ```bash
-   uv sync --extra dev --extra test
-   ```
-
-4. **Verify setup**
-   ```bash
-   make help  # Should show available commands
-   ```
-
 ## Development Workflow
 
-### Building Examples
+The `fastly-compute-py` build tool is written in Rust. By default, the Makefile uses `cargo run` (DEV_MODE=1), which means:
+- **No installation needed** for testing or use against examples; the tool runs directly via cargo
+- **Always up-to-date.** Changes to Rust code are automatically picked up.
+- **Fast incremental builds.** Cargo handles recompilation efficiently.
 
-The default development workflow uses `cargo run` which automatically picks up Rust changes:
-
-```bash
-# Build an example
-make build/bottle-app.composed.wasm
-
-# Build all examples
-make
-
-# Serve an example for testing
-make serve EXAMPLE=bottle-app
-```
+To work on the build tool, edit the Rust code in `crates/fastly-compute-py/`, then run `make` to build it.
 
 ### Making Changes to the Build Tool
 
-The build tool is in `crates/fastly-compute-py/`. When you make changes:
+The build tool is written in Rust and lives in `crates/fastly-compute-py/`. After you make changes, the Makefile automatically rebuilds via `cargo run` when you build an example service, like this:
 
 ```bash
-# The build system automatically rebuilds via `cargo run`
 make build/bottle-app.composed.wasm
+```
 
-# Or test the installed entry point
+You can also test the installed entry point, which lets Python code call the build tool:
+
+```bash
 make DEV_MODE=0 build/bottle-app.composed.wasm
 ```
 
 ### Code Quality
 
+These will spruce up spelling in both Python and Rust code:
+
 ```bash
-# Format code (Python + Rust)
-make format
-
-# Check formatting
-make format-check
-
-# Run linters (Python + Rust)
-make lint
-
-# Auto-fix linting issues
-make lint-fix
+make format          # Format code
+make format-check    # Check formatting
+make lint            # Run linters
+make lint-fix        # Auto-fix linting issues
 ```
 
 ### Testing
 
-```bash
-# Run all tests
-make test
+The SDK has comprehensive tests, with integration tests running via Viceroy:
 
-# Update snapshot tests
-make test-update-snapshots
+```bash
+make test                     # Run all tests
+make test-update-snapshots    # Update snapshot tests
 ```
 
 ## Project Structure
@@ -109,7 +74,7 @@ make test-update-snapshots
 │   ├── fastly-compute-py/   # Rust build tool
 │   │   ├── build.rs         # Build script (requires wasm-tools)
 │   │   └── src/
-│   └── wasiless/            # WASM component for WASI removal
+│   └── wasiless/            # Wasm component for WASI stubbing
 ├── examples/                 # Example applications
 │   ├── bottle-app/
 │   ├── flask-app/
@@ -123,15 +88,15 @@ make test-update-snapshots
 
 Understanding the build process helps when debugging issues:
 
-1. **build.rs runs** (during Rust compilation):
+1. **build.rs** (during Rust compilation)...
    - Calls `wasm-tools component wit` to merge WIT files
    - Builds `wasiless` crate for wasm32-unknown-unknown
    - Calls `wasm-tools component new` to componentize wasiless
 
-2. **fastly-compute-py runs**:
+2. **fastly-compute-py**...
    - Resolves Python dependencies from virtualenv
-   - Calls `componentize-py` to build Python WASM component
-   - Composes with wasiless using WAC
+   - Calls `componentize-py` to build Python Wasm component
+   - Composes with wasiless using `wac`
 
 ## Continuous Integration
 
