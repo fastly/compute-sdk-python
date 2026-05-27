@@ -29,23 +29,9 @@ Here's how to write your own Python WSGI app and run it on Fastly's edge network
 8. `fastly compute build`
 9. `fastly compute deploy`
 
-## Run Our Examples on Your Own Machine
+## Run Some Examples on Your Own Machine
 
-### Hello World in Flask
-```bash
-make serve                       # Serve default example (Bottle)
-make serve EXAMPLE=flask-app     # Serve Flask example
-make serve EXAMPLE=game-of-life  # Serve Conway's Game of Life example
-```
-
-Visit http://127.0.0.1:7676/hello/world or http://127.0.0.1:7676/info to see them work.
-
-### Other Examples
-
-```bash
-make list-examples            # List all examples
-make build-all                # Build all examples
-```  
+We ship [a few simple examples](examples/README.md) you can run locally to get a taste of what's possible.
 
 ## Status
 

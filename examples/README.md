@@ -1,80 +1,49 @@
 # Fastly Compute Python Examples
 
-This directory contains example applications demonstrating different approaches to building Fastly Compute services with Python.
+This directory contains small examples of Fastly Compute services built with Python.
 
 ## Available Examples
 
-### `bottle-app.py`
+### `bottle-app`
 - **Framework**: Bottle (lightweight WSGI framework)
-- **Shows**: Basic routing, JSON responses, WIT API integration
+- **Demonstrates**: Basic routing, JSON responses, WIT API integration
 - **Use Case**: Simple services, proof-of-concept applications
 
-### `flask-app.py`
+### `flask-app`
 - **Framework**: Flask (popular Python web framework)
-- **Shows**: Flask routing, request handling, error handling
+- **Demonstrates**: Flask routing, request handling, error handling
 - **Use Case**: More complex applications, familiar Flask patterns
 
-### `game-of-life.py`
-A server-side implementation of Conway’s Game of Life, with a server round trip per frame.
-
-- **Shows**: Raw requests-per-second performance; Fastly's session-reuse
+### `game-of-life`
+- **Shows**: A server-side implementation of Conway’s Game of Life, with a server round trip per frame.
+- **Demonstrates**: Raw requests-per-second performance; Fastly's session-reuse
 feature, which saves spin-up time in busy services
+
+### `backend-requests`
+This is actually a piece of the test harness; please ignore it.
 
 ## Building and Running Examples
 
-### Build a Specific Example
+Before you use `make`, please [install the prerequisites](../CONTRIBUTING.md#prerequisites).
+
+### Hello World in Flask or Bottle
 ```bash
-make build/flask-app.wasm     # Build Flask example
-make build/bottle-app.wasm    # Build Bottle example
-make build/game-of-life.wasm  # Build Conway's Game of Life example
+make serve                       # Serve default example (Bottle)
+make serve EXAMPLE=flask-app     # Serve Flask example
 ```
 
-### Serve an Example
+Visit http://127.0.0.1:7676/hello/world or http://127.0.0.1:7676/info.
+
+### Conway's Game of Life
 ```bash
-make serve                    # Serve default (bottle-app)
-make serve EXAMPLE=flask-app  # Serve Flask example
+make serve EXAMPLE=game-of-life  # Serve Conway's Game of Life example
 ```
 
-### Build All Examples
-```bash
-make build-all
-```
+Visit http://127.0.0.1:7676/.
 
-### List Available Examples
-```bash
-make list-examples
-```
-
-## Testing Examples
-
-The integration tests use the default example (bottle-app). To test other examples:
+### Other Invocations
 
 ```bash
-# Update the test to use a different example
-EXAMPLE=flask-app make test
-```
-
-## Creating New Examples
-
-1. Create a new `.py` file in this directory
-2. Implement your WSGI application
-3. Include the `serve_wsgi_request` function and `HttpIncoming` class
-4. Build with `make build/your-example.wasm`
-5. Test with `make serve EXAMPLE=your-example`
-
-## Framework Requirements
-
-All examples must:
-- Be WSGI-compatible applications
-- Include the WIT integration boilerplate (`serve_wsgi_request`, `HttpIncoming`)
-- Handle the standard test endpoints for integration tests:
-  - `/hello/<name>` - Returns "Hello {name}!"
-  - `/info` - Returns JSON with service info and WIT data
-  - `/error` - Raises an exception for error testing
-
-## Dependencies
-
-Examples may use different web frameworks, but they all rely on:
-- `wit_world` - Generated WIT bindings
-- `componentize-py` - Python to WebAssembly compilation
-- Framework-specific dependencies (bottle, flask, etc.)
+make list-examples            # List all examples
+make build-all                # Build all examples
+```  

@@ -20,8 +20,8 @@ The build process requires several tools to be installed:
    rustup target add wasm32-unknown-unknown
    ```
 
-5. **wasm-tools** (required by build.rs for WIT merging and componentization)
-6. **Viceroy** - Fastly's local testing server
+5. **[wasm-tools](https://github.com/bytecodealliance/wasm-tools)** (required by build.rs for WIT merging and componentization)
+6. **[Viceroy](https://github.com/fastly/Viceroy/releases)** - Fastly's local testing server
 
 ## Development Workflow
 
