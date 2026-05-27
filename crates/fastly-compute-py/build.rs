@@ -79,6 +79,12 @@ fn build_wasiless_wasm(root_dir: impl AsRef<Path>, out_dir: impl AsRef<Path>) ->
         .arg("--manifest-path")
         .arg(&manifest_path)
         .env("CARGO_TARGET_DIR", &target_dir)
+        // Clear host-specific rustflags injected by maturin or other build
+        // wrappers (e.g. -Csplit-debuginfo=packed).  These are valid for the
+        // host target but are not supported by wasm32-unknown-unknown and
+        // will cause the cross-compilation to fail.
+        .env_remove("CARGO_ENCODED_RUSTFLAGS")
+        .env_remove("RUSTFLAGS")
         .status()
         .context("Failed to run cargo build for wasiless")?;
 

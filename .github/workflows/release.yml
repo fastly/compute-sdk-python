@@ -1,0 +1,272 @@
+name: Release
+
+# Triggers:
+#   - Push a version tag (e.g. git tag v0.1.0 && git push --tags) for a real release.
+#   - workflow_dispatch for ad-hoc test builds without creating a tag.
+#     Wheels are uploaded as GitHub Actions artifacts and no GitHub Release is created.
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version label for artifacts (e.g. v0.1.0-test)"
+        required: true
+        default: "v0.0.0-dev"
+
+# Minimal permissions by default; create-github-release job adds write where needed.
+permissions:
+  contents: read
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Linux wheels — built inside manylinux_2_28 containers via maturin-action.
+  # Cross-compilation for aarch64 is handled by the action's built-in container;
+  # no QEMU or explicit cross-toolchain setup is needed.
+  # ---------------------------------------------------------------------------
+  build-linux:
+    name: "Linux ${{ matrix.target }}"
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: x86_64-unknown-linux-gnu
+            manylinux: "2_28"
+          - target: aarch64-unknown-linux-gnu
+            manylinux: "2_28"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # maturin-action runs inside a manylinux container for Linux builds.
+      # We need both stable (for the extension) and nightly (for wasiless /
+      # componentize-py which requires wasm32-wasip1 + rust-src).
+      # The before-script-linux hook runs inside the container before maturin.
+      - name: Build wheels
+        uses: PyO3/maturin-action@v1
+        with:
+          maturin-version: "v1.11.5"
+          target: ${{ matrix.target }}
+          manylinux: ${{ matrix.manylinux }}
+          rust-toolchain: "1.92.0"
+          rustup-components: "rustfmt,clippy"
+          args: --release --locked -i python3.12 --compatibility pypi
+          # Install nightly + wasm targets inside the container before the build.
+          before-script-linux: |
+            rustup toolchain install nightly --component rust-src
+            rustup target add wasm32-wasip1 --toolchain nightly
+            rustup target add wasm32-unknown-unknown
+
+      - name: Upload wheels
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheels-linux-${{ matrix.target }}
+          path: target/wheels/*.whl
+          if-no-files-found: error
+
+  # ---------------------------------------------------------------------------
+  # macOS wheels — native builds on GitHub-hosted runners.
+  # macos-14 is Apple Silicon (aarch64); macos-13 is Intel (x86_64).
+  # Using native runners avoids cross-compilation complexity entirely.
+  # ---------------------------------------------------------------------------
+  build-macos:
+    name: "macOS ${{ matrix.target }}"
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: x86_64-apple-darwin
+            runner: macos-13
+          - target: aarch64-apple-darwin
+            runner: macos-14
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Rust toolchain
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: "1.92.0"
+          target: wasm32-unknown-unknown
+          components: rustfmt,clippy
+          cache: false
+
+      - name: Set up nightly Rust toolchain with rust-src
+        run: |
+          rustup toolchain install nightly --component rust-src
+          rustup target add wasm32-wasip1 --toolchain nightly
+
+      # Cache Rust registry/git sources — keyed on Cargo.lock only so they
+      # are shared across runs with the same lockfile.
+      - name: Cache Rust sources
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            ~/.cargo/git/checkouts/
+          key: cargo-sources-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}-v1
+          restore-keys: |
+            cargo-sources-${{ runner.os }}-
+
+      # Build artifacts keyed on Cargo.lock + toolchain to avoid incompatible
+      # artifact reuse across toolchain upgrades.
+      - name: Cache Rust build artifacts
+        uses: actions/cache@v4
+        with:
+          path: target/
+          key: cargo-target-${{ runner.os }}-${{ matrix.target }}-${{ hashFiles('**/Cargo.lock') }}-1.92.0-v1
+          restore-keys: |
+            cargo-target-${{ runner.os }}-${{ matrix.target }}-${{ hashFiles('**/Cargo.lock') }}-
+            cargo-target-${{ runner.os }}-${{ matrix.target }}-
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Build wheels
+        uses: PyO3/maturin-action@v1
+        with:
+          maturin-version: "v1.11.5"
+          target: ${{ matrix.target }}
+          # container: off is implied for non-Linux but set explicitly for clarity.
+          container: "off"
+          args: --release --locked -i python3.12
+
+      - name: Upload wheels
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheels-macos-${{ matrix.target }}
+          path: target/wheels/*.whl
+          if-no-files-found: error
+
+  # ---------------------------------------------------------------------------
+  # Windows wheel — native build on windows-latest (x86_64).
+  # Windows support is currently untested; this is a hard failure intentionally
+  # so that any Windows-specific build issues surface immediately.
+  # ---------------------------------------------------------------------------
+  build-windows:
+    name: "Windows x86_64"
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Rust toolchain
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: "1.92.0"
+          target: wasm32-unknown-unknown
+          components: rustfmt,clippy
+          cache: false
+
+      - name: Set up nightly Rust toolchain with rust-src
+        run: |
+          rustup toolchain install nightly --component rust-src
+          rustup target add wasm32-wasip1 --toolchain nightly
+
+      - name: Cache Rust sources
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~\.cargo\registry\index\
+            ~\.cargo\registry\cache\
+            ~\.cargo\git\db\
+            ~\.cargo\git\checkouts\
+          key: cargo-sources-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}-v1
+          restore-keys: |
+            cargo-sources-${{ runner.os }}-
+
+      - name: Cache Rust build artifacts
+        uses: actions/cache@v4
+        with:
+          path: target\
+          key: cargo-target-${{ runner.os }}-x86_64-unknown-windows-msvc-${{ hashFiles('**/Cargo.lock') }}-1.92.0-v1
+          restore-keys: |
+            cargo-target-${{ runner.os }}-x86_64-unknown-windows-msvc-${{ hashFiles('**/Cargo.lock') }}-
+            cargo-target-${{ runner.os }}-x86_64-unknown-windows-msvc-
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Build wheels
+        uses: PyO3/maturin-action@v1
+        with:
+          maturin-version: "v1.11.5"
+          target: x86_64-pc-windows-msvc
+          container: "off"
+          args: --release --locked -i python3.12
+
+      - name: Upload wheels
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheels-windows-x86_64
+          path: target/wheels/*.whl
+          if-no-files-found: error
+
+  # ---------------------------------------------------------------------------
+  # Collect all wheels into a single artifact for convenient download.
+  # ---------------------------------------------------------------------------
+  collect-wheels:
+    name: "Collect all wheels"
+    needs: [build-linux, build-macos, build-windows]
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Download all wheel artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: wheels-*
+          path: dist/
+          merge-multiple: true
+
+      - name: List collected wheels
+        run: ls -lh dist/
+
+      - name: Upload combined artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: all-wheels
+          path: dist/*.whl
+          if-no-files-found: error
+
+  # ---------------------------------------------------------------------------
+  # Create a GitHub Release and attach all wheels.
+  # Only runs on tag pushes — workflow_dispatch builds stop at collect-wheels,
+  # leaving wheels as Actions artifacts for download and local testing.
+  # ---------------------------------------------------------------------------
+  create-github-release:
+    name: "Create GitHub Release"
+    needs: [collect-wheels]
+    runs-on: ubuntu-24.04
+    # Only create a release for tag-triggered runs.
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: write  # Required to create releases and upload assets.
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all wheels
+        uses: actions/download-artifact@v4
+        with:
+          name: all-wheels
+          path: dist/
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="${{ github.ref_name }}"
+          gh release create "$TAG" dist/*.whl \
+            --title "$TAG" \
+            --prerelease \
+            --generate-notes \
+            --notes-start-tag "$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo '')"
