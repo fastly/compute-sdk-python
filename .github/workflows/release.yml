@@ -19,13 +19,17 @@ on:
 permissions:
   contents: read
 
+env:
+  # Bump these in one place when upgrading toolchains or maturin.
+  PYTHON_VERSION: "3.12"
+  RUST_STABLE: "1.92.0"  # pinned; see comment in build-linux
+  MATURIN_VERSION: "v1.13.3"
+
 jobs:
-  # ---------------------------------------------------------------------------
   # Verify that the versions in pyproject.toml and Cargo.toml match the tag
   # (or the manually-supplied version label) before spending time on builds.
   # For workflow_dispatch runs the version input is used; for tag pushes the
   # tag itself is used.
-  # ---------------------------------------------------------------------------
   check-version:
     name: "Check version consistency"
     runs-on: ubuntu-24.04
@@ -35,17 +39,15 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Verify versions match
         run: |
           python scripts/check_version_sync.py --tag "${{ github.event_name == 'workflow_dispatch' && inputs.version || github.ref_name }}"
 
-  # ---------------------------------------------------------------------------
-  # Linux wheels — built inside manylinux_2_28 containers via maturin-action.
-  # Cross-compilation for aarch64 is handled by the action's built-in container;
-  # no QEMU or explicit cross-toolchain setup is needed.
-  # ---------------------------------------------------------------------------
+  # Linux wheels are built inside manylinux_2_28 containers via maturin-action.
+  # We explicitly target manylinux 2_28; auto likely would too but pinning
+  # avoids unexpected wheel renames. See https://github.com/pypa/manylinux.
   build-linux:
     name: "Linux ${{ matrix.target }}"
     runs-on: ubuntu-24.04
@@ -69,10 +71,11 @@ jobs:
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
-          maturin-version: "v1.11.5"
+          maturin-version: ${{ env.MATURIN_VERSION }}
           target: ${{ matrix.target }}
           manylinux: ${{ matrix.manylinux }}
-          rust-toolchain: "1.92.0"
+          # Pinned to avoid wasm32-wasip2 semver issues with newer stable releases.
+          rust-toolchain: ${{ env.RUST_STABLE }}
           rustup-components: "rustfmt,clippy"
           # abi3-py312 is set in [tool.maturin] features; no -i needed.
           args: --release --locked --compatibility pypi
@@ -89,11 +92,8 @@ jobs:
           path: target/wheels/*.whl
           if-no-files-found: error
 
-  # ---------------------------------------------------------------------------
   # macOS wheels — native builds on GitHub-hosted runners.
   # macos-14 is Apple Silicon (aarch64); macos-13 is Intel (x86_64).
-  # Using native runners avoids cross-compilation complexity entirely.
-  # ---------------------------------------------------------------------------
   build-macos:
     name: "macOS ${{ matrix.target }}"
     runs-on: ${{ matrix.runner }}
@@ -113,7 +113,7 @@ jobs:
       - name: Set up Rust toolchain
         uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
-          toolchain: "1.92.0"
+          toolchain: ${{ env.RUST_STABLE }}
           target: wasm32-unknown-unknown
           components: rustfmt,clippy
           cache: false
@@ -143,7 +143,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: target/
-          key: cargo-target-${{ runner.os }}-${{ matrix.target }}-${{ hashFiles('**/Cargo.lock') }}-1.92.0-v1
+          key: cargo-target-${{ runner.os }}-${{ matrix.target }}-${{ hashFiles('**/Cargo.lock') }}-${{ env.RUST_STABLE }}-v1
           restore-keys: |
             cargo-target-${{ runner.os }}-${{ matrix.target }}-${{ hashFiles('**/Cargo.lock') }}-
             cargo-target-${{ runner.os }}-${{ matrix.target }}-
@@ -151,16 +151,17 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
-          maturin-version: "v1.11.5"
+          maturin-version: ${{ env.MATURIN_VERSION }}
           target: ${{ matrix.target }}
           # container: off is implied for non-Linux but set explicitly for clarity.
           container: "off"
-          args: --release --locked -i python3.12
+          # abi3-py312 is set in [tool.maturin] features; no -i needed.
+          args: --release --locked
 
       - name: Upload wheels
         uses: actions/upload-artifact@v4
@@ -169,11 +170,9 @@ jobs:
           path: target/wheels/*.whl
           if-no-files-found: error
 
-  # ---------------------------------------------------------------------------
   # Windows wheel — native build on windows-latest (x86_64).
   # Windows support is currently untested; this is a hard failure intentionally
   # so that any Windows-specific build issues surface immediately.
-  # ---------------------------------------------------------------------------
   build-windows:
     name: "Windows x86_64"
     runs-on: windows-latest
@@ -185,7 +184,7 @@ jobs:
       - name: Set up Rust toolchain
         uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
-          toolchain: "1.92.0"
+          toolchain: ${{ env.RUST_STABLE }}
           target: wasm32-unknown-unknown
           components: rustfmt,clippy
           cache: false
@@ -211,23 +210,24 @@ jobs:
         uses: actions/cache@v4
         with:
           path: target\
-          key: cargo-target-${{ runner.os }}-x86_64-unknown-windows-msvc-${{ hashFiles('**/Cargo.lock') }}-1.92.0-v1
+          key: cargo-target-${{ runner.os }}-x86_64-pc-windows-msvc-${{ hashFiles('**/Cargo.lock') }}-${{ env.RUST_STABLE }}-v1
           restore-keys: |
-            cargo-target-${{ runner.os }}-x86_64-unknown-windows-msvc-${{ hashFiles('**/Cargo.lock') }}-
-            cargo-target-${{ runner.os }}-x86_64-unknown-windows-msvc-
+            cargo-target-${{ runner.os }}-x86_64-pc-windows-msvc-${{ hashFiles('**/Cargo.lock') }}-
+            cargo-target-${{ runner.os }}-x86_64-pc-windows-msvc-
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
-          maturin-version: "v1.11.5"
+          maturin-version: ${{ env.MATURIN_VERSION }}
           target: x86_64-pc-windows-msvc
           container: "off"
-          args: --release --locked -i python3.12
+          # abi3-py312 is set in [tool.maturin] features; no -i needed.
+          args: --release --locked
 
       - name: Upload wheels
         uses: actions/upload-artifact@v4
@@ -236,9 +236,7 @@ jobs:
           path: target/wheels/*.whl
           if-no-files-found: error
 
-  # ---------------------------------------------------------------------------
   # Collect all wheels into a single artifact for convenient download.
-  # ---------------------------------------------------------------------------
   collect-wheels:
     name: "Collect all wheels"
     needs: [build-linux, build-macos, build-windows]
@@ -262,16 +260,13 @@ jobs:
           path: dist/*.whl
           if-no-files-found: error
 
-  # ---------------------------------------------------------------------------
   # Create a GitHub Release and attach all wheels.
   # Only runs on tag pushes — workflow_dispatch builds stop at collect-wheels,
   # leaving wheels as Actions artifacts for download and local testing.
-  # ---------------------------------------------------------------------------
   create-github-release:
     name: "Create GitHub Release"
     needs: [collect-wheels]
     runs-on: ubuntu-24.04
-    # Only create a release for tag-triggered runs.
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
     permissions:
       contents: write  # Required to create releases and upload assets.
