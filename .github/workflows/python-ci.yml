@@ -7,6 +7,12 @@ on:
   pull_request:
   workflow_dispatch:  # allow manual triggering
 
+# Cancel in-progress runs for the same branch/PR when a new push arrives.
+# Omitted from release.yml — you never want to cancel an in-progress release.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   VICEROY_TAG: v0.16.4
 
@@ -24,7 +30,7 @@ jobs:
     - name: Install uv
       run: pip install uv
 
-    # Cache cargo binaries (viceroy, wasm-tools, etc.)
+    # Cache cargo binaries (viceroy, wasm-tools, wac-cli).
     - name: Cache cargo binaries
       id: cache-cargo-bins
       uses: actions/cache@v4

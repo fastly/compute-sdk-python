@@ -244,12 +244,39 @@ jobs:
           path: dist/*.whl
           if-no-files-found: error
 
+  # Generate SHA256 checksums for all wheels and attach them to the release.
+  # pip and uv can verify wheels against published checksums.
+  generate-checksums:
+    name: "Generate checksums"
+    needs: [collect-wheels]
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Download all wheels
+        uses: actions/download-artifact@v4
+        with:
+          name: all-wheels
+          path: dist/
+
+      - name: Generate SHA256 checksums
+        run: |
+          cd dist
+          sha256sum *.whl > checksums.txt
+          cat checksums.txt
+
+      - name: Upload checksums artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: checksums
+          path: dist/checksums.txt
+          if-no-files-found: error
+
   # Create a GitHub Release and attach all wheels.
   # Only runs on tag pushes — workflow_dispatch builds stop at collect-wheels,
   # leaving wheels as Actions artifacts for download and local testing.
   create-github-release:
     name: "Create GitHub Release"
-    needs: [collect-wheels]
+    needs: [generate-checksums]
     runs-on: ubuntu-24.04
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
     permissions:
@@ -264,12 +291,18 @@ jobs:
           name: all-wheels
           path: dist/
 
+      - name: Download checksums
+        uses: actions/download-artifact@v4
+        with:
+          name: checksums
+          path: dist/
+
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           TAG="${{ github.ref_name }}"
-          gh release create "$TAG" dist/*.whl \
+          gh release create "$TAG" dist/*.whl dist/checksums.txt \
             --title "$TAG" \
             --prerelease \
             --generate-notes \
