@@ -15,7 +15,7 @@ Here's how to write your own Python WSGI app and run it on Fastly's edge network
 1. Install the package that provides the Fastly Python build tool and gives you access to the Fastly API:
 
    `pip install fastly-compute`
-2. Make a project shaped like [our Flask example](https://github.com/fastly/compute-sdk-python/tree/main/examples/flask-app). You may find it easiest to clone the [repository](https://github.com/fastly/compute-sdk-python), copy the `examples/flask-app` folder, and modify it. If you change the name of the top-level `.py` file, be sure to also update the entrypoint (`entry = "your_top_level_module_name"`) in `pyproject.toml`.
+2. Make a project shaped like [our Flask example](/examples/flask-app). You may find it easiest to clone the [repository](/), copy the `examples/flask-app` folder, and modify it. If you change the name of the top-level `.py` file, be sure to also update the entrypoint (`entry = "your_top_level_module_name"`) in `pyproject.toml`.
 3. `cd your-project`
 4. Install the [Fastly CLI](https://www.fastly.com/documentation/reference/tools/cli/) if you don't already have it.
 5. `fastly compute init`
@@ -64,10 +64,7 @@ Currently supports...
   they will fail at runtime. (If you have third-party code that uses
   non-top-level imports, you can ensure they work by importing them at the top
   level in your own code.)
-- Any native Python modules need to be compiled against WASI. Few are at the
-  moment. However, [Joel has done
-  some](https://github.com/dicej/wasi-wheels/releases/), and the changes needed
-  aren't extensive.
+- Third-party C extension modules are not yet supported.
 - Our in-Python API may change backward-incompatibly during this beta period.
 
 ## Contributing
