@@ -52,7 +52,8 @@ jobs:
           manylinux: ${{ matrix.manylinux }}
           rust-toolchain: "1.92.0"
           rustup-components: "rustfmt,clippy"
-          args: --release --locked -i python3.12 --compatibility pypi
+          # abi3-py312 is set in [tool.maturin] features; no -i needed.
+          args: --release --locked --compatibility pypi
           # Install nightly + wasm targets inside the container before the build.
           before-script-linux: |
             rustup toolchain install nightly --component rust-src
