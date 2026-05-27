@@ -35,7 +35,7 @@ jobs:
     name: "Check version consistency"
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -66,7 +66,7 @@ jobs:
             manylinux: "2_28"
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Build wheels
         uses: PyO3/maturin-action@v1
@@ -106,7 +106,7 @@ jobs:
             runner: macos-14
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Set up Rust toolchains
         uses: ./.github/actions/setup-rust
@@ -170,7 +170,7 @@ jobs:
     needs: [check-version]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Set up Rust toolchains
         uses: ./.github/actions/setup-rust
@@ -283,7 +283,7 @@ jobs:
       contents: write  # Required to create releases and upload assets.
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Download all wheels
         uses: actions/download-artifact@v4
