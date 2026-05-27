@@ -27,6 +27,7 @@ env:
   RUST_STABLE: "1.92.0"
   RUST_NIGHTLY: "nightly-2026-04-27"
   MATURIN_VERSION: "v1.13.3"
+  WASM_TOOLS_VERSION: "1.250.0"
 
 jobs:
   # Verify that the versions in pyproject.toml and Cargo.toml match the tag
@@ -86,6 +87,8 @@ jobs:
             # bare nightly channel separately. Cargo.lock pins crate versions.
             rustup toolchain install nightly --component rust-src
             rustup target add wasm32-wasip1 --toolchain nightly
+            # build.rs calls wasm-tools directly; install it inside the container.
+            cargo install wasm-tools --version ${{ env.WASM_TOOLS_VERSION }} --locked
 
       - name: Upload wheels
         uses: actions/upload-artifact@v4
