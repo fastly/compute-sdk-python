@@ -111,12 +111,10 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # macos-13 (x86_64) runners have been queueing indefinitely; disabled
-          # for now. Re-enable once runner availability improves.
-          # - target: x86_64-apple-darwin
-          #   runner: macos-13
+          - target: x86_64-apple-darwin
+            runner: macos-26-intel
           - target: aarch64-apple-darwin
-            runner: macos-14
+            runner: macos-26
 
     steps:
       - uses: actions/checkout@v6
