@@ -72,9 +72,15 @@ def main() -> int:
     if pyproject_version == cargo_version:
         print(f"✓ pyproject.toml and Cargo.toml are synchronized: {pyproject_version}")
     else:
-        print("✗ Version mismatch between pyproject.toml and Cargo.toml:", file=sys.stderr)
-        print(f"  pyproject.toml:                    {pyproject_version}", file=sys.stderr)
-        print(f"  crates/fastly-compute-py/Cargo.toml: {cargo_version}", file=sys.stderr)
+        print(
+            "✗ Version mismatch between pyproject.toml and Cargo.toml:", file=sys.stderr
+        )
+        print(
+            f"  pyproject.toml:                    {pyproject_version}", file=sys.stderr
+        )
+        print(
+            f"  crates/fastly-compute-py/Cargo.toml: {cargo_version}", file=sys.stderr
+        )
         print("\nUpdate both files to use the same version.", file=sys.stderr)
         ok = False
 
@@ -85,10 +91,18 @@ def main() -> int:
         else:
             print(f"✗ In-tree versions do not match tag '{args.tag}':", file=sys.stderr)
             if pyproject_version != expected:
-                print(f"  pyproject.toml:                    {pyproject_version} (expected {expected})", file=sys.stderr)
+                print(
+                    f"  pyproject.toml:                    {pyproject_version} (expected {expected})",
+                    file=sys.stderr,
+                )
             if cargo_version != expected:
-                print(f"  crates/fastly-compute-py/Cargo.toml: {cargo_version} (expected {expected})", file=sys.stderr)
-            print("\nBump both files to match the tag before releasing.", file=sys.stderr)
+                print(
+                    f"  crates/fastly-compute-py/Cargo.toml: {cargo_version} (expected {expected})",
+                    file=sys.stderr,
+                )
+            print(
+                "\nBump both files to match the tag before releasing.", file=sys.stderr
+            )
             ok = False
 
     return 0 if ok else 1
