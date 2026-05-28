@@ -15,6 +15,7 @@ concurrency:
 
 env:
   VICEROY_TAG: v0.16.4
+  WASM_TOOLS_VERSION: "1.250.0"
 
 jobs:
   build:
@@ -30,14 +31,20 @@ jobs:
     - name: Install uv
       run: pip install uv
 
-    # Cache cargo binaries (viceroy).
+    # Cache cargo binaries (viceroy, wasm-tools).
+    # wasm-tools is required by scripts/generate_patches, which runs as part
+    # of make lint to verify patches.py is up to date with the WIT sources.
     - name: Cache cargo binaries
       id: cache-cargo-bins
       uses: actions/cache@v4
       with:
-        key: cargo-bins-${{ runner.os }}-${{ env.VICEROY_TAG }}
+        key: cargo-bins-${{ runner.os }}-${{ env.VICEROY_TAG }}-wasm-tools-${{ env.WASM_TOOLS_VERSION }}
         path: |
           ~/.cargo/bin/viceroy*
+          ~/.cargo/bin/wasm-tools*
+    - name: Install wasm-tools
+      if: steps.cache-cargo-bins.outputs.cache-hit != 'true'
+      run: cargo install wasm-tools --version ${{ env.WASM_TOOLS_VERSION }} --locked
     - name: Install viceroy
       if: steps.cache-cargo-bins.outputs.cache-hit != 'true'
       run: cargo install --git https://github.com/fastly/Viceroy.git --tag "$VICEROY_TAG" viceroy
