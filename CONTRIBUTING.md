@@ -150,11 +150,7 @@ The version must be kept in sync across two files:
 - `pyproject.toml` — `[project] version`
 - `crates/fastly-compute-py/Cargo.toml` — `[package] version`
 
-`make lint` checks these are in sync. To also validate against a specific tag:
-
-```bash
-make check-version-tag TAG=v0.2.0
-```
+`make lint` checks these are in sync.
 
 ### Steps
 
@@ -162,7 +158,7 @@ make check-version-tag TAG=v0.2.0
 
 2. Verify locally:
    ```bash
-   make check-version-tag TAG=v0.2.0
+   make lint
    ```
 
 3. PR the changes and land into main.
@@ -174,7 +170,7 @@ make check-version-tag TAG=v0.2.0
    ```
    
 4. The release workflow runs automatically. Jobs: `check-version` (fails fast
-   on any mismatch) → parallel wheel builds → `collect-wheels` →
+   on any mismatch) → parallel wheel + sdist builds → `collect-artifacts` →
    `create-github-release`.
 
 5. (Pending) If the release is built successfully, it will make its way to PyPI
