@@ -3,6 +3,8 @@ use std::env;
 use std::fs;
 use std::path::Path;
 use std::path::PathBuf;
+use wit_component::WitPrinter;
+use wit_parser::Resolve;
 
 fn main() -> Result<()> {
     println!("cargo:rerun-if-changed=../../wit");
@@ -44,21 +46,31 @@ fn main() -> Result<()> {
 }
 
 fn generate_merged_wit(source_wit_dir: &PathBuf, out_dir: impl AsRef<Path>) -> Result<()> {
-    // Generate merged WIT file using wasm-tools
+    let mut resolve = Resolve {
+        all_features: true,
+        ..Default::default()
+    };
+    let (main_pkg, _) = resolve.push_path(source_wit_dir).with_context(|| {
+        format!(
+            "failed to parse WIT directory: {}",
+            source_wit_dir.display()
+        )
+    })?;
+
+    // Collect all package IDs and remove the main pkg
+    let nested_pkgs: Vec<_> = resolve
+        .packages
+        .iter()
+        .map(|(id, _)| id)
+        .filter(|&id| id != main_pkg)
+        .collect();
+
+    let merged = WitPrinter::default()
+        .print(&resolve, main_pkg, &nested_pkgs)
+        .context("failed to print merged WIT")?;
+
     let merged_wit_path = out_dir.as_ref().join("merged.wit");
-    let output = std::process::Command::new("wasm-tools")
-        .arg("component")
-        .arg("wit")
-        .arg(source_wit_dir)
-        .output()
-        .context("Failed to run wasm-tools")?;
-
-    if !output.status.success() {
-        let stderr = String::from_utf8_lossy(&output.stderr);
-        anyhow::bail!("wasm-tools component wit failed: {}", stderr);
-    }
-
-    fs::write(&merged_wit_path, &output.stdout)?;
+    fs::write(&merged_wit_path, merged)?;
 
     Ok(())
 }
@@ -92,22 +104,22 @@ fn build_wasiless_wasm(root_dir: impl AsRef<Path>, out_dir: impl AsRef<Path>) ->
         anyhow::bail!("Failed to build wasiless");
     }
 
-    // Transform wasiless into a component using wasm-tools component new
+    // Wrap the core wasm module into a wasm component using wit-component's
+    // ComponentEncoder, replacing the previous `wasm-tools component new` call.
     let input_wasm = target_dir.join("wasm32-unknown-unknown/release/wasiless.wasm");
     let output_wasm = out_dir.as_ref().join("wasiless.wasm");
 
-    let status = std::process::Command::new("wasm-tools")
-        .arg("component")
-        .arg("new")
-        .arg(&input_wasm)
-        .arg("-o")
-        .arg(&output_wasm)
-        .status()
-        .context("Failed to run wasm-tools component new")?;
+    let module_bytes = fs::read(&input_wasm)
+        .with_context(|| format!("failed to read {}", input_wasm.display()))?;
 
-    if !status.success() {
-        anyhow::bail!("Failed to componentize wasiless");
-    }
+    let component_bytes = wit_component::ComponentEncoder::default()
+        .module(&module_bytes)
+        .context("failed to set module on ComponentEncoder")?
+        .encode()
+        .context("failed to encode wasm component")?;
+
+    fs::write(&output_wasm, component_bytes)
+        .with_context(|| format!("failed to write {}", output_wasm.display()))?;
 
     Ok(())
 }
