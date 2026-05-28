@@ -138,13 +138,8 @@ Understanding the build process helps when debugging issues:
 The CI workflow (`.github/workflows/python-ci.yml`) validates formatting,
 linting, and tests on every push and pull request. The release workflow
 (`.github/workflows/release.yml`) builds binary wheels for all supported
-platforms (Linux x86_64/aarch64, macOS x86_64/aarch64) and attaches them
+platforms (`Linux x86_64/aarch64`, `macOS x86_64/aarch64`) and attaches them
 to a GitHub pre-release.
-
-Windows is not currently supported: the pinned version of `componentize-py`
-calls a POSIX `configure` script unconditionally when building CPython for
-WASI. Newer releases of `componentize-py` have resolved this; Windows support
-can be re-enabled when upgrading the dependency.
 
 ## Performing a Release
 
@@ -170,38 +165,18 @@ make check-version-tag TAG=v0.2.0
    make check-version-tag TAG=v0.2.0
    ```
 
-3. Commit and tag:
-   ```bash
-   git add pyproject.toml crates/fastly-compute-py/Cargo.toml
-   git commit -m "Bump version to 0.2.0"
+3. PR the changes and land into main.
+
+4. Push tag (make sure you are on the right sha first)
+   ```
    git tag v0.2.0
    git push origin v0.2.0
    ```
-
+   
 4. The release workflow runs automatically. Jobs: `check-version` (fails fast
    on any mismatch) → parallel wheel builds → `collect-wheels` →
    `create-github-release`.
 
-5. Install a wheel from the GitHub Release to validate before promoting to PyPI:
-   ```bash
-   pip install https://github.com/fastly/compute-sdk-python/releases/download/v0.2.0/<wheel-filename>.whl
-   ```
-
-6. Promote to PyPI once validated (via trusted publishing, configured separately).
-
-### Ad-hoc test builds
-
-To build wheels without tagging, trigger the workflow manually from
-**Actions → Release → Run workflow** with a version label (e.g. `v0.2.0-rc1`).
-Wheels are uploaded as Actions artifacts; no release is created. The in-tree
-versions must still match the label you provide.
-
-### If the version check fails
-
-Fix the mismatch, then retag:
-```bash
-git tag -f v0.2.0
-git push --force origin v0.2.0
-```
-
+5. (Pending) If the release is built successfully, it will make its way to PyPI
+   via trusted publishing.
 
