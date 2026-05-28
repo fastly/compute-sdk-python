@@ -185,6 +185,28 @@ jobs:
   # CPython for WASI. Newer releases of componentize-py have Windows support;
   # re-enable this job when upgrading componentize-py.
 
+  # Build a source distribution for PyPI alongside the binary wheels.
+  build-sdist:
+    name: "Build sdist"
+    runs-on: ubuntu-24.04
+    needs: [check-version]
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Build sdist
+        uses: PyO3/maturin-action@v1
+        with:
+          maturin-version: ${{ env.MATURIN_VERSION }}
+          command: sdist
+          args: --out dist
+
+      - name: Upload sdist
+        uses: actions/upload-artifact@v4
+        with:
+          name: sdist
+          path: dist/*.tar.gz
+          if-no-files-found: error
+
   # Collect all wheels into a single artifact for convenient download.
   collect-wheels:
     name: "Collect all wheels"
@@ -241,7 +263,7 @@ jobs:
   # leaving wheels as Actions artifacts for download and local testing.
   create-github-release:
     name: "Create GitHub Release"
-    needs: [generate-checksums]
+    needs: [generate-checksums, build-sdist]
     runs-on: ubuntu-24.04
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
     permissions:
@@ -262,12 +284,18 @@ jobs:
           name: checksums
           path: dist/
 
+      - name: Download sdist
+        uses: actions/download-artifact@v4
+        with:
+          name: sdist
+          path: dist/
+
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           TAG="${{ github.ref_name }}"
-          gh release create "$TAG" dist/*.whl dist/checksums.txt \
+          gh release create "$TAG" dist/*.whl dist/*.tar.gz dist/checksums.txt \
             --title "$TAG" \
             --prerelease \
             --generate-notes \
