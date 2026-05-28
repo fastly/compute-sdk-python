@@ -27,7 +27,6 @@ env:
   RUST_STABLE: "1.92.0"
   RUST_NIGHTLY: "nightly-2026-04-27"
   MATURIN_VERSION: "v1.13.3"
-  WASM_TOOLS_VERSION: "1.250.0"
 
 jobs:
   # Verify that the versions in pyproject.toml and Cargo.toml match the tag
@@ -79,20 +78,8 @@ jobs:
           # abi3-py312 is set in [tool.maturin] features; no -i needed.
           args: --release --locked --compatibility pypi
           before-script-linux: |
-            rustup toolchain install ${{ env.RUST_NIGHTLY }} --component rust-src
-            rustup target add wasm32-wasip1 --toolchain ${{ env.RUST_NIGHTLY }}
+            .github/scripts/setup-nightly.sh ${{ env.RUST_NIGHTLY }}
             rustup target add wasm32-unknown-unknown
-            # componentize-py's build.rs invokes `rustup run nightly cargo build`.
-            # rustup rejects 'nightly' as a custom link name, so install the
-            # bare nightly channel separately. Cargo.lock pins crate versions.
-            rustup toolchain install nightly --component rust-src
-            rustup target add wasm32-wasip1 --toolchain nightly
-            # build.rs calls wasm-tools as a host-side subprocess. The container
-            # always runs on an x86_64 host (CARGO_BUILD_TARGET is set to the
-            # cross target, so cargo install would produce an aarch64 binary that
-            # can't execute). Download the x86_64 pre-built binary explicitly.
-            curl -sSfL "https://github.com/bytecodealliance/wasm-tools/releases/download/v${{ env.WASM_TOOLS_VERSION }}/wasm-tools-${{ env.WASM_TOOLS_VERSION }}-x86_64-linux.tar.gz" \
-              | tar -xz --strip-components=1 -C /usr/local/bin "wasm-tools-${{ env.WASM_TOOLS_VERSION }}-x86_64-linux/wasm-tools"
 
       - name: Upload wheels
         uses: actions/upload-artifact@v4
@@ -124,14 +111,6 @@ jobs:
         with:
           rust-stable: ${{ env.RUST_STABLE }}
           rust-nightly: ${{ env.RUST_NIGHTLY }}
-
-      - name: Install wasm-tools
-        run: |
-          ARCH=$(uname -m)
-          # uname -m returns 'arm64' on Apple Silicon; release assets use 'aarch64'
-          [[ "$ARCH" == "arm64" ]] && ARCH="aarch64"
-          curl -sSfL "https://github.com/bytecodealliance/wasm-tools/releases/download/v${{ env.WASM_TOOLS_VERSION }}/wasm-tools-${{ env.WASM_TOOLS_VERSION }}-${ARCH}-macos.tar.gz" \
-            | tar -xz --strip-components=1 -C /usr/local/bin "wasm-tools-${{ env.WASM_TOOLS_VERSION }}-${ARCH}-macos/wasm-tools"
 
       - name: Set up Python
         uses: actions/setup-python@v5

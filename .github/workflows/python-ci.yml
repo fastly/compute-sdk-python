@@ -30,7 +30,7 @@ jobs:
     - name: Install uv
       run: pip install uv
 
-    # Cache cargo binaries (viceroy, wasm-tools, wac-cli).
+    # Cache cargo binaries (viceroy).
     - name: Cache cargo binaries
       id: cache-cargo-bins
       uses: actions/cache@v4
@@ -38,11 +38,6 @@ jobs:
         key: cargo-bins-${{ runner.os }}-${{ env.VICEROY_TAG }}
         path: |
           ~/.cargo/bin/viceroy*
-          ~/.cargo/bin/wasm-tools*
-          ~/.cargo/bin/wac*
-    - name: Install wasm-tools and wac
-      if: steps.cache-cargo-bins.outputs.cache-hit != 'true'
-      run: cargo install wasm-tools --version 1.250.0 --locked && cargo install wac-cli
     - name: Install viceroy
       if: steps.cache-cargo-bins.outputs.cache-hit != 'true'
       run: cargo install --git https://github.com/fastly/Viceroy.git --tag "$VICEROY_TAG" viceroy
