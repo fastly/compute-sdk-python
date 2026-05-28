@@ -111,8 +111,10 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - target: x86_64-apple-darwin
-            runner: macos-13
+          # macos-13 (x86_64) runners have been queueing indefinitely; disabled
+          # for now. Re-enable once runner availability improves.
+          # - target: x86_64-apple-darwin
+          #   runner: macos-13
           - target: aarch64-apple-darwin
             runner: macos-14
 
@@ -153,6 +155,8 @@ jobs:
       - name: Install wasm-tools
         run: |
           ARCH=$(uname -m)
+          # uname -m returns 'arm64' on Apple Silicon; release assets use 'aarch64'
+          [[ "$ARCH" == "arm64" ]] && ARCH="aarch64"
           curl -sSfL "https://github.com/bytecodealliance/wasm-tools/releases/download/v${{ env.WASM_TOOLS_VERSION }}/wasm-tools-${{ env.WASM_TOOLS_VERSION }}-${ARCH}-macos.tar.gz" \
             | tar -xz --strip-components=1 -C /usr/local/bin "wasm-tools-${{ env.WASM_TOOLS_VERSION }}-${ARCH}-macos/wasm-tools"
 
