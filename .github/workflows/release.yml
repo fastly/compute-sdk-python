@@ -125,31 +125,6 @@ jobs:
           rust-stable: ${{ env.RUST_STABLE }}
           rust-nightly: ${{ env.RUST_NIGHTLY }}
 
-      # Cache Rust registry/git sources — keyed on Cargo.lock only so they
-      # are shared across runs with the same lockfile.
-      - name: Cache Rust sources
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            ~/.cargo/git/checkouts/
-          key: cargo-sources-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}-v1
-          restore-keys: |
-            cargo-sources-${{ runner.os }}-
-
-      # Build artifacts keyed on Cargo.lock + toolchain to avoid incompatible
-      # artifact reuse across toolchain upgrades.
-      - name: Cache Rust build artifacts
-        uses: actions/cache@v4
-        with:
-          path: target/
-          key: cargo-target-${{ runner.os }}-${{ matrix.target }}-${{ hashFiles('**/Cargo.lock') }}-${{ env.RUST_STABLE }}-v1
-          restore-keys: |
-            cargo-target-${{ runner.os }}-${{ matrix.target }}-${{ hashFiles('**/Cargo.lock') }}-
-            cargo-target-${{ runner.os }}-${{ matrix.target }}-
-
       - name: Install wasm-tools
         run: |
           ARCH=$(uname -m)
