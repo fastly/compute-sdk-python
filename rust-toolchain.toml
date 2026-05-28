@@ -5,8 +5,7 @@
 #
 # A nightly toolchain is also required at build time: componentize-py's
 # build.rs uses `-Z build-std` to compile its wasm32-wasip1 runtime with
-# position-independent code, which is a nightly-only Cargo flag. This cannot
-# be avoided with stable Rust, it is a hard upstream requirement.
+# position-independent code, which is a nightly-only/unstable Cargo flag.
 #
 # The nightly version is pinned in the CI workflows (RUST_NIGHTLY env var).
 # For local development, install it with:
