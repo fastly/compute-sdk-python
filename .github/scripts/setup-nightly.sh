@@ -22,7 +22,7 @@ else
   echo "Nightly toolchain $RUST_NIGHTLY already installed (cache hit)"
 fi
 
-if ! rustup toolchain list | grep -q "^nightly-[0-9]"; then
+if ! rustup run nightly rustc --version &>/dev/null; then
   rustup toolchain install nightly --component rust-src
   rustup target add wasm32-wasip1 --toolchain nightly
 else
