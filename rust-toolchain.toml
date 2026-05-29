@@ -1,0 +1,19 @@
+# Rust toolchain configuration for this project.
+#
+# Pins the stable channel used for the main build. wasm32-unknown-unknown is
+# required by build.rs (wasiless cross-compilation).
+#
+# A nightly toolchain is also required at build time: componentize-py's
+# build.rs uses `-Z build-std` to compile its wasm32-wasip1 runtime with
+# position-independent code, which is a nightly-only/unstable Cargo flag.
+#
+# The nightly version is pinned in the CI workflows (RUST_NIGHTLY env var).
+# For local development, install it with:
+#
+#   rustup toolchain install nightly-YYYY-MM-DD --component rust-src --target wasm32-wasip1
+#
+# See .github/workflows/python-ci.yml for the current pinned date.
+[toolchain]
+channel = "1.92.0"
+targets = ["wasm32-unknown-unknown"]
+components = ["rustfmt", "clippy"]

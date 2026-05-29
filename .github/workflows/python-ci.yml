@@ -5,28 +5,25 @@ on:
     branches:
       - main
   pull_request:
-  workflow_dispatch:  # Allows manual triggering from GitHub Actions UI
+  workflow_dispatch:  # allow manual triggering
+
+# Cancel in-progress runs for the same branch/PR when a new push arrives.
+# Omitted from release.yml — you never want to cancel an in-progress release.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 env:
   VICEROY_TAG: v0.16.4
+  WASM_TOOLS_VERSION: "1.250.0"
 
 jobs:
   build:
     runs-on: ubuntu-24.04
     steps:
-    - uses: actions/checkout@v4
-    - name: Set up Rust toolchain
-      uses: actions-rust-lang/setup-rust-toolchain@v1
-      with:
-        toolchain: 1.92.0
-        target: wasm32-unknown-unknown
-        components: rustfmt, clippy
-        # Disable the built-in cargo cache - we use our own below
-        cache: false
-    - name: Set up nightly Rust toolchain with rust-src
-      run: |
-        rustup toolchain install nightly --component rust-src
-        rustup target add wasm32-wasip1 --toolchain nightly
+    - uses: actions/checkout@v6
+    - name: Set up Rust toolchains
+      uses: ./.github/actions/setup-rust
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
@@ -34,19 +31,20 @@ jobs:
     - name: Install uv
       run: pip install uv
 
-    # Cache cargo binaries (viceroy, wasm-tools, etc.)
+    # Cache cargo binaries (viceroy, wasm-tools).
+    # wasm-tools is required by scripts/generate_patches, which runs as part
+    # of make lint to verify patches.py is up to date with the WIT sources.
     - name: Cache cargo binaries
       id: cache-cargo-bins
       uses: actions/cache@v4
       with:
-        key: cargo-bins-${{ runner.os }}-${{ env.VICEROY_TAG }}
+        key: cargo-bins-${{ runner.os }}-${{ env.VICEROY_TAG }}-wasm-tools-${{ env.WASM_TOOLS_VERSION }}
         path: |
           ~/.cargo/bin/viceroy*
           ~/.cargo/bin/wasm-tools*
-          ~/.cargo/bin/wac*
-    - name: Install wasm-tools and wac
+    - name: Install wasm-tools
       if: steps.cache-cargo-bins.outputs.cache-hit != 'true'
-      run: cargo install wasm-tools wac-cli
+      run: cargo install wasm-tools --version ${{ env.WASM_TOOLS_VERSION }} --locked
     - name: Install viceroy
       if: steps.cache-cargo-bins.outputs.cache-hit != 'true'
       run: cargo install --git https://github.com/fastly/Viceroy.git --tag "$VICEROY_TAG" viceroy

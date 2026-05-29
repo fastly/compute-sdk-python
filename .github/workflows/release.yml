@@ -1,0 +1,238 @@
+name: Release
+
+# Triggers:
+#   - Push a version tag (e.g. git tag v0.1.0 && git push --tags) for a real release.
+#   - workflow_dispatch for ad-hoc test builds without creating a tag.
+#     Wheels are uploaded as GitHub Actions artifacts and no GitHub Release is created.
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version label for artifacts (e.g. v0.1.0-test)"
+        required: true
+        default: "v0.0.0-dev"
+
+# Minimal permissions by default; create-github-release job adds write where needed.
+permissions:
+  contents: read
+
+env:
+  # Bump these in one place when upgrading toolchains or maturin.
+  # RUST_STABLE and RUST_NIGHTLY must also be kept in sync with the defaults
+  # in .github/actions/setup-rust/action.yml.
+  PYTHON_VERSION: "3.12"
+  RUST_STABLE: "1.92.0"
+  RUST_NIGHTLY: "nightly-2026-04-27"
+  MATURIN_VERSION: "v1.13.3"
+
+jobs:
+  # Verify that the versions in pyproject.toml and Cargo.toml match the tag
+  # (or the manually-supplied version label) before spending time on builds.
+  check-version:
+    name: "Check version consistency"
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Verify versions match
+        run: |
+          python scripts/check_version_sync.py --tag "${{ github.event_name == 'workflow_dispatch' && inputs.version || github.ref_name }}"
+
+  # Linux wheels are built inside manylinux_2_28 containers via maturin-action.
+  # We explicitly target manylinux 2_28; auto likely would too but pinning
+  # avoids unexpected wheel renames. See https://github.com/pypa/manylinux.
+  #
+  # The composite setup-rust action cannot run inside the maturin-action
+  # container, so toolchain setup is handled via before-script-linux instead.
+  build-linux:
+    name: "Linux ${{ matrix.target }}"
+    runs-on: ubuntu-24.04
+    needs: [check-version]
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: x86_64-unknown-linux-gnu
+            manylinux: "2_28"
+          - target: aarch64-unknown-linux-gnu
+            manylinux: "2_28"
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Build wheels
+        uses: PyO3/maturin-action@v1
+        with:
+          maturin-version: ${{ env.MATURIN_VERSION }}
+          target: ${{ matrix.target }}
+          manylinux: ${{ matrix.manylinux }}
+          rust-toolchain: ${{ env.RUST_STABLE }}
+          # abi3-py312 is set in [tool.maturin] features; no -i needed.
+          args: --release --locked --compatibility pypi
+          before-script-linux: |
+            .github/scripts/setup-nightly.sh ${{ env.RUST_NIGHTLY }}
+            rustup target add wasm32-unknown-unknown
+
+      - name: Upload wheels
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheels-linux-${{ matrix.target }}
+          path: target/wheels/*.whl
+          if-no-files-found: error
+
+  # macOS wheels — native builds on GitHub-hosted runners.
+  # macos-14 is Apple Silicon (aarch64); macos-13 is Intel (x86_64).
+  build-macos:
+    name: "macOS ${{ matrix.target }}"
+    runs-on: ${{ matrix.runner }}
+    needs: [check-version]
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: x86_64-apple-darwin
+            runner: macos-26-intel
+            # Maturin defaults to 10.12 for x86_64, but componentize-py's
+            # build.rs compiles a native CPython host binary that requires
+            # >=10.15 (sqlite3_create_window_function) with Xcode 26's SDK.
+            # Python 3.12 itself requires 10.13+, so 10.15 is a safe minimum.
+            macosx_deployment_target: "10.15"
+          - target: aarch64-apple-darwin
+            runner: macos-26
+            macosx_deployment_target: "11.0"
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Rust toolchains
+        uses: ./.github/actions/setup-rust
+        with:
+          rust-stable: ${{ env.RUST_STABLE }}
+          rust-nightly: ${{ env.RUST_NIGHTLY }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Build wheels
+        uses: PyO3/maturin-action@v1
+        with:
+          maturin-version: ${{ env.MATURIN_VERSION }}
+          target: ${{ matrix.target }}
+          # container: off is implied for non-Linux but set explicitly for clarity.
+          container: "off"
+          # abi3-py312 is set in [tool.maturin] features; no -i needed.
+          args: --release --locked
+        env:
+          MACOSX_DEPLOYMENT_TARGET: ${{ matrix.macosx_deployment_target }}
+
+      - name: Upload wheels
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheels-macos-${{ matrix.target }}
+          path: target/wheels/*.whl
+          if-no-files-found: error
+
+  # Windows is not supported at the currently pinned componentize-py commit:
+  # its build.rs calls a POSIX configure script unconditionally when building
+  # CPython for WASI. Newer releases of componentize-py have Windows support;
+  # re-enable this job when upgrading componentize-py.
+
+  # Build a source distribution for PyPI alongside the binary wheels.
+  build-sdist:
+    name: "Build sdist"
+    runs-on: ubuntu-24.04
+    needs: [check-version]
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Build sdist
+        uses: PyO3/maturin-action@v1
+        with:
+          maturin-version: ${{ env.MATURIN_VERSION }}
+          command: sdist
+          args: --out dist
+
+      - name: Upload sdist
+        uses: actions/upload-artifact@v4
+        with:
+          name: sdist
+          path: dist/*.tar.gz
+          if-no-files-found: error
+
+  # Collect all release artifacts (wheels + sdist) into a single artifact,
+  # generate SHA256 checksums, and upload everything together.
+  collect-artifacts:
+    name: "Collect release artifacts"
+    needs: [build-linux, build-macos, build-sdist]
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Download all wheel artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: wheels-*
+          path: dist/
+          merge-multiple: true
+
+      - name: Download sdist
+        uses: actions/download-artifact@v4
+        with:
+          name: sdist
+          path: dist/
+
+      - name: Generate SHA256 checksums
+        run: |
+          cd dist
+          sha256sum *.whl *.tar.gz > checksums.txt
+          cat checksums.txt
+
+      - name: List artifacts
+        run: ls -lh dist/
+
+      - name: Upload combined artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-artifacts
+          path: dist/
+          if-no-files-found: error
+
+  # Create a GitHub Release and attach all artifacts.
+  # Only runs on tag pushes, workflow_dispatch builds stop at collect-artifacts,
+  # presumed to be used for testing CI or related.
+  create-github-release:
+    name: "Create GitHub Release"
+    needs: [collect-artifacts]
+    runs-on: ubuntu-24.04
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: write  # Required to create releases and upload assets.
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Download release artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: release-artifacts
+          path: dist/
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="${{ github.ref_name }}"
+          gh release create "$TAG" dist/*.whl dist/*.tar.gz dist/checksums.txt \
+            --title "$TAG" \
+            --prerelease \
+            --generate-notes \
+            --notes-start-tag "$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo '')"

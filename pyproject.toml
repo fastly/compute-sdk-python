@@ -92,6 +92,9 @@ dev = [
 module-name = "fastly_compute._fastly_compute_py"
 manifest-path = "crates/fastly-compute-py/Cargo.toml"
 exclude = ["fastly_compute/tests/**/*"]
+# Emit a stable-ABI (abi3) wheel tagged cp312-abi3-* so a single wheel
+# works on CPython 3.12 and all future versions without rebuilding.
+features = ["pyo3/abi3-py312"]
 
 [project.scripts]
 fastly-compute-py = "fastly_compute.fastly_compute_py:main"
