@@ -36,4 +36,22 @@ pub enum Command {
         #[arg(short, long)]
         virtualenv: Option<PathBuf>,
     },
+
+    /// Generate WIT binding stubs for use with type checkers and IDEs
+    Bindings {
+        /// WIT directory to generate bindings from (default: wit)
+        #[arg(short = 'd', long)]
+        wit_dir: Option<PathBuf>,
+
+        /// WIT world to target (e.g. fastly:compute/service@0.1.0)
+        #[arg(short = 'w', long)]
+        world: Option<String>,
+
+        /// Python module name for the generated bindings (default: wit_world)
+        #[arg(long)]
+        world_module: Option<String>,
+
+        /// Output directory for the generated stubs
+        output_dir: PathBuf,
+    },
 }

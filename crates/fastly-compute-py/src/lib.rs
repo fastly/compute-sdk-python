@@ -80,23 +80,40 @@ fn init_logging(verbose: u8) {
 pub fn run_main(cli: &Cli) -> Result<()> {
     init_logging(cli.verbose);
 
-    log::info!("Building Python application for Fastly Compute...");
+    match &cli.command {
+        cli::Command::Build { .. } => {
+            log::info!("Building Python application for Fastly Compute...");
 
-    let config = ConfigBuilder::from_pyproject()
-        .unwrap_or_else(|e| {
-            log::warn!("Failed to load pyproject.toml: {}", e);
-            ConfigBuilder::default()
-        })
-        .with_command(&cli.command)
-        .resolve();
+            let config = ConfigBuilder::from_pyproject()
+                .unwrap_or_else(|e| {
+                    log::warn!("Failed to load pyproject.toml: {}", e);
+                    ConfigBuilder::default()
+                })
+                .with_command(&cli.command)
+                .resolve();
 
-    log::debug!("Final resolved configuration: {config:?}");
-    log::info!("  Entry point: {}", config.entry);
-    log::info!("  Output: {}", config.output.display());
+            log::debug!("Final resolved configuration: {config:?}");
+            log::info!("  Entry point: {}", config.entry);
+            log::info!("  Output: {}", config.output.display());
 
-    build(config.output.clone(), config.entry, config.virtualenv)?;
+            build(config.output.clone(), config.entry, config.virtualenv)?;
 
-    log::info!("✓ Build complete: {}", config.output.display());
+            log::info!("✓ Build complete: {}", config.output.display());
+        }
+        cli::Command::Bindings {
+            wit_dir,
+            world,
+            world_module,
+            output_dir,
+        } => {
+            generate_bindings(
+                wit_dir.as_deref(),
+                world.as_deref(),
+                world_module.as_deref(),
+                output_dir,
+            )?;
+        }
+    }
 
     Ok(())
 }
@@ -116,6 +133,42 @@ fn run_main_py(args: Vec<String>) -> PyResult<()> {
 #[pymodule]
 fn _fastly_compute_py(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(run_main_py, m)?)?;
+    Ok(())
+}
+
+pub fn generate_bindings(
+    wit_dir: Option<&Path>,
+    world: Option<&str>,
+    world_module: Option<&str>,
+    output_dir: &Path,
+) -> Result<()> {
+    let wit_path = wit_dir.unwrap_or(Path::new("wit"));
+    let worlds: &[&str] = match world {
+        Some(w) => &[w],
+        None => &[],
+    };
+
+    log::info!("Generating WIT bindings...");
+    log::debug!("  WIT path: {}", wit_path.display());
+    log::debug!("  World: {:?}", world);
+    log::debug!("  World module: {:?}", world_module);
+    log::debug!("  Output dir: {}", output_dir.display());
+
+    componentize_py::BindingsGenerator {
+        wit_path: &[wit_path],
+        worlds,
+        features: &[],
+        all_features: false,
+        world_module,
+        output_dir,
+        import_interface_names: &HashMap::new(),
+        export_interface_names: &HashMap::new(),
+        full_names: false,
+    }
+    .generate()?;
+
+    log::info!("✓ Bindings generated: {}", output_dir.display());
+
     Ok(())
 }
 

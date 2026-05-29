@@ -74,6 +74,7 @@ impl ConfigBuilder {
                 self.cli.output = output.clone();
                 self.cli.virtualenv = virtualenv.clone();
             }
+            Command::Bindings { .. } => {}
         }
         self
     }
