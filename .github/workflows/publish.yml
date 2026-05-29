@@ -1,0 +1,34 @@
+# When you promote a GitHub prerelease to an actual release, publish its
+# artifacts to PyPI.
+
+name: Publish to PyPI
+
+on:
+  release:
+    types: [released]
+
+jobs:
+  publish:
+    name: Publish promoted release to PyPI
+    runs-on: ubuntu-24.04
+    environment:
+      name: pypi
+      url: https://pypi.org/p/fastly-compute
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+    - name: Download release assets
+      env:
+        GH_TOKEN: ${{ github.token }}
+        TAG: ${{ github.event.release.tag_name }}
+        REPO: ${{ github.repository }}
+      run: |
+        mkdir dist
+        gh release download "$TAG" \
+          --repo "$REPO" \
+          --dir dist/ \
+          --pattern '*.whl' \
+          --pattern '*.tar.gz'
+    - name: Publish dists to PyPI
+      uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b  # @release/v1
