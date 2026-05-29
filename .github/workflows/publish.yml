@@ -25,7 +25,7 @@ jobs:
         REPO: ${{ github.repository }}
       run: |
         mkdir dist
-        gh release download "$TAG_NAME" \
+        gh release download "$TAG" \
           --repo "$REPO" \
           --dir dist/ \
           --pattern '*.whl' \
