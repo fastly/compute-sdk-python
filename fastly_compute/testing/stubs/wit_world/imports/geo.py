@@ -25,6 +25,6 @@ def lookup(ip_addr: types.IpAddress, max_len: int) -> str:
     
     [here]: https://www.fastly.com/documentation/reference/vcl/variables/geolocation/
     
-    Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+    Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
     """
     raise NotImplementedError

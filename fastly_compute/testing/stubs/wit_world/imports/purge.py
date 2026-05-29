@@ -45,7 +45,7 @@ def purge_surrogate_key(surrogate_keys: str, purge_options: PurgeOptions) -> Non
     A surrogate key must contain only printable ASCII characters (those between `0x21` and `0x7E`,
     inclusive).
     
-    Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+    Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
     """
     raise NotImplementedError
 def purge_surrogate_key_verbose(surrogate_keys: str, purge_options: PurgeOptions, max_len: int) -> str:
@@ -58,6 +58,6 @@ def purge_surrogate_key_verbose(surrogate_keys: str, purge_options: PurgeOptions
     
     [JSON purge response]: https://developer.fastly.com/reference/api/purging/#purge-tag
     
-    Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+    Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
     """
     raise NotImplementedError

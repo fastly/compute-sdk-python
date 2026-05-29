@@ -11,8 +11,8 @@ from abc import abstractmethod
 import weakref
 
 from componentize_py_types import Result, Ok, Err, Some
-from ..imports import http_types
 from ..imports import types
+from ..imports import http_types
 from ..imports import async_io
 
 class KeepaliveMode(Enum):
@@ -31,7 +31,7 @@ class Response:
         
         The new `response` is created with status code 200 OK, no headers, and an empty body.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def get_header_names(self, max_len: int, cursor: int) -> Tuple[str, Optional[int]]:
@@ -44,7 +44,7 @@ class Response:
         or `none` if all the remaining names fit. If `max-len` is too small to fit any name,
         an `error.buffer-len` error is returned, providing a recommended buffer size.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def get_header_value(self, name: str, max_len: int) -> Optional[bytes]:
@@ -57,7 +57,7 @@ class Response:
         If header name requires more than `max-len` bytes, this will return an `error.buffer-len`
         containing the required size.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def get_header_values(self, name: str, max_len: int, cursor: int) -> Tuple[bytes, Optional[int]]:
@@ -72,7 +72,7 @@ class Response:
         fit, or `none` if all the remaining values fit. If `max-len` is too small to fit any value,
         an `error.buffer-len` error is returned, providing a recommended buffer size.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def set_header_values(self, name: str, values: bytes) -> None:
@@ -80,7 +80,7 @@ class Response:
         Sets the values for the given header name, replacing any headers that previously existed for
         that name.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def insert_header(self, name: str, value: bytes) -> None:
@@ -88,7 +88,7 @@ class Response:
         Sets a response header to the given value, discarding any previous values for the given
         header name.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def append_header(self, name: str, value: bytes) -> None:
@@ -97,7 +97,7 @@ class Response:
         
         Unlike `set-header-values`, this does not discard existing values for the same header name.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def remove_header(self, name: str) -> None:
@@ -106,35 +106,35 @@ class Response:
         
         Returns `ok` if any headers were successfully removed.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def get_version(self) -> http_types.HttpVersion:
         """
         Gets the HTTP version of this response.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def set_version(self, version: http_types.HttpVersion) -> None:
         """
         Sets the HTTP version of this response.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def get_status(self) -> int:
         """
         Gets the HTTP status code of the response.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def set_status(self, status: int) -> None:
         """
         Sets the HTTP status code of the response.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def set_framing_headers_mode(self, mode: http_types.FramingHeadersMode) -> None:
@@ -142,14 +142,14 @@ class Response:
         Sets how the framing headers `Content-Length` and `Transfer-Encoding` will be determined
         when sending this response.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def set_http_keepalive_mode(self, mode: KeepaliveMode) -> None:
         """
         Adjust the response's connection reuse mode.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def get_remote_ip_addr(self) -> Optional[types.IpAddress]:
@@ -184,7 +184,7 @@ def send_downstream(response: Response, body: async_io.Pollable) -> None:
     Data for the body must be written before calling this function. To start a response
     and write data to it afterwards, use `send-downstream-streaming` instead.
     
-    Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+    Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
     """
     raise NotImplementedError
 def send_downstream_streaming(response: Response, body: async_io.Pollable) -> None:
@@ -193,7 +193,7 @@ def send_downstream_streaming(response: Response, body: async_io.Pollable) -> No
     
     The body is left open, allowing data to be written after calling this function.
     
-    Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+    Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
     """
     raise NotImplementedError
 def close(response: Response) -> None:
@@ -204,6 +204,6 @@ def close(response: Response) -> None:
     client. You should call `close` only if you have a `response` you don't intend
     to use anymore.
     
-    Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+    Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
     """
     raise NotImplementedError

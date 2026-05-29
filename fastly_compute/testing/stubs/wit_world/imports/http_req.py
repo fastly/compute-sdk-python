@@ -11,9 +11,9 @@ from abc import abstractmethod
 import weakref
 
 from componentize_py_types import Result, Ok, Err, Some
+from ..imports import types
 from ..imports import http_types
 from ..imports import backend
-from ..imports import types
 from ..imports import async_io
 from ..imports import http_resp
 
@@ -79,7 +79,7 @@ class Request:
         """
         Creates a new `request` with no method, URL, or headers, and an empty body.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def set_cache_override(self, cache_override: CacheOverride) -> None:
@@ -88,7 +88,7 @@ class Request:
         
         This setting will override any cache directive headers returned in response to this request.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def get_header_names(self, max_len: int, cursor: int) -> Tuple[str, Optional[int]]:
@@ -101,7 +101,7 @@ class Request:
         or `none` if all the remaining names fit. If `max-len` is too small to fit any name,
         an `error.buffer-len` error is returned, providing a recommended buffer size.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def get_header_value(self, name: str, max_len: int) -> Optional[bytes]:
@@ -114,7 +114,7 @@ class Request:
         If header name requires more than `max-len` bytes, this will return an `error.buffer-len`
         containing the required size.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def get_header_values(self, name: str, max_len: int, cursor: int) -> Tuple[bytes, Optional[int]]:
@@ -129,7 +129,7 @@ class Request:
         fit, or `none` if all the remaining values fit. If `max-len` is too small to fit any value,
         an `error.buffer-len` error is returned, providing a recommended buffer size.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def set_header_values(self, name: str, values: bytes) -> None:
@@ -137,7 +137,7 @@ class Request:
         Sets the values for the given header name, replacing any headers that previously existed for
         that name.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def insert_header(self, name: str, value: bytes) -> None:
@@ -145,7 +145,7 @@ class Request:
         Sets a request header to the given value, discarding any previous values for the given
         header name.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def append_header(self, name: str, value: bytes) -> None:
@@ -154,7 +154,7 @@ class Request:
         
         Unlike `set-header-values`, this does not discard existing values for the same header name.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def remove_header(self, name: str) -> None:
@@ -163,49 +163,49 @@ class Request:
         
         Returns `ok` if any headers were successfully removed.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def get_method(self, max_len: int) -> str:
         """
         Gets the request method.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def set_method(self, method: str) -> None:
         """
         Sets the request method.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def get_uri(self, max_len: int) -> str:
         """
         Gets the request URI.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def set_uri(self, uri: str) -> None:
         """
         Sets the request URI.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def get_version(self) -> http_types.HttpVersion:
         """
         Gets the HTTP version of this request.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def set_version(self, version: http_types.HttpVersion) -> None:
         """
         Sets the HTTP version of this request.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def set_auto_decompress_response(self, encodings: http_types.ContentEncodings) -> None:
@@ -219,7 +219,7 @@ class Request:
         Not all of the flags defined in `content-encodings` are supported. Currently the only
         supported flag is `content-encodings.gzip`.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def redirect_to_websocket_proxy(self, backend: backend.Backend) -> None:
@@ -236,7 +236,7 @@ class Request:
         
         [WebSockets passthrough]: https://www.fastly.com/documentation/guides/concepts/real-time-messaging/websockets-tunnel/
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def set_framing_headers_mode(self, mode: http_types.FramingHeadersMode) -> None:
@@ -244,12 +244,12 @@ class Request:
         Sets how the framing headers `Content-Length` and `Transfer-Encoding` will be determined
         when sending this request.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def redirect_to_grip_proxy(self, backend: backend.Backend) -> None:
         """
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def __enter__(self) -> Self:
@@ -462,7 +462,7 @@ def send(request: Request, body: async_io.Pollable, backend: backend.Backend) ->
     
     Returns once the response headers have been received, or an error occurs.
     
-    Raises: `wit_world.types.Err(wit_world.imports.http_req.ErrorWithDetail)`
+    Raises: `componentize_py_types.Err(wit_world.imports.http_req.ErrorWithDetail)`
     """
     raise NotImplementedError
 def send_uncached(request: Request, body: async_io.Pollable, backend: backend.Backend) -> Tuple[http_resp.Response, async_io.Pollable]:
@@ -472,7 +472,7 @@ def send_uncached(request: Request, body: async_io.Pollable, backend: backend.Ba
     
     Returns once the response headers have been received, or an error occurs.
     
-    Raises: `wit_world.types.Err(wit_world.imports.http_req.ErrorWithDetail)`
+    Raises: `componentize_py_types.Err(wit_world.imports.http_req.ErrorWithDetail)`
     """
     raise NotImplementedError
 def send_async(request: Request, body: async_io.Pollable, backend: backend.Backend) -> async_io.Pollable:
@@ -493,7 +493,7 @@ def send_async(request: Request, body: async_io.Pollable, backend: backend.Backe
     able to run, as the request will continue sending even after the program
     that initiated it exits.
     
-    Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+    Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
     """
     raise NotImplementedError
 def send_async_uncached(request: Request, body: async_io.Pollable, backend: backend.Backend) -> async_io.Pollable:
@@ -504,7 +504,7 @@ def send_async_uncached(request: Request, body: async_io.Pollable, backend: back
     backend server without performing any caching or inserting any
     cache-related headers in the response.
     
-    Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+    Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
     """
     raise NotImplementedError
 def send_async_streaming(request: Request, body: async_io.Pollable, backend: backend.Backend) -> async_io.Pollable:
@@ -526,7 +526,7 @@ def send_async_streaming(request: Request, body: async_io.Pollable, backend: bac
     and transmission of the request body and headers will continue in the
     background.
     
-    Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+    Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
     """
     raise NotImplementedError
 def send_async_uncached_streaming(request: Request, body: async_io.Pollable, backend: backend.Backend) -> async_io.Pollable:
@@ -537,7 +537,7 @@ def send_async_uncached_streaming(request: Request, body: async_io.Pollable, bac
     backend server without performing any caching or inserting any
     cache-related headers in the response.
     
-    Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+    Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
     """
     raise NotImplementedError
 def await_response(pending: async_io.Pollable) -> Tuple[http_resp.Response, async_io.Pollable]:
@@ -545,7 +545,7 @@ def await_response(pending: async_io.Pollable) -> Tuple[http_resp.Response, asyn
     Waits until the request is completed, and then returns the resulting
     response and body.
     
-    Raises: `wit_world.types.Err(wit_world.imports.http_req.ErrorWithDetail)`
+    Raises: `componentize_py_types.Err(wit_world.imports.http_req.ErrorWithDetail)`
     """
     raise NotImplementedError
 def close(request: Request) -> None:
@@ -555,11 +555,11 @@ def close(request: Request) -> None:
     A `request` is automatically consumed when you send a request. You should call `close`
     only if you have a `request` you don't intend to use anymore.
     
-    Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+    Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
     """
     raise NotImplementedError
 def upgrade_websocket(backend: backend.Backend) -> None:
     """
-    Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+    Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
     """
     raise NotImplementedError

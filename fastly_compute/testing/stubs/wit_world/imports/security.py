@@ -13,9 +13,9 @@ from abc import abstractmethod
 import weakref
 
 from componentize_py_types import Result, Ok, Err, Some
+from ..imports import types
 from ..imports import async_io
 from ..imports import http_req
-from ..imports import types
 
 class ExtraInspectOptions:
     """
@@ -52,6 +52,6 @@ def inspect(request: http_req.Request, body: async_io.Pollable, options: Inspect
     
     [NGWAF]: https://docs.fastly.com/en/ngwaf/
     
-    Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+    Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
     """
     raise NotImplementedError

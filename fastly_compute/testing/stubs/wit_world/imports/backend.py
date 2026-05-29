@@ -268,7 +268,7 @@ class Backend:
         """
         Attempts to open the named static backend.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.OpenError)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.OpenError)`
         """
         raise NotImplementedError
     def get_name(self) -> str:
@@ -283,21 +283,21 @@ class Backend:
         For backends without a configured healthcheck, this will always return
         `backend-health.unknown`.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def is_dynamic(self) -> bool:
         """
         Returns `true` if the backend is a “dynamic” backend.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def get_host(self, max_len: int) -> str:
         """
         Gets the host of this backend.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def get_override_host(self, max_len: int) -> Optional[bytes]:
@@ -309,21 +309,21 @@ class Backend:
         
         [the Fastly documentation on override hosts]: https://docs.fastly.com/en/guides/specifying-an-override-host
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def get_port(self) -> int:
         """
         Gets the remote TCP port of the backend connection for the request.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def get_connect_timeout_ms(self) -> int:
         """
         Gets the connection timeout of the backend.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def get_first_byte_timeout_ms(self) -> int:
@@ -332,7 +332,7 @@ class Backend:
         
         This timeout applies between the time of connection and the time we get the first byte back.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def get_between_bytes_timeout_ms(self) -> int:
@@ -341,28 +341,28 @@ class Backend:
         
         This timeout applies between any two bytes we receive across the wire.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def is_tls(self) -> bool:
         """
         Returns `true` if the backend is configured to use TLS.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def get_tls_min_version(self) -> Optional[int]:
         """
         Gets the minimum TLS version this backend will use.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def get_tls_max_version(self) -> Optional[int]:
         """
         Gets the maximum TLS version this backend will use.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def get_http_keepalive_time(self) -> int:
@@ -370,21 +370,21 @@ class Backend:
         Returns the time for this backend to hold onto an idle HTTP keepalive connection
         after it was last used before closing it.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def get_tcp_keepalive_enable(self) -> bool:
         """
         Returns `true` if TCP keepalives have been enabled for this backend.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def get_tcp_keepalive_interval(self) -> int:
         """
         Returns the time to wait in between sending each TCP keepalive probe to this backend.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def get_tcp_keepalive_probes(self) -> int:
@@ -392,7 +392,7 @@ class Backend:
         Returns the time to wait after the last data was sent before starting to send TCP keepalive
         probes to this backend.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def get_tcp_keepalive_time(self) -> int:
@@ -400,7 +400,7 @@ class Backend:
         Returns the time to wait after the last data was sent before starting to send TCP keepalive
         probes to this backend.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def __enter__(self) -> Self:
@@ -439,6 +439,6 @@ def register_dynamic_backend(prefix: str, target: str, options: DynamicBackendOp
     backends with a service that has not had dynamic backends enabled, or dynamic backends have
     been administratively prohibited for the node in response to an ongoing incident.
     
-    Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+    Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
     """
     raise NotImplementedError

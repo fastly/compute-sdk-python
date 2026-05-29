@@ -41,11 +41,11 @@ class ShieldBackendOptions:
 
 def shield_info(name: str, max_len: int) -> str:
     """
-    Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+    Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
     """
     raise NotImplementedError
 def backend_for_shield(name: str, options: Optional[ShieldBackendOptions]) -> backend.Backend:
     """
-    Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+    Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
     """
     raise NotImplementedError

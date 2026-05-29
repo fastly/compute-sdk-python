@@ -36,7 +36,7 @@ class Entry:
         """
         Read the metadata of the KV Store item, if present.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def generation(self) -> int:
@@ -202,7 +202,7 @@ class Store:
         """
         Opens the KV Store with the given name.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.OpenError)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.OpenError)`
         """
         raise NotImplementedError
     def lookup(self, key: str) -> Optional[Entry]:
@@ -214,7 +214,7 @@ class Store:
         
         This function waits until the operation completes.
         
-        Raises: `wit_world.types.Err(wit_world.imports.kv_store.KvError)`
+        Raises: `componentize_py_types.Err(wit_world.imports.kv_store.KvError)`
         """
         raise NotImplementedError
     def lookup_async(self, key: str) -> async_io.Pollable:
@@ -224,7 +224,7 @@ class Store:
         This function initiates an async lookup of a value in the KV Store. Use
         `await-lookup` to finish the lookup.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def insert(self, key: str, body: async_io.Pollable, options: InsertOptions) -> None:
@@ -236,7 +236,7 @@ class Store:
         
         This function waits until the operation completes.
         
-        Raises: `wit_world.types.Err(wit_world.imports.kv_store.KvError)`
+        Raises: `componentize_py_types.Err(wit_world.imports.kv_store.KvError)`
         """
         raise NotImplementedError
     def insert_async(self, key: str, body: async_io.Pollable, options: InsertOptions) -> async_io.Pollable:
@@ -249,7 +249,7 @@ class Store:
         This function initiates an async insert of a value in the KV Store. Use
         `await-insert` to finish the lookup.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def delete(self, key: str) -> bool:
@@ -261,7 +261,7 @@ class Store:
         
         This function waits until the operation completes.
         
-        Raises: `wit_world.types.Err(wit_world.imports.kv_store.KvError)`
+        Raises: `componentize_py_types.Err(wit_world.imports.kv_store.KvError)`
         """
         raise NotImplementedError
     def delete_async(self, key: str) -> async_io.Pollable:
@@ -271,7 +271,7 @@ class Store:
         This function initiates an async delete of a value in the KV Store. Use
         `await-delete` to finish the lookup.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def list(self, options: ListOptions) -> async_io.Pollable:
@@ -283,7 +283,7 @@ class Store:
         
         This function waits until the operation completes.
         
-        Raises: `wit_world.types.Err(wit_world.imports.kv_store.KvError)`
+        Raises: `componentize_py_types.Err(wit_world.imports.kv_store.KvError)`
         """
         raise NotImplementedError
     def list_async(self, options: ListOptions) -> async_io.Pollable:
@@ -293,7 +293,7 @@ class Store:
         This function initiates an async list value in the KV Store. Use
         `await-list` to finish the lookup.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def __enter__(self) -> Self:
@@ -315,7 +315,7 @@ def await_lookup(handle: async_io.Pollable) -> Optional[Entry]:
     Returns `ok(some(v))` with the value `v` that was found, `ok(none)` if no value was
     found, or `err(e)` indicating the error `e` occurred.
     
-    Raises: `wit_world.types.Err(wit_world.imports.kv_store.KvError)`
+    Raises: `componentize_py_types.Err(wit_world.imports.kv_store.KvError)`
     """
     raise NotImplementedError
 def await_insert(handle: async_io.Pollable) -> None:
@@ -324,7 +324,7 @@ def await_insert(handle: async_io.Pollable) -> None:
     
     Returns `ok` if the `insert` succeeded, or an error code on failure.
     
-    Raises: `wit_world.types.Err(wit_world.imports.kv_store.KvError)`
+    Raises: `componentize_py_types.Err(wit_world.imports.kv_store.KvError)`
     """
     raise NotImplementedError
 def await_delete(handle: async_io.Pollable) -> bool:
@@ -334,7 +334,7 @@ def await_delete(handle: async_io.Pollable) -> bool:
     Returns `ok(true)` if a value was successfully deleted, `ok(false)` if no value was
     found, or `err(e)` indicating the error `e` occurred.
     
-    Raises: `wit_world.types.Err(wit_world.imports.kv_store.KvError)`
+    Raises: `componentize_py_types.Err(wit_world.imports.kv_store.KvError)`
     """
     raise NotImplementedError
 def await_list(handle: async_io.Pollable) -> async_io.Pollable:
@@ -344,6 +344,6 @@ def await_list(handle: async_io.Pollable) -> async_io.Pollable:
     Returns `ok(b)` with the JSON-encoded body `b` on success, or `err(e)` indicating
     the error `e` occurred.
     
-    Raises: `wit_world.types.Err(wit_world.imports.kv_store.KvError)`
+    Raises: `componentize_py_types.Err(wit_world.imports.kv_store.KvError)`
     """
     raise NotImplementedError

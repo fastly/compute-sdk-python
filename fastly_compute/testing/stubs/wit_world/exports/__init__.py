@@ -8,8 +8,8 @@ from abc import abstractmethod
 import weakref
 
 from componentize_py_types import Result, Ok, Err, Some
-from ..imports import http_req
 from ..imports import async_io
+from ..imports import http_req
 
 class HttpIncoming(Protocol):
 
@@ -26,7 +26,7 @@ class HttpIncoming(Protocol):
         stream the response body after the response has been initiated, use
         `send-downstream-streaming`.
         
-        Raises: `wit_world.types.Err(None)`
+        Raises: `componentize_py_types.Err(None)`
         """
         raise NotImplementedError
 

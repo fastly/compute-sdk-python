@@ -33,11 +33,11 @@ from abc import abstractmethod
 import weakref
 
 from componentize_py_types import Result, Ok, Err, Some
-from ..imports import cache
-from ..imports import http_req
 from ..imports import backend
-from ..imports import http_resp
 from ..imports import async_io
+from ..imports import http_resp
+from ..imports import http_req
+from ..imports import cache
 
 class ExtraLookupOptions:
     """
@@ -113,7 +113,7 @@ class SuggestedWriteOptions:
         """
         Returns the suggested value for the `write-options.vary-rule` field.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def get_initial_age_ns(self) -> int:
@@ -130,7 +130,7 @@ class SuggestedWriteOptions:
         """
         Returns the suggested value for the `write-options.surrogate-keys` field.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def get_length(self) -> Optional[int]:
@@ -179,7 +179,7 @@ class Entry:
         
         The request is not consumed.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def transaction_insert(self, resp_handle: http_resp.Response, options: WriteOptions) -> async_io.Pollable:
@@ -191,7 +191,7 @@ class Entry:
         
         The response is consumed.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def transaction_insert_and_stream_back(self, resp_handle: http_resp.Response, options: WriteOptions) -> Tuple[async_io.Pollable, Self]:
@@ -205,7 +205,7 @@ class Entry:
         
         The response is consumed.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def transaction_update(self, resp_handle: http_resp.Response, options: WriteOptions) -> None:
@@ -219,7 +219,7 @@ class Entry:
         
         The response is consumed.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def transaction_update_and_return_fresh(self, resp_handle: http_resp.Response, options: WriteOptions) -> Self:
@@ -234,7 +234,7 @@ class Entry:
         
         The response is consumed.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def transaction_record_not_cacheable(self, options: WriteOptions) -> None:
@@ -246,7 +246,7 @@ class Entry:
         Only the max age and, optionally, the vary rule are read from the `options`
         for this function.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def get_suggested_backend_request(self) -> http_req.Request:
@@ -257,7 +257,7 @@ class Entry:
         looked-up request is ranged, the suggested request will be unranged in order to try caching
         the entire response.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def get_suggested_write_options(self, response: http_resp.Response) -> SuggestedWriteOptions:
@@ -266,7 +266,7 @@ class Entry:
         
         The response is not consumed.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def prepare_response_for_storage(self, response: http_resp.Response) -> Tuple[StorageAction, http_resp.Response]:
@@ -279,7 +279,7 @@ class Entry:
         
         In addition to the updated response, this function returns the recommended storage action.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def get_found_response(self, transform_for_client: int) -> Optional[Tuple[http_resp.Response, async_io.Pollable]]:
@@ -291,7 +291,7 @@ class Entry:
         request. For example, a response retrieved for a range request may be transformed into a
         `206 Partial Content` response with an appropriate `content-range` header.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def get_state(self) -> cache.LookupState:
@@ -301,7 +301,7 @@ class Entry:
         Primarily useful after performing the lookup to determine what subsequent operations are
         possible and whether any insertion or update obligations exist.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def get_length(self) -> Optional[int]:
@@ -309,7 +309,7 @@ class Entry:
         Gets the length of the found response, returning `ok(none)` if there
         was no response found or no length was provided.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def get_max_age_ns(self) -> Optional[int]:
@@ -317,7 +317,7 @@ class Entry:
         Gets the configured max age of the found response in nanoseconds, returning `ok(none)`
         if there was no response found.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def get_stale_while_revalidate_ns(self) -> Optional[int]:
@@ -325,7 +325,7 @@ class Entry:
         Gets the configured stale-while-revalidate period of the found response in nanoseconds,
         returning `ok(none)` if there was no response found.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def get_age_ns(self) -> Optional[int]:
@@ -333,7 +333,7 @@ class Entry:
         Gets the age of the found response in nanoseconds, returning `ok(none)`
         if there was no response found.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def get_hits(self) -> Optional[int]:
@@ -344,7 +344,7 @@ class Entry:
         This figure only reflects hits for a stored response in a particular cache server
         or cluster, not the entire Fastly network.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def get_sensitive_data(self) -> Optional[bool]:
@@ -352,7 +352,7 @@ class Entry:
         Gets whether a found response is marked as containing sensitive data, returning `ok(none)`
         if there was no response found.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def get_surrogate_keys(self, max_len: int) -> Optional[str]:
@@ -365,7 +365,7 @@ class Entry:
         If the full list requires more than `max-len` bytes, an `error.buffer-len`
         error is returned containing the required size.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def get_vary_rule(self, max_len: int) -> Optional[str]:
@@ -378,7 +378,7 @@ class Entry:
         If the full list requires more than `max-len` bytes, an `error.buffer-len`
         error is returned containing the required size.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def transaction_abandon(self) -> None:
@@ -394,7 +394,7 @@ class Entry:
         requests. Consider using `transaction-record-not-cacheable` to make lookups for this request
         bypass the cache.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def __enter__(self) -> Self:
@@ -420,7 +420,7 @@ def is_request_cacheable(request: http_req.Request) -> bool:
     
     [RFC 9111]: https://www.rfc-editor.org/rfc/rfc9111.html
     
-    Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+    Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
     """
     raise NotImplementedError
 def get_suggested_cache_key(request: http_req.Request, max_len: int) -> bytes:
@@ -432,7 +432,7 @@ def get_suggested_cache_key(request: http_req.Request, max_len: int) -> bytes:
     
     At the moment, HTTP cache keys must always be 32 bytes.
     
-    Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+    Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
     """
     raise NotImplementedError
 def close_entry(handle: Entry) -> None:
@@ -443,6 +443,6 @@ def close_entry(handle: Entry) -> None:
     has been performed), closing the handle cancels any request collapsing, potentially choosing
     a new waiter to perform the insertion/update.
     
-    Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+    Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
     """
     raise NotImplementedError

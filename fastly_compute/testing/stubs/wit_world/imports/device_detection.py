@@ -23,6 +23,6 @@ def lookup(user_agent: str, max_len: int) -> Optional[str]:
     
     [here]: https://www.fastly.com/documentation/reference/vcl/variables/client-request/client-identified/
     
-    Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+    Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
     """
     raise NotImplementedError
