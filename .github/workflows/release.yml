@@ -100,8 +100,14 @@ jobs:
         include:
           - target: x86_64-apple-darwin
             runner: macos-26-intel
+            # Maturin defaults to 10.12 for x86_64, but componentize-py's
+            # build.rs compiles a native CPython host binary that requires
+            # >=10.15 (sqlite3_create_window_function) with Xcode 26's SDK.
+            # Python 3.12 itself requires 10.13+, so 10.15 is a safe minimum.
+            macosx_deployment_target: "10.15"
           - target: aarch64-apple-darwin
             runner: macos-26
+            macosx_deployment_target: "11.0"
 
     steps:
       - uses: actions/checkout@v6
@@ -126,6 +132,8 @@ jobs:
           container: "off"
           # abi3-py312 is set in [tool.maturin] features; no -i needed.
           args: --release --locked
+        env:
+          MACOSX_DEPLOYMENT_TARGET: ${{ matrix.macosx_deployment_target }}
 
       - name: Upload wheels
         uses: actions/upload-artifact@v4
