@@ -1,3 +1,5 @@
+# Package up release artifacts, and attach them to a new GitHub prerelease.
+
 name: Release
 
 # Triggers:
