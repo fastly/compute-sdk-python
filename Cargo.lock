@@ -484,8 +484,8 @@ dependencies = [
 
 [[package]]
 name = "componentize-py"
-version = "0.22.1"
-source = "git+https://github.com/bytecodealliance/componentize-py?tag=v0.22.1#81d582a2333198cff13c0b56de35d72c25a652e7"
+version = "0.23.0"
+source = "git+https://github.com/bytecodealliance/componentize-py?tag=v0.23.0#911ef76cc949ff11696232c00737c0a4a7474d1e"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -2669,7 +2669,7 @@ dependencies = [
 [[package]]
 name = "test-generator"
 version = "0.1.0"
-source = "git+https://github.com/bytecodealliance/componentize-py?tag=v0.22.1#81d582a2333198cff13c0b56de35d72c25a652e7"
+source = "git+https://github.com/bytecodealliance/componentize-py?tag=v0.23.0#911ef76cc949ff11696232c00737c0a4a7474d1e"
 dependencies = [
  "anyhow",
  "getrandom 0.2.17",

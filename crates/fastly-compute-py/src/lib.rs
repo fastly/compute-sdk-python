@@ -155,7 +155,7 @@ pub fn generate_bindings(
     log::debug!("  Output dir: {}", output_dir.display());
 
     componentize_py::BindingsGenerator {
-        wit_path: &[wit_path],
+        wit_paths: &[wit_path],
         worlds,
         features: &[],
         all_features: false,
@@ -194,7 +194,7 @@ pub fn build(output: PathBuf, entry_name: String, virtualenv: Option<PathBuf>) -
     log::info!("  Componentizing Python application...");
     futures::executor::block_on(async {
         componentize_py::ComponentGenerator {
-            wit_path: &[merged_wit_path.as_path()],
+            wit_paths: &[merged_wit_path.as_path()],
             worlds: &["fastly:compute/service@0.1.0"],
             features: &[],
             all_features: false,
