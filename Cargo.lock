@@ -894,6 +894,7 @@ dependencies = [
  "log",
  "pyo3",
  "serde",
+ "serde_json",
  "tempfile",
  "toml 0.8.23",
  "wac-graph",

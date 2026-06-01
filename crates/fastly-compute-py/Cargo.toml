@@ -29,6 +29,7 @@ componentize-py = { git = "https://github.com/bytecodealliance/componentize-py",
 futures = { version = "0.3", default-features = false, features = ["executor"] }
 pyo3 = { version = "0.28.3", features = ["abi3-py312"], optional = true }
 serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
 toml = "0.8"
 log = "0.4"
 env_logger = "0.11"

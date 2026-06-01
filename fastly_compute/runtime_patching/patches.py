@@ -40,7 +40,8 @@ except ImportError:
     # the wit_world, is around.
     def patch():
         """Pretend to patch."""
-        print("Faking the run of exception-mapping monkeypatches for test runner.")
+        import sys
+        print("Faking the run of exception-mapping monkeypatches for test runner.", file=sys.stderr)
 else:
     MAPPINGS = {
         wit_world.imports.acl.AclError.GENERIC_ERROR: fastly_compute.exceptions.acl.acl_error.GenericError,
