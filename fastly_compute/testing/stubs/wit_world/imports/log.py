@@ -35,7 +35,7 @@ class Endpoint:
         to that endpoint will succeed. Refer to your service dashboard to diagnose missing log
         events.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.OpenError)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.OpenError)`
         """
         raise NotImplementedError
     def write(self, msg: bytes) -> None:

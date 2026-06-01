@@ -13,8 +13,8 @@ from abc import abstractmethod
 import weakref
 
 from componentize_py_types import Result, Ok, Err, Some
-from ..imports import async_io
 from ..imports import types
+from ..imports import async_io
 
 class AclError(Enum):
     """
@@ -33,7 +33,7 @@ class Acl:
         """
         Opens an ACL linked to the current service with the given link name.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.OpenError)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.OpenError)`
         """
         raise NotImplementedError
     def lookup(self, ip_addr: types.IpAddress) -> Optional[async_io.Pollable]:
@@ -45,7 +45,7 @@ class Acl:
         If no matches are found, then `ok(none)` is returned. This corresponds
         to an HTTP error code of 204, “No Content”.
         
-        Raises: `wit_world.types.Err(wit_world.imports.acl.AclError)`
+        Raises: `componentize_py_types.Err(wit_world.imports.acl.AclError)`
         """
         raise NotImplementedError
     def __enter__(self) -> Self:

@@ -132,7 +132,7 @@ class Entry:
         
         Returns a result without waiting for any request collapsing that may be ongoing.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     @classmethod
@@ -143,7 +143,7 @@ class Entry:
         This operation always participates in request collapsing and may return stale objects. To
         bypass request collapsing, use `entry.lookup` or `insert` instead.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     @classmethod
@@ -155,7 +155,7 @@ class Entry:
         This operation always participates in request collapsing and may return stale objects. To
         bypass request collapsing, use `entry.lookup` or `insert` instead.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def transaction_insert(self, options: WriteOptions) -> async_io.Pollable:
@@ -167,7 +167,7 @@ class Entry:
         The returned handle is to a streaming body that is used for writing the object into
         the cache.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def transaction_insert_and_stream_back(self, options: WriteOptions) -> Tuple[async_io.Pollable, Self]:
@@ -183,7 +183,7 @@ class Entry:
         the cache. The returned cache handle provides a separate transaction for reading out the
         newly cached object to send elsewhere.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def transaction_update(self, options: WriteOptions) -> None:
@@ -194,7 +194,7 @@ class Entry:
         - `found`
         - `must-insert-or-update`
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def get_state(self) -> LookupState:
@@ -205,7 +205,7 @@ class Entry:
         Some SDKs were released that checked only FOUND to infer "usable";
         we preserve the equivalence for backwards compatibility.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def get_user_metadata(self, max_len: int) -> Optional[bytes]:
@@ -213,7 +213,7 @@ class Entry:
         Gets the user metadata of the found object, returning `ok(none)` if no object
         was found.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def get_body(self, options: GetBodyOptions) -> async_io.Pollable:
@@ -228,7 +228,7 @@ class Entry:
         the body of objects that are past the stale-while-revalidate period will not
         be available, even when other metadata is.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def get_length(self) -> Optional[int]:
@@ -236,7 +236,7 @@ class Entry:
         Gets the content length of the found object, returning `ok(none)` if
         there was no found object, or no content length was provided.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def get_max_age_ns(self) -> Optional[int]:
@@ -244,7 +244,7 @@ class Entry:
         Gets the configured max age of the found object, returning `ok(none)`
         if there was no found object.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def get_stale_while_revalidate_ns(self) -> Optional[int]:
@@ -252,7 +252,7 @@ class Entry:
         Gets the configured stale-while-revalidate period of the found object, returning `ok(none)`
         if there was no found object.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def get_age_ns(self) -> Optional[int]:
@@ -260,7 +260,7 @@ class Entry:
         Gets the age of the found object, returning `ok(none)` if there
         was no found object.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def get_hits(self) -> Optional[int]:
@@ -268,7 +268,7 @@ class Entry:
         Gets the number of cache hits for the found object, returning `ok(none)`
         if there was no found object.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def transaction_cancel(self) -> None:
@@ -278,7 +278,7 @@ class Entry:
         Useful if there is an error before streaming is possible, for example if a backend is
         unreachable.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def __enter__(self) -> Self:
@@ -338,7 +338,7 @@ class ReplaceEntry:
         
         This operation always participates in request collapsing and may return stale objects.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def get_age_ns(self) -> Optional[int]:
@@ -346,7 +346,7 @@ class ReplaceEntry:
         Gets the age of the existing object during replace, returning
         `ok(none)` if there was no object.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def get_body(self, options: GetBodyOptions) -> Optional[async_io.Pollable]:
@@ -357,7 +357,7 @@ class ReplaceEntry:
         The returned `body` must be closed before calling this function
         again on the same `replace-entry`.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def get_hits(self) -> Optional[int]:
@@ -365,7 +365,7 @@ class ReplaceEntry:
         Gets the number of cache hits for the existing object during replace,
         returning `ok(none)` if there was no object.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def get_length(self) -> Optional[int]:
@@ -374,7 +374,7 @@ class ReplaceEntry:
         returning `ok(none)` if there was no object, or no content
         length was provided.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def get_max_age_ns(self) -> Optional[int]:
@@ -382,7 +382,7 @@ class ReplaceEntry:
         Gets the configured max age of the existing object during replace,
         returning `ok(none)` if there was no object.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def get_stale_while_revalidate_ns(self) -> Optional[int]:
@@ -391,7 +391,7 @@ class ReplaceEntry:
         object during replace, returning `ok(none)` if there was no
         object.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def get_state(self) -> Optional[LookupState]:
@@ -403,7 +403,7 @@ class ReplaceEntry:
         Some SDKs were released that checked only FOUND to infer "usable";
         we preserve the equivalence for backwards compatibility.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def get_user_metadata(self, max_len: int) -> Optional[bytes]:
@@ -411,7 +411,7 @@ class ReplaceEntry:
         Gets the user metadata of the existing object during replace, returning
         `ok(none)` if there was no object.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def __enter__(self) -> Self:
@@ -433,7 +433,7 @@ def insert(key: bytes, options: WriteOptions) -> async_io.Pollable:
     The returned handle is to a streaming body that is used for writing the object into
     the cache.
     
-    Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+    Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
     """
     raise NotImplementedError
 def await_entry(handle: async_io.Pollable) -> Entry:
@@ -441,14 +441,14 @@ def await_entry(handle: async_io.Pollable) -> Entry:
     Continues the lookup transaction from which the given busy handle was returned,
     waiting for the leader transaction if request collapsed, and returns a cache handle.
     
-    Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+    Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
     """
     raise NotImplementedError
 def close_pending_entry(handle: async_io.Pollable) -> None:
     """
     Closes an interaction with the cache that has not yet finished request collapsing.
     
-    Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+    Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
     """
     raise NotImplementedError
 def close_entry(handle: Entry) -> None:
@@ -459,7 +459,7 @@ def close_entry(handle: Entry) -> None:
     update has been performed), closing the handle cancels any request collapsing, potentially
     choosing a new waiter to perform the insertion/update.
     
-    Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+    Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
     """
     raise NotImplementedError
 def replace_insert(handle: ReplaceEntry, options: WriteOptions) -> async_io.Pollable:
@@ -469,7 +469,7 @@ def replace_insert(handle: ReplaceEntry, options: WriteOptions) -> async_io.Poll
     The returned handle is to a streaming body that is used for writing the object into
     the cache.
     
-    Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+    Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
     """
     raise NotImplementedError
 def close_replace_entry(handle: ReplaceEntry) -> None:
@@ -480,6 +480,6 @@ def close_replace_entry(handle: ReplaceEntry) -> None:
     update has been performed), closing the handle cancels any request collapsing, potentially
     choosing a new waiter to perform the insertion/update.
     
-    Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+    Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
     """
     raise NotImplementedError

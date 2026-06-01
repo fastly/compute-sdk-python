@@ -37,21 +37,21 @@ def new() -> async_io.Pollable:
     """
     Creates a new empty body that can be used for outgoing requests and responses.
     
-    Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+    Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
     """
     raise NotImplementedError
 def append(dest: async_io.Pollable, src: async_io.Pollable) -> None:
     """
     Appends the contents of the body `src` to the body `dest`.
     
-    Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+    Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
     """
     raise NotImplementedError
 def read(body: async_io.Pollable, chunk_size: int) -> bytes:
     """
     Reads from a body.
     
-    Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+    Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
     """
     raise NotImplementedError
 def write(body: async_io.Pollable, buf: bytes) -> int:
@@ -61,7 +61,7 @@ def write(body: async_io.Pollable, buf: bytes) -> int:
     This function may write fewer bytes than requested; on success, the number of
     bytes actually written is returned.
     
-    Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+    Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
     """
     raise NotImplementedError
 def write_front(body: async_io.Pollable, buf: bytes) -> None:
@@ -70,7 +70,7 @@ def write_front(body: async_io.Pollable, buf: bytes) -> None:
     
     On success, this function always writes all the bytes of `buf`.
     
-    Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+    Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
     """
     raise NotImplementedError
 def close(body: async_io.Pollable) -> None:
@@ -85,7 +85,7 @@ def close(body: async_io.Pollable) -> None:
     If a handle is dropped without calling `close`, it's an *unsuccessful* stream
     termination.
     
-    Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+    Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
     """
     raise NotImplementedError
 def get_known_length(body: async_io.Pollable) -> Optional[int]:
@@ -107,7 +107,7 @@ def append_trailer(body: async_io.Pollable, name: str, value: bytes) -> None:
     """
     Adds a body trailing header with given value.
     
-    Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+    Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
     """
     raise NotImplementedError
 def get_trailer_names(body: async_io.Pollable, max_len: int, cursor: int) -> Tuple[str, Optional[int]]:
@@ -120,7 +120,7 @@ def get_trailer_names(body: async_io.Pollable, max_len: int, cursor: int) -> Tup
     or `none` if all the remaining names fit. If `max-len` is too small to fit any name, an
     `error.buffer-len` error is returned, providing a recommended buffer size.
     
-    Raises: `wit_world.types.Err(wit_world.imports.http_body.TrailerError)`
+    Raises: `componentize_py_types.Err(wit_world.imports.http_body.TrailerError)`
     """
     raise NotImplementedError
 def get_trailer_value(body: async_io.Pollable, name: str, max_len: int) -> Optional[bytes]:
@@ -135,7 +135,7 @@ def get_trailer_value(body: async_io.Pollable, name: str, max_len: int) -> Optio
     small to fit the value, an `error.buffer-len` error is returned, providing a
     recommended buffer size.
     
-    Raises: `wit_world.types.Err(wit_world.imports.http_body.TrailerError)`
+    Raises: `componentize_py_types.Err(wit_world.imports.http_body.TrailerError)`
     """
     raise NotImplementedError
 def get_trailer_values(body: async_io.Pollable, name: str, max_len: int, cursor: int) -> Tuple[bytes, Optional[int]]:
@@ -150,6 +150,6 @@ def get_trailer_values(body: async_io.Pollable, name: str, max_len: int, cursor:
     fit, or `none` if all the remaining values fit. If `max-len` is too small to fit any value,
     an `error.buffer-len` error is returned, providing a recommended buffer size.
     
-    Raises: `wit_world.types.Err(wit_world.imports.http_body.TrailerError)`
+    Raises: `componentize_py_types.Err(wit_world.imports.http_body.TrailerError)`
     """
     raise NotImplementedError

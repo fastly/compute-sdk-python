@@ -26,7 +26,7 @@ class PenaltyBox:
         """
         Opens a `penalty-box` identified by the given name.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.OpenError)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.OpenError)`
         """
         raise NotImplementedError
     def get_name(self) -> str:
@@ -40,14 +40,14 @@ class PenaltyBox:
         
         Valid ttl span is 1m to 1h and TTL value is truncated to the nearest minute.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def has(self, entry: str) -> bool:
         """
         Checks if `entry` is in the penaltybox.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def __enter__(self) -> Self:
@@ -72,7 +72,7 @@ class RateCounter:
         """
         Opens a `rate-counter` with the given name.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.OpenError)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.OpenError)`
         """
         raise NotImplementedError
     def get_name(self) -> str:
@@ -90,28 +90,28 @@ class RateCounter:
         
         Returns `true` if the client is penalized (i.e. should be limited), or `false` if not.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def increment(self, entry: str, delta: int) -> None:
         """
         Increments an entry in the ratecounter by `delta`.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def lookup_rate(self, entry: str, window: int) -> int:
         """
         Looks up the current rate for entry in the ratecounter for a window.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def lookup_count(self, entry: str, duration: int) -> int:
         """
         Looks up the current count for entry in the ratecounter for duration.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def __enter__(self) -> Self:

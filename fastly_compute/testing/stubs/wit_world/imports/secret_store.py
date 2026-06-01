@@ -37,14 +37,14 @@ class Secret:
         As the early note says, this `secret` will be local to the current sandbox, and
         will not be shared with other instances of this service.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def plaintext(self, max_len: int) -> bytes:
         """
         Returns the plaintext value of this secret.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def __enter__(self) -> Self:
@@ -68,7 +68,7 @@ class Store:
         """
         Opens the Secret Store with the given name.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.OpenError)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.OpenError)`
         """
         raise NotImplementedError
     def get(self, key: str) -> Optional[Secret]:
@@ -78,7 +78,7 @@ class Store:
         If successful, this method returns `ok(some(s))` containing the found secret `s` if the
         secret is found, or `ok(none)` if the secret was not found.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def __enter__(self) -> Self:

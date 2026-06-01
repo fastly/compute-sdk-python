@@ -27,14 +27,14 @@ class Store:
         
         Names are case sensitive.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.OpenError)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.OpenError)`
         """
         raise NotImplementedError
     def get(self, key: str, max_len: int) -> Optional[str]:
         """
         Fetches a value from the config store, returning `ok(none)` if it doesn't exist.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def __enter__(self) -> Self:

@@ -13,9 +13,9 @@ from abc import abstractmethod
 import weakref
 
 from componentize_py_types import Result, Ok, Err, Some
-from ..imports import http_req
 from ..imports import types
 from ..imports import async_io
+from ..imports import http_req
 
 class ExtraNextRequestOptions:
     """
@@ -65,7 +65,7 @@ def next_request(options: NextRequestOptions) -> async_io.Pollable:
        necessary to preserve state between multiple requests, store it outside
        of the sandbox.
     
-    Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+    Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
     """
     raise NotImplementedError
 def await_request(pending: async_io.Pollable) -> Optional[Tuple[http_req.Request, async_io.Pollable]]:
@@ -75,7 +75,7 @@ def await_request(pending: async_io.Pollable) -> Optional[Tuple[http_req.Request
     
     Returns `ok(none)` if there are no more requests for this sandbox.
     
-    Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+    Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
     """
     raise NotImplementedError
 def downstream_original_header_names(ds_request: http_req.Request, max_len: int, cursor: int) -> Tuple[str, Optional[int]]:
@@ -91,14 +91,14 @@ def downstream_original_header_names(ds_request: http_req.Request, max_len: int,
     or `none` if all the remaining names fit. If `max-len` is too small to fit any name,
     an `error.buffer-len` error is returned, providing a recommended buffer size.
     
-    Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+    Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
     """
     raise NotImplementedError
 def downstream_original_header_count(ds_request: http_req.Request) -> int:
     """
     Returns the number of headers in the client request as originally received.
     
-    Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+    Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
     """
     raise NotImplementedError
 def downstream_client_ip_addr(ds_request: http_req.Request) -> Optional[types.IpAddress]:
@@ -115,28 +115,28 @@ def downstream_client_h2_fingerprint(ds_request: http_req.Request, max_len: int)
     """
     Gets the HTTP/2 fingerprint of client request if available.
     
-    Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+    Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
     """
     raise NotImplementedError
 def downstream_client_request_id(ds_request: http_req.Request, max_len: int) -> str:
     """
     Gets the id of the current request if available.
     
-    Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+    Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
     """
     raise NotImplementedError
 def downstream_client_oh_fingerprint(ds_request: http_req.Request, max_len: int) -> str:
     """
     Gets the fingerprint of client request headers if available.
     
-    Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+    Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
     """
     raise NotImplementedError
 def downstream_client_ddos_detected(ds_request: http_req.Request) -> bool:
     """
     Returns whether the request was tagged as contributing to a DDoS attack.
     
-    Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+    Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
     """
     raise NotImplementedError
 def downstream_tls_cipher_openssl_name(ds_request: http_req.Request, max_len: int) -> Optional[bytes]:
@@ -149,7 +149,7 @@ def downstream_tls_cipher_openssl_name(ds_request: http_req.Request, max_len: in
     
     [OpenSSL name]: https://testssl.sh/openssl-iana.mapping.html
     
-    Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+    Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
     """
     raise NotImplementedError
 def downstream_tls_protocol(ds_request: http_req.Request, max_len: int) -> Optional[bytes]:
@@ -158,7 +158,7 @@ def downstream_tls_protocol(ds_request: http_req.Request, max_len: int) -> Optio
     
     Returns `ok(none)` if the downstream client connection is not a TLS connection.
     
-    Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+    Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
     """
     raise NotImplementedError
 def downstream_tls_client_hello(ds_request: http_req.Request, max_len: int) -> Optional[bytes]:
@@ -171,7 +171,7 @@ def downstream_tls_client_hello(ds_request: http_req.Request, max_len: int) -> O
     
     [RFC 5246]: https://www.rfc-editor.org/rfc/rfc5246#section-7.4.1.2
     
-    Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+    Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
     """
     raise NotImplementedError
 def downstream_tls_raw_client_certificate(ds_request: http_req.Request, max_len: int) -> Optional[bytes]:
@@ -182,7 +182,7 @@ def downstream_tls_raw_client_certificate(ds_request: http_req.Request, max_len:
     
     Returns `ok(none)` if the downstream client connection is not a TLS connection.
     
-    Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+    Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
     """
     raise NotImplementedError
 def downstream_tls_client_cert_verify_result(ds_request: http_req.Request) -> Optional[http_req.ClientCertVerifyResult]:
@@ -191,7 +191,7 @@ def downstream_tls_client_cert_verify_result(ds_request: http_req.Request) -> Op
     
     Returns `ok(none)` if the downstream client connection is not a TLS connection.
     
-    Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+    Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
     """
     raise NotImplementedError
 def downstream_tls_client_servername(ds_request: http_req.Request, max_len: int) -> Optional[str]:
@@ -200,7 +200,7 @@ def downstream_tls_client_servername(ds_request: http_req.Request, max_len: int)
     
     Returns `ok(none)` if not available.
     
-    Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+    Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
     """
     raise NotImplementedError
 def downstream_tls_ja3_md5(ds_request: http_req.Request) -> Optional[bytes]:
@@ -209,7 +209,7 @@ def downstream_tls_ja3_md5(ds_request: http_req.Request) -> Optional[bytes]:
     
     Returns `ok(none)` if the downstream client connection is not a TLS connection.
     
-    Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+    Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
     """
     raise NotImplementedError
 def downstream_tls_ja4(ds_request: http_req.Request, max_len: int) -> Optional[str]:
@@ -218,14 +218,14 @@ def downstream_tls_ja4(ds_request: http_req.Request, max_len: int) -> Optional[s
     
     Returns `ok(none)` if the downstream client connection is not a TLS connection.
     
-    Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+    Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
     """
     raise NotImplementedError
 def downstream_compliance_region(ds_request: http_req.Request, max_len: int) -> Optional[str]:
     """
     Gets the compliance region that the client IP address is in.
     
-    Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+    Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
     """
     raise NotImplementedError
 def fastly_key_is_valid(ds_request: http_req.Request) -> bool:
@@ -234,6 +234,6 @@ def fastly_key_is_valid(ds_request: http_req.Request) -> bool:
     Fastly-Key belonging to a user with the rights to purge content on this
     service.
     
-    Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+    Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
     """
     raise NotImplementedError

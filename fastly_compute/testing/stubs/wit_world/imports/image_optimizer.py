@@ -13,10 +13,10 @@ from abc import abstractmethod
 import weakref
 
 from componentize_py_types import Result, Ok, Err, Some
-from ..imports import http_req
 from ..imports import backend
 from ..imports import async_io
 from ..imports import http_resp
+from ..imports import http_req
 
 class ExtraImageOptimizerTransformOptions:
     """
@@ -42,6 +42,6 @@ class ImageOptimizerTransformOptions:
 
 def transform_image_optimizer_request(origin_image_request: http_req.Request, origin_image_request_body: Optional[async_io.Pollable], origin_image_request_backend: backend.Backend, io_transform_options: ImageOptimizerTransformOptions) -> Tuple[http_resp.Response, async_io.Pollable]:
     """
-    Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+    Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
     """
     raise NotImplementedError

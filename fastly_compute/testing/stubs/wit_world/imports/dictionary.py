@@ -27,7 +27,7 @@ class Dictionary:
         
         Names are case sensitive.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.OpenError)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.OpenError)`
         """
         raise NotImplementedError
     def lookup(self, key: str, max_len: int) -> Optional[str]:
@@ -37,7 +37,7 @@ class Dictionary:
         If the lookup is successful, this function returns `ok(some(s))` containing the found
         string `s`, or `ok(none)` if no entry with the given key was found.
         
-        Raises: `wit_world.types.Err(wit_world.imports.types.Error)`
+        Raises: `componentize_py_types.Err(wit_world.imports.types.Error)`
         """
         raise NotImplementedError
     def __enter__(self) -> Self:
