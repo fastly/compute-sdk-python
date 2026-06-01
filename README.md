@@ -19,7 +19,7 @@ Here's how to write your own Python WSGI app and run it on Fastly's edge network
 3. `cd your-project`
 4. Install the [Fastly CLI](https://www.fastly.com/documentation/reference/tools/cli/) if you don't already have it.
 5. `fastly compute init`
-6. Say yes when warned "The current directory isn't empty." Answer "[4] Other" when it asks for Language.
+6. Say yes when warned "The current directory isn't empty." Answer "Other" when it asks for Language.
 7. Add this to the bottom of `fastly.toml`:
    ```
    [scripts]
