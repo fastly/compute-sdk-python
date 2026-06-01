@@ -5,6 +5,8 @@ map that matches what gets injected into fastly_data metadata.
 """
 
 import json
+import os
+import shlex
 import subprocess
 import tempfile
 from pathlib import Path
@@ -21,14 +23,17 @@ def dependencies_output():
     Uses --output to write JSON to a temp file, avoiding any ambiguity from
     uv or logging infrastructure writing to stdout.
     """
+    cmd_str = os.environ.get("FASTLY_COMPUTE_PY")
+    if cmd_str:
+        cmd = shlex.split(cmd_str)
+    else:
+        cmd = ["uv", "run", "fastly-compute-py"]
+
     with tempfile.TemporaryDirectory() as tmp_dir:
         output_path = Path(tmp_dir) / "dependencies.json"
-
         subprocess.run(
-            [
-                "uv",
-                "run",
-                "fastly-compute-py",
+            cmd
+            + [
                 "dependencies",
                 "--format",
                 "json",
