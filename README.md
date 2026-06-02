@@ -1,6 +1,6 @@
 # Fastly Compute Python SDK
 
-Experimental Python SDK for [Fastly Compute](https://www.fastly.com/products/edge-compute) services
+Experimental Python SDK for [Fastly Compute](https://www.fastly.com/products/edge-compute) services.
 
 ## Highlights
 
@@ -10,24 +10,87 @@ Experimental Python SDK for [Fastly Compute](https://www.fastly.com/products/edg
 
 ## Quick Start
 
-Here's how to write your own Python WSGI app and run it on Fastly's edge network:
+### Install Dependencies
 
-1. Install the package that provides the Fastly Python build tool and gives you access to the Fastly API:
+To work with `fastly-compute` in Python, you must install two system dependencies:
 
-   `pip install fastly-compute`
-2. Make a project shaped like [our Flask example](/examples/flask-app). You may find it easiest to clone the [repository](/), copy the `examples/flask-app` folder, and modify it. If you change the name of the top-level `.py` file, be sure to also update the entrypoint (`entry = "your_top_level_module_name"`) in `pyproject.toml`.
-3. `cd your-project`
-4. Install the [Fastly CLI](https://www.fastly.com/documentation/reference/tools/cli/) if you don't already have it.
-5. `fastly compute init`
-6. Say yes when warned "The current directory isn't empty." Answer "Other" when it asks for Language.
-7. Add this to the bottom of `fastly.toml`:
+1. The [Fastly CLI](https://www.fastly.com/documentation/reference/tools/cli/).
+2. The [uv](https://docs.astral.sh/uv/getting-started/installation/) Python package manager.
+
+Additional dependencies, including the Python SDK for compute and build tooling, will be installed and managed by `uv` in an isolated environment.
+
+### Set Up Your Project
+
+For this basic project, we'll use the Flask microframework. We will create our project and add the SDK and build tooling by adding `fastly-compute` and `flask`:
+
+   ```console
+   $ uv init my-compute-service
+   ...
+   $ cd my-compute-service
+   $ uv add fastly-compute flask
+   ...
    ```
+
+### Write Your Service
+
+`uv init` automatically creates a `main.py` file in your project directory. Replace its contents with the following Flask application code:
+
+```python
+import platform
+from flask import Flask
+from fastly_compute.wsgi import WsgiHttpIncoming
+
+app = Flask(__name__)
+
+
+@app.route("/")
+def index():
+    version = platform.python_version()
+    return f"Hello from Python {version} on Fastly Compute!"
+
+HttpIncoming = WsgiHttpIncoming(app)
+```
+
+### Configure Compute Service Entry Point
+
+The `fastly-compute-py` build tool, provided as part of the `fastly-compute` package, needs to be told about the module containing the compute service we just created. We can do this by modifying the `pyproject.toml` as follows:
+
+```toml
+# Add to end of pyproject.toml
+[tool.fastly-compute]
+entry = "main"
+```
+
+Then, let's do a quick test to make sure we are able to build a WebAssembly (Wasm) component:
+
+```console
+$ uv run fastly-compute-py build
+Building Python application for Fastly Compute...
+  Entry point: main
+  Output: bin/main.wasm
+  Resolving Python dependencies...
+  Componentizing Python application...
+  Composing final WebAssembly module...
+  Injecting Fastly metadata...
+✓ Build complete: bin/main.wasm
+```
+
+### Test and Deploy Your Service Using the Fastly CLI
+
+Now that we have the skeleton of our service, let's test it using the [Fastly CLI](https://www.fastly.com/documentation/reference/tools/cli/).
+
+1. Run `fastly compute init`
+2. Say yes when warned "The current directory isn't empty." Answer "Other" when it asks for Language.
+3. Add this to the bottom of `fastly.toml`:
+
+   ```toml
    [scripts]
-   build = "fastly-compute-py build"
+   build = "uv run fastly-compute-py build"
    ```
 
-8. `fastly compute build`
-9. `fastly compute deploy`
+With that in place, we can now run `fastly compute serve` to test our service locally. When you're ready, you can use the Fastly CLI to deploy the service to the production fleet and perform other actions.
+
+See the [`examples/`](https://github.com/fastly/compute-sdk-python/examples/) directory for more examples.
 
 ## Run Some Examples on Your Own Machine
 
