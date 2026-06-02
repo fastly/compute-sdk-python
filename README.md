@@ -15,23 +15,30 @@ Here's how to write your own Python WSGI app and run it on Fastly's edge network
 1. Install the package that provides the Fastly Python build tool and gives you access to the Fastly API:
 
    `pip install fastly-compute`
-2. Make a project shaped like [our Flask example](/examples/flask-app). You may find it easiest to clone the [repository](/), copy the `examples/flask-app` folder, and modify it. If you change the name of the top-level `.py` file, be sure to also update the entrypoint (`entry = "your_top_level_module_name"`) in `pyproject.toml`.
-3. `cd your-project`
-4. Install the [Fastly CLI](https://www.fastly.com/documentation/reference/tools/cli/) if you don't already have it.
-5. `fastly compute init`
-6. Say yes when warned "The current directory isn't empty." Answer "Other" when it asks for Language.
-7. Add this to the bottom of `fastly.toml`:
+2. Make a project shaped like [our Flask example](https://github.com/fastly/compute-sdk-python/blob/main/examples/flask-app). You may find it easiest to clone the [repository](https://github.com/fastly/compute-sdk-python/), copy the `examples/flask-app` folder, and modify it. If you change the name of the top-level `.py` file, be sure to also update the entrypoint (`entry = "your_top_level_module_name"`) in `pyproject.toml`.
+3. If your project imports from `Flask` or `bottle` like ours do, pip-install whichever of them you need:
+   ```
+   pip install Flask
+   ```
+   ```
+   pip install Bottle
+   ```
+4. `cd your-project`
+5. Install the [Fastly CLI](https://www.fastly.com/documentation/reference/tools/cli/) if you don't already have it.
+6. `fastly compute init`
+7. Say yes when warned "The current directory isn't empty." Answer "Other" when it asks for Language.
+8. Add this to the bottom of `fastly.toml`:
    ```
    [scripts]
    build = "fastly-compute-py build"
    ```
 
-8. `fastly compute build`
-9. `fastly compute deploy`
+9. `fastly compute build`
+10. `fastly compute deploy`
 
 ## Run Some Examples on Your Own Machine
 
-We ship [a few simple examples](examples/README.md) you can run locally to get a taste of what's possible.
+We ship [a few simple examples](https://github.com/fastly/compute-sdk-python/blob/main/examples/README.md) you can run locally to get a taste of what's possible.
 
 ## Status
 
@@ -55,4 +62,4 @@ Currently supports...
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md).
+See [CONTRIBUTING.md](https://github.com/fastly/compute-sdk-python/blob/main/CONTRIBUTING.md).
