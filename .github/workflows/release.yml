@@ -68,12 +68,13 @@ jobs:
           rust-stable: ${{ env.RUST_STABLE }}
           rust-nightly: ${{ env.RUST_NIGHTLY }}
 
-      - name: Build CPython WASI via cargo
+      - name: Build CPython WASI via cargo check
         run: |
           cargo fetch
-          # Trigger build of dependencies (which includes componentize-py and its build.rs)
-          # Componentize-py will automatically download and configure its tested WASI-SDK version.
-          cargo build --release --locked --manifest-path crates/fastly-compute-py/Cargo.toml
+          # Trigger execution of build scripts by running cargo check.
+          # This fully compiles CPython inside componentize-py's build.rs,
+          # but skips compiling heavy Rust machine code, saving massive time!
+          cargo check --locked --manifest-path crates/fastly-compute-py/Cargo.toml
 
       - name: Package CPython WASI builddir
         shell: bash
