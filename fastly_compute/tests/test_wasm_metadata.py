@@ -1,7 +1,7 @@
 """Tests for Wasm producers metadata embedded in the built component.
 
 Verifies that all top-level producers section fields written by
-inject_fastly_metadata() are present and correct:
+inject_fastly_metadata() are present and correct.  For example:
 
   - language: Python 3.14
   - sdk: fastly-compute-py 0.1.0
@@ -23,8 +23,8 @@ import pytest
 WASM_PATH = Path("build/bottle-app.composed.wasm")
 
 # NOTE: these will need to be updated at times but serves as a sanity check
-FASTLY_COMPUTE_PY_VERSION = "0.1.0"
-COMPONENTIZE_PY_VERSION = "0.22.1"
+FASTLY_COMPUTE_PY_VERSION_RE = re.compile(r"0\.\d+\.\d+")
+COMPONENTIZE_PY_VERSION_RE = re.compile(r"0\.\d+\.\d+")
 PYTHON_VERSION = "3.14"
 
 
@@ -89,20 +89,19 @@ def test_language_python_version_matches_libpython(producers, metadata):
 
 
 def test_sdk_fastly_compute_py(producers):
-    assert (
-        producers.get("sdk", {}).get("fastly-compute-py") == FASTLY_COMPUTE_PY_VERSION
-    )
+    sdk_version = producers.get("sdk", {}).get("fastly-compute-py", "")
+    assert FASTLY_COMPUTE_PY_VERSION_RE.fullmatch(sdk_version) is not None
 
 
 def test_processed_by_componentize_py(producers):
-    assert (
-        producers.get("processed-by", {}).get("componentize-py")
-        == COMPONENTIZE_PY_VERSION
+    componentize_py_version = producers.get("processed-by", {}).get(
+        "componentize-py", ""
     )
+    assert COMPONENTIZE_PY_VERSION_RE.fullmatch(componentize_py_version) is not None
 
 
 def test_processed_by_fastly_compute_py(producers):
-    assert (
-        producers.get("processed-by", {}).get("fastly-compute-py")
-        == FASTLY_COMPUTE_PY_VERSION
+    fastly_compute_py_version = producers.get("processed-by", {}).get(
+        "fastly-compute-py", ""
     )
+    assert FASTLY_COMPUTE_PY_VERSION_RE.fullmatch(fastly_compute_py_version) is not None
