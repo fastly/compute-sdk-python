@@ -78,7 +78,7 @@ jobs:
       - name: Package CPython WASI builddir
         shell: bash
         run: |
-          MANIFEST_DIR=$(cargo metadata --format-version=1 | jq -r '.packages[] | select(.name == "componentize-py") | .manifest_path' | xargs dirname)
+          MANIFEST_DIR=$(cargo metadata --format-version=1 | jq -r '.packages[] | select(.name == "componentize-py") | .manifest_path' | tr '\\' '/' | xargs dirname)
           echo "Found componentize-py at $MANIFEST_DIR"
           tar -czf cpython-wasi.tar.gz -C "$MANIFEST_DIR" cpython/builddir/wasi
 
@@ -184,7 +184,7 @@ jobs:
         shell: bash
         run: |
           cargo fetch
-          MANIFEST_DIR=$(cargo metadata --format-version=1 | jq -r '.packages[] | select(.name == "componentize-py") | .manifest_path' | xargs dirname)
+          MANIFEST_DIR=$(cargo metadata --format-version=1 | jq -r '.packages[] | select(.name == "componentize-py") | .manifest_path' | tr '\\' '/' | xargs dirname)
           echo "Found componentize-py at $MANIFEST_DIR"
           tar -xzf cpython-wasi.tar.gz -C "$MANIFEST_DIR"
 
@@ -236,7 +236,7 @@ jobs:
         shell: bash
         run: |
           cargo fetch
-          MANIFEST_DIR=$(cargo metadata --format-version=1 | jq -r '.packages[] | select(.name == "componentize-py") | .manifest_path' | xargs dirname)
+          MANIFEST_DIR=$(cargo metadata --format-version=1 | jq -r '.packages[] | select(.name == "componentize-py") | .manifest_path' | tr '\\' '/' | xargs dirname)
           echo "Found componentize-py at $MANIFEST_DIR"
           tar -xzf cpython-wasi.tar.gz -C "$MANIFEST_DIR"
 
