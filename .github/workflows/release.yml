@@ -207,10 +207,54 @@ jobs:
           path: target/wheels/*.whl
           if-no-files-found: error
 
-  # Windows is not supported at the currently pinned componentize-py commit:
-  # its build.rs calls a POSIX configure script unconditionally when building
-  # CPython for WASI. Newer releases of componentize-py have Windows support;
-  # re-enable this job when upgrading componentize-py.
+  # Windows wheel — native build on windows-latest (x86_64).
+  build-windows:
+    name: "Windows x86_64"
+    runs-on: windows-latest
+    needs: [check-version, build-cpython-wasi]
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Rust toolchains
+        uses: ./.github/actions/setup-rust
+        with:
+          rust-stable: ${{ env.RUST_STABLE }}
+          rust-nightly: ${{ env.RUST_NIGHTLY }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Download CPython WASI artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: cpython-wasi
+
+      - name: Restore CPython WASI
+        shell: bash
+        run: |
+          cargo fetch
+          MANIFEST_DIR=$(cargo metadata --format-version=1 | jq -r '.packages[] | select(.name == "componentize-py") | .manifest_path' | xargs dirname)
+          echo "Found componentize-py at $MANIFEST_DIR"
+          tar -xzf cpython-wasi.tar.gz -C "$MANIFEST_DIR"
+
+      - name: Build wheels
+        uses: PyO3/maturin-action@v1
+        with:
+          maturin-version: ${{ env.MATURIN_VERSION }}
+          target: x86_64-pc-windows-msvc
+          container: "off"
+          # abi3-py312 is set in [tool.maturin] features; no -i needed.
+          args: --release --locked
+
+      - name: Upload wheels
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheels-windows-x86_64
+          path: target/wheels/*.whl
+          if-no-files-found: error
 
   # Build a source distribution for PyPI alongside the binary wheels.
   build-sdist:
@@ -238,7 +282,7 @@ jobs:
   # generate SHA256 checksums, and upload everything together.
   collect-artifacts:
     name: "Collect release artifacts"
-    needs: [build-linux, build-macos, build-sdist]
+    needs: [build-linux, build-macos, build-windows, build-sdist]
     runs-on: ubuntu-24.04
 
     steps:
