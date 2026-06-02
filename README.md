@@ -94,7 +94,7 @@ See the [`examples/`](https://github.com/fastly/compute-sdk-python/examples/) di
 
 ## Run Some Examples on Your Own Machine
 
-We ship [a few simple examples](examples/README.md) you can run locally to get a taste of what's possible.
+We ship [a few simple examples](https://github.com/fastly/compute-sdk-python/blob/main/examples/README.md) you can run locally to get a taste of what's possible.
 
 ## Status
 
@@ -118,4 +118,4 @@ Currently supports...
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md).
+See [CONTRIBUTING.md](https://github.com/fastly/compute-sdk-python/blob/main/CONTRIBUTING.md).
