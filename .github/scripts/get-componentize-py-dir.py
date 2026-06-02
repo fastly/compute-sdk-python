@@ -16,9 +16,7 @@ def main():
             )
         )
         # Find the package named "componentize-py"
-        pkg = next(
-            p for p in metadata["packages"] if p["name"] == "componentize-py"
-        )
+        pkg = next(p for p in metadata["packages"] if p["name"] == "componentize-py")
         # Print the parent directory of its Cargo.toml manifest with forward slashes
         print(Path(pkg["manifest_path"]).parent.as_posix())
         return 0

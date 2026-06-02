@@ -74,6 +74,7 @@ convention = "google"
 [tool.ruff.lint.per-file-ignores]
 "fastly_compute/tests/*" = ["D"]
 "examples/*" = ["D"]
+".github/*" = ["D"]
 # What can one say about __main__?
 "__main__.py" = ["D100"]
 
