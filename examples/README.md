@@ -24,7 +24,7 @@ This is actually a piece of the test harness; please ignore it.
 
 ## Building and Running Examples
 
-Before you use `make`, please [install the prerequisites](../CONTRIBUTING.md#prerequisites).
+Before you use `make`, please [install the prerequisites](https://github.com/fastly/compute-sdk-python/blob/main/CONTRIBUTING.md#prerequisites).
 
 ### Hello World in Flask or Bottle
 ```bash
