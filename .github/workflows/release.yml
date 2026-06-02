@@ -81,7 +81,7 @@ jobs:
         run: |
           MANIFEST_DIR=$(cargo metadata --format-version=1 | jq -r '.packages[] | select(.name == "componentize-py") | .manifest_path' | tr '\\' '/' | xargs dirname)
           echo "Found componentize-py at $MANIFEST_DIR"
-          tar -czf cpython-wasi.tar.gz -C "$MANIFEST_DIR" cpython/builddir/wasi
+          tar -czf cpython-wasi.tar.gz -C "$MANIFEST_DIR" --exclude="*/bin/*" --exclude="*.pc" --exclude="*/man/*" cpython/builddir/wasi
 
       - name: Upload CPython WASI artifact
         uses: actions/upload-artifact@v4
