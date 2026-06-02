@@ -10,12 +10,10 @@ on:
   push:
     tags:
       - "v*"
+  pull_request:
+    paths:
+      - ".github/workflows/release.yml"
   workflow_dispatch:
-    inputs:
-      version:
-        description: "Version label for artifacts (e.g. v0.1.0-test)"
-        required: true
-        default: "v0.0.0-dev"
 
 # Minimal permissions by default; create-github-release job adds write where needed.
 permissions:
@@ -45,8 +43,13 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Verify versions match
+        shell: bash
         run: |
-          python scripts/check_version_sync.py --tag "${{ github.event_name == 'workflow_dispatch' && inputs.version || github.ref_name }}"
+          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            python scripts/check_version_sync.py --tag "${{ github.ref_name }}"
+          else
+            python scripts/check_version_sync.py
+          fi
 
   # Linux wheels are built inside manylinux_2_28 containers via maturin-action.
   # We explicitly target manylinux 2_28; auto likely would too but pinning
