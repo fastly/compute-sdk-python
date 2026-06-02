@@ -25,7 +25,7 @@ wit-parser = "0.244"
 wit-component = "0.244"
 wasm-metadata = { version = "0.245", default-features = false }
 tempfile = "3"
-componentize-py = { git = "https://github.com/bytecodealliance/componentize-py", rev = "81d582a2333198cff13c0b56de35d72c25a652e7" }
+componentize-py = { git = "https://github.com/bytecodealliance/componentize-py", tag = "v0.23.0" }
 futures = { version = "0.3", default-features = false, features = ["executor"] }
 pyo3 = { version = "0.28.3", features = ["abi3-py312"], optional = true }
 serde = { version = "1.0", features = ["derive"] }
