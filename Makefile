@@ -96,7 +96,7 @@ lint: fastly_compute/runtime_patching/patches.py | $(STUBS_DIR)
 	@echo "Checking version synchronization..."
 	uv run python scripts/check_version_sync.py
 	@echo "Linting Python code..."
-	uv run --extra dev ruff check .
+	uv run --extra dev --extra test --extra examples ruff check .
 	uv run --extra dev --extra test pyrefly check
 	@echo "Linting Rust code..."
 	cd crates/fastly-compute-py && cargo clippy --release --no-default-features --features binary -- -D warnings
