@@ -10,12 +10,10 @@ on:
   push:
     tags:
       - "v*"
+  pull_request:
+    paths:
+      - ".github/workflows/release.yml"
   workflow_dispatch:
-    inputs:
-      version:
-        description: "Version label for artifacts (e.g. v0.1.0-test)"
-        required: true
-        default: "v0.0.0-dev"
 
 # Minimal permissions by default; create-github-release job adds write where needed.
 permissions:
@@ -45,8 +43,52 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Verify versions match
+        shell: bash
         run: |
-          python scripts/check_version_sync.py --tag "${{ github.event_name == 'workflow_dispatch' && inputs.version || github.ref_name }}"
+          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            python scripts/check_version_sync.py --tag "${{ github.ref_name }}"
+          else
+            python scripts/check_version_sync.py
+          fi
+
+  # Build CPython for WASI on a Linux runner and upload it as an artifact.
+  # Since WASI is platform-independent, this artifact is reused by both the
+  # macOS and Windows runner jobs to completely avoid compiling CPython from
+  # source (which adds CI time and is problematic on Windows).
+  build-cpython-wasi:
+    name: "Build CPython for WASI"
+    runs-on: ubuntu-24.04
+    needs: [check-version]
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Rust toolchains
+        uses: ./.github/actions/setup-rust
+        with:
+          rust-stable: ${{ env.RUST_STABLE }}
+          rust-nightly: ${{ env.RUST_NIGHTLY }}
+
+      - name: Build CPython WASI via cargo check
+        run: |
+          cargo fetch
+          # Trigger execution of build scripts by running cargo check.
+          # This fully compiles CPython inside componentize-py's build.rs,
+          # but skips compiling heavy Rust machine code, saving massive time!
+          cargo check --locked --manifest-path crates/fastly-compute-py/Cargo.toml
+
+      - name: Package CPython WASI builddir
+        shell: bash
+        run: |
+          MANIFEST_DIR="$(python .github/scripts/get-componentize-py-dir.py)"
+          echo "Found componentize-py at $MANIFEST_DIR"
+          tar -czf cpython-wasi.tar.gz -C "$MANIFEST_DIR" --exclude="*/bin/*" --exclude="*.pc" --exclude="*/man/*" cpython/builddir/wasi
+
+      - name: Upload CPython WASI artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cpython-wasi
+          path: cpython-wasi.tar.gz
+          if-no-files-found: error
 
   # Linux wheels are built inside manylinux_2_28 containers via maturin-action.
   # We explicitly target manylinux 2_28; auto likely would too but pinning
@@ -57,7 +99,7 @@ jobs:
   build-linux:
     name: "Linux ${{ matrix.target }}"
     runs-on: ubuntu-24.04
-    needs: [check-version]
+    needs: [check-version, build-cpython-wasi]
     strategy:
       fail-fast: false
       matrix:
@@ -69,6 +111,11 @@ jobs:
 
     steps:
       - uses: actions/checkout@v6
+
+      - name: Download CPython WASI artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: cpython-wasi
 
       - name: Build wheels
         uses: PyO3/maturin-action@v1
@@ -82,6 +129,10 @@ jobs:
           before-script-linux: |
             .github/scripts/setup-nightly.sh ${{ env.RUST_NIGHTLY }}
             rustup target add wasm32-unknown-unknown
+            cargo fetch
+            MANIFEST_DIR="$(python .github/scripts/get-componentize-py-dir.py)"
+            echo "Found componentize-py inside container at $MANIFEST_DIR"
+            tar -xzf cpython-wasi.tar.gz -C "$MANIFEST_DIR"
 
       - name: Upload wheels
         uses: actions/upload-artifact@v4
@@ -95,7 +146,7 @@ jobs:
   build-macos:
     name: "macOS ${{ matrix.target }}"
     runs-on: ${{ matrix.runner }}
-    needs: [check-version]
+    needs: [check-version, build-cpython-wasi]
     strategy:
       fail-fast: false
       matrix:
@@ -125,6 +176,19 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
+      - name: Download CPython WASI artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: cpython-wasi
+
+      - name: Restore CPython WASI
+        shell: bash
+        run: |
+          cargo fetch
+          MANIFEST_DIR="$(python .github/scripts/get-componentize-py-dir.py)"
+          echo "Found componentize-py at $MANIFEST_DIR"
+          tar -xzf cpython-wasi.tar.gz -C "$MANIFEST_DIR"
+
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
@@ -144,10 +208,54 @@ jobs:
           path: target/wheels/*.whl
           if-no-files-found: error
 
-  # Windows is not supported at the currently pinned componentize-py commit:
-  # its build.rs calls a POSIX configure script unconditionally when building
-  # CPython for WASI. Newer releases of componentize-py have Windows support;
-  # re-enable this job when upgrading componentize-py.
+  # Windows wheel — native build on windows-latest (x86_64).
+  build-windows:
+    name: "Windows x86_64"
+    runs-on: windows-latest
+    needs: [check-version, build-cpython-wasi]
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Rust toolchains
+        uses: ./.github/actions/setup-rust
+        with:
+          rust-stable: ${{ env.RUST_STABLE }}
+          rust-nightly: ${{ env.RUST_NIGHTLY }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Download CPython WASI artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: cpython-wasi
+
+      - name: Restore CPython WASI
+        shell: bash
+        run: |
+          cargo fetch
+          MANIFEST_DIR="$(python .github/scripts/get-componentize-py-dir.py)"
+          echo "Found componentize-py at $MANIFEST_DIR"
+          tar -xzf cpython-wasi.tar.gz -C "$MANIFEST_DIR"
+
+      - name: Build wheels
+        uses: PyO3/maturin-action@v1
+        with:
+          maturin-version: ${{ env.MATURIN_VERSION }}
+          target: x86_64-pc-windows-msvc
+          container: "off"
+          # abi3-py312 is set in [tool.maturin] features; no -i needed.
+          args: --release --locked
+
+      - name: Upload wheels
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheels-windows-x86_64
+          path: target/wheels/*.whl
+          if-no-files-found: error
 
   # Build a source distribution for PyPI alongside the binary wheels.
   build-sdist:
@@ -175,7 +283,7 @@ jobs:
   # generate SHA256 checksums, and upload everything together.
   collect-artifacts:
     name: "Collect release artifacts"
-    needs: [build-linux, build-macos, build-sdist]
+    needs: [build-linux, build-macos, build-windows, build-sdist]
     runs-on: ubuntu-24.04
 
     steps:
