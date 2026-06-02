@@ -111,24 +111,20 @@ to a GitHub pre-release.
 Releases are driven by a git tag. The release workflow builds binary wheels
 and attaches them to a GitHub pre-release for validation before PyPI publishing.
 
-The version must be kept in sync across two files:
-- `pyproject.toml` — `[project] version`
-- `crates/fastly-compute-py/Cargo.toml` — `[package] version`
+The version must be kept in sync across several files including `pyproject.toml`, `crates/fastly-compute-py/Cargo.toml`, and all workspace `uv.lock` / lockfiles.
 
 `make lint` checks these are in sync.
 
 ### Steps
 
-1. Bump `version` in both files above to the new version (e.g. `0.2.0`).
-
-2. Verify locally:
+1. Use the automated version bump helper to update versions and synchronize all cargo/uv lockfiles across the workspace and examples:
    ```bash
-   make lint
+   make bump-version VERSION=0.2.0
    ```
 
-3. PR the changes and land into main.
+2. PR the changes and land into main.
 
-4. Push tag (make sure you are on the right sha first)
+3. Push tag (make sure you are on the right sha first)
    ```
    git tag v0.2.0
    git push origin v0.2.0
@@ -138,6 +134,9 @@ The version must be kept in sync across two files:
    on any mismatch) → parallel wheel + sdist builds → `collect-artifacts` →
    `create-github-release`.
 
-5. (Pending) If the release is built successfully, it will make its way to PyPI
-   via trusted publishing.
-
+5. If the release workflow succeeds, a new pre-release will be avilable on
+   Github.  Afer review and update of the generated changelog, use the
+   Github UI to transition the release to no longer being a pre-release.
+   This will trigger the publish workflow and push a [new release to PyPI][pypi].
+   
+[pypi]: https://pypi.org/project/fastly-compute/
