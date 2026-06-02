@@ -51,6 +51,44 @@ jobs:
             python scripts/check_version_sync.py
           fi
 
+  # Build CPython for WASI on a Linux runner and upload it as an artifact.
+  # Since WASI is platform-independent, this artifact is reused by both the
+  # macOS and Windows runner jobs to completely avoid compiling CPython from
+  # source (which adds CI time and is problematic on Windows).
+  build-cpython-wasi:
+    name: "Build CPython for WASI"
+    runs-on: ubuntu-24.04
+    needs: [check-version]
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Rust toolchains
+        uses: ./.github/actions/setup-rust
+        with:
+          rust-stable: ${{ env.RUST_STABLE }}
+          rust-nightly: ${{ env.RUST_NIGHTLY }}
+
+      - name: Build CPython WASI via cargo
+        run: |
+          cargo fetch
+          # Trigger build of dependencies (which includes componentize-py and its build.rs)
+          # Componentize-py will automatically download and configure its tested WASI-SDK version.
+          cargo build --release --locked --manifest-path crates/fastly-compute-py/Cargo.toml
+
+      - name: Package CPython WASI builddir
+        shell: bash
+        run: |
+          MANIFEST_DIR=$(cargo metadata --format-version=1 | jq -r '.packages[] | select(.name == "componentize-py") | .manifest_path' | xargs dirname)
+          echo "Found componentize-py at $MANIFEST_DIR"
+          tar -czf cpython-wasi.tar.gz -C "$MANIFEST_DIR" cpython/builddir/wasi
+
+      - name: Upload CPython WASI artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cpython-wasi
+          path: cpython-wasi.tar.gz
+          if-no-files-found: error
+
   # Linux wheels are built inside manylinux_2_28 containers via maturin-action.
   # We explicitly target manylinux 2_28; auto likely would too but pinning
   # avoids unexpected wheel renames. See https://github.com/pypa/manylinux.
@@ -60,7 +98,7 @@ jobs:
   build-linux:
     name: "Linux ${{ matrix.target }}"
     runs-on: ubuntu-24.04
-    needs: [check-version]
+    needs: [check-version, build-cpython-wasi]
     strategy:
       fail-fast: false
       matrix:
@@ -72,6 +110,11 @@ jobs:
 
     steps:
       - uses: actions/checkout@v6
+
+      - name: Download CPython WASI artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: cpython-wasi
 
       - name: Build wheels
         uses: PyO3/maturin-action@v1
@@ -85,6 +128,10 @@ jobs:
           before-script-linux: |
             .github/scripts/setup-nightly.sh ${{ env.RUST_NIGHTLY }}
             rustup target add wasm32-unknown-unknown
+            cargo fetch
+            MANIFEST_DIR=$(cargo metadata --format-version=1 | jq -r '.packages[] | select(.name == "componentize-py") | .manifest_path' | xargs dirname)
+            echo "Found componentize-py inside container at $MANIFEST_DIR"
+            tar -xzf cpython-wasi.tar.gz -C "$MANIFEST_DIR"
 
       - name: Upload wheels
         uses: actions/upload-artifact@v4
@@ -98,7 +145,7 @@ jobs:
   build-macos:
     name: "macOS ${{ matrix.target }}"
     runs-on: ${{ matrix.runner }}
-    needs: [check-version]
+    needs: [check-version, build-cpython-wasi]
     strategy:
       fail-fast: false
       matrix:
@@ -127,6 +174,19 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Download CPython WASI artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: cpython-wasi
+
+      - name: Restore CPython WASI
+        shell: bash
+        run: |
+          cargo fetch
+          MANIFEST_DIR=$(cargo metadata --format-version=1 | jq -r '.packages[] | select(.name == "componentize-py") | .manifest_path' | xargs dirname)
+          echo "Found componentize-py at $MANIFEST_DIR"
+          tar -xzf cpython-wasi.tar.gz -C "$MANIFEST_DIR"
 
       - name: Build wheels
         uses: PyO3/maturin-action@v1
