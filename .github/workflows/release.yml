@@ -79,7 +79,7 @@ jobs:
       - name: Package CPython WASI builddir
         shell: bash
         run: |
-          MANIFEST_DIR=$(cargo metadata --format-version=1 | jq -r '.packages[] | select(.name == "componentize-py") | .manifest_path' | tr '\\' '/' | xargs dirname)
+          MANIFEST_DIR="$(python .github/scripts/get-componentize-py-dir.py)"
           echo "Found componentize-py at $MANIFEST_DIR"
           tar -czf cpython-wasi.tar.gz -C "$MANIFEST_DIR" --exclude="*/bin/*" --exclude="*.pc" --exclude="*/man/*" cpython/builddir/wasi
 
@@ -130,8 +130,7 @@ jobs:
             .github/scripts/setup-nightly.sh ${{ env.RUST_NIGHTLY }}
             rustup target add wasm32-unknown-unknown
             cargo fetch
-            COMPONENTIZE_PY_DIR=$(find /root/.cargo/git/checkouts -type d -name "componentize-py-*" | head -n 1)
-            MANIFEST_DIR=$(find "$COMPONENTIZE_PY_DIR" -name "Cargo.toml" -exec dirname {} \; | head -n 1)
+            MANIFEST_DIR="$(python .github/scripts/get-componentize-py-dir.py)"
             echo "Found componentize-py inside container at $MANIFEST_DIR"
             tar -xzf cpython-wasi.tar.gz -C "$MANIFEST_DIR"
 
@@ -186,7 +185,7 @@ jobs:
         shell: bash
         run: |
           cargo fetch
-          MANIFEST_DIR=$(cargo metadata --format-version=1 | jq -r '.packages[] | select(.name == "componentize-py") | .manifest_path' | tr '\\' '/' | xargs dirname)
+          MANIFEST_DIR="$(python .github/scripts/get-componentize-py-dir.py)"
           echo "Found componentize-py at $MANIFEST_DIR"
           tar -xzf cpython-wasi.tar.gz -C "$MANIFEST_DIR"
 
@@ -238,7 +237,7 @@ jobs:
         shell: bash
         run: |
           cargo fetch
-          MANIFEST_DIR=$(cargo metadata --format-version=1 | jq -r '.packages[] | select(.name == "componentize-py") | .manifest_path' | tr '\\' '/' | xargs dirname)
+          MANIFEST_DIR="$(python .github/scripts/get-componentize-py-dir.py)"
           echo "Found componentize-py at $MANIFEST_DIR"
           tar -xzf cpython-wasi.tar.gz -C "$MANIFEST_DIR"
 
