@@ -96,7 +96,7 @@ lint: fastly_compute/runtime_patching/patches.py | $(STUBS_DIR)
 	@echo "Checking version synchronization..."
 	uv run python scripts/check_version_sync.py
 	@echo "Linting Python code..."
-	uv run --extra dev ruff check .
+	uv run --extra dev --extra test --extra examples ruff check .
 	uv run --extra dev --extra test pyrefly check
 	@echo "Linting Rust code..."
 	cd crates/fastly-compute-py && cargo clippy --release --no-default-features --features binary -- -D warnings
@@ -119,6 +119,12 @@ format-check:
 	@echo "Checking Rust formatting..."
 	cd crates/fastly-compute-py && cargo fmt --check
 
+# Bump version numbers across the project for a new release
+bump-version:
+	@test -n "$(VERSION)" || (echo "Error: VERSION is required. Example: make bump-version VERSION=0.2.0" && exit 1)
+	uv run python scripts/bump_version.py $(VERSION)
+	$(MAKE) lint
+
 # Help target
 help:
 	@echo "Fastly Compute Python SDK"
@@ -132,6 +138,7 @@ help:
 	@echo "  serve [EXAMPLE=name]    Serve example (default: $(EXAMPLE))"
 	@echo "  test                    Run integration tests (builds all examples)"
 	@echo "  test-update-snapshots   Update snapshot test baselines"
+	@echo "  bump-version VERSION=vX.Y.Z Bump version across pyproject.toml and Cargo.toml"
 	@echo "  build-all               Build all examples (alias for 'all')"
 	@echo "  list-examples           List available examples"
 	@echo "  clean                   Clean all build artifacts (including Rust)"
@@ -156,4 +163,4 @@ help:
 	@echo ""
 	@echo "Available examples: $(EXAMPLES)"
 
-.PHONY: all serve test test-update-snapshots list-examples build-all clean lint lint-fix format format-check help
+.PHONY: all serve test test-update-snapshots list-examples build-all clean lint lint-fix format format-check help bump-version
