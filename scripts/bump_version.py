@@ -48,11 +48,13 @@ def main() -> int:
     pyproject_path = root_dir / "pyproject.toml"
     cargo_path = root_dir / "crates" / "fastly-compute-py" / "Cargo.toml"
 
+    new_version_line = f'version = "{new_version}"'
+
     # pyrpoject.toml: Matches `version = "X.Y.Z"` under [project]
-    update_file_version(pyproject_path, r'(?<=^version = ")[^"]+', new_version)
+    update_file_version(pyproject_path, r'^version = ".*$', new_version_line)
 
     # Cargo.toml: Matches `version = "X.Y.Z"` under [package]
-    update_file_version(cargo_path, r'(?<=^version = ")[^"]+', new_version)
+    update_file_version(cargo_path, r'^version = ".*$', new_version_line)
 
     # Update Cargo.lock
     print("Updating Cargo.lock...")
