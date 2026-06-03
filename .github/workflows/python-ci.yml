@@ -18,7 +18,8 @@ env:
   WASM_TOOLS_VERSION: "1.250.0"
 
 jobs:
-  build:
+  lint_build_test:
+    name: "Lint, Build & Test"
     runs-on: ubuntu-24.04
     steps:
     - uses: actions/checkout@v6
