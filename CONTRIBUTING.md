@@ -134,9 +134,9 @@ The version must be kept in sync across several files including `pyproject.toml`
    on any mismatch) → parallel wheel + sdist builds → `collect-artifacts` →
    `create-github-release`.
 
-5. If the release workflow succeeds, a new pre-release will be avilable on
-   Github.  Afer review and update of the generated changelog, use the
-   Github UI to transition the release to no longer being a pre-release.
+5. If the release workflow succeeds, a new pre-release will be available on
+   GitHub.  Afer review and update of the generated changelog, use the
+   GitHub UI to transition the release to no longer being a pre-release.
    This will trigger the publish workflow and push a [new release to PyPI][pypi].
-   
+
 [pypi]: https://pypi.org/project/fastly-compute/
