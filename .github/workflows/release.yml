@@ -336,12 +336,16 @@ jobs:
           name: release-artifacts
           path: dist/
 
+      - name: Package Starter Kits
+        run: |
+          make starter-kits
+
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           TAG="${{ github.ref_name }}"
-          gh release create "$TAG" dist/*.whl dist/*.tar.gz dist/checksums.txt \
+          gh release create "$TAG" dist/*.whl dist/*.tar.gz dist/checksums.txt dist/starter-kit-python-*.zip \
             --title "$TAG" \
             --prerelease \
             --generate-notes \

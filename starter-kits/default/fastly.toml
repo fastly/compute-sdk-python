@@ -1,0 +1,8 @@
+# This file describes a Fastly Compute package. To learn more visit:
+# https://www.fastly.com/documentation/reference/compute/fastly-toml
+
+authors = []
+description = "A basic starter kit that demonstrates routing and simple responses in Python."
+language = "python"
+manifest_version = 3
+name = "fastly-compute-python-app"

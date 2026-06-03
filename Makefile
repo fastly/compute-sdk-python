@@ -125,6 +125,10 @@ bump-version:
 	uv run python scripts/bump_version.py $(VERSION)
 	$(MAKE) lint
 
+# Package all starter kits under starter-kits/ into dist/
+starter-kits:
+	@uv run python scripts/package_starter_kits.py
+
 # Help target
 help:
 	@echo "Fastly Compute Python SDK"
@@ -163,4 +167,4 @@ help:
 	@echo ""
 	@echo "Available examples: $(EXAMPLES)"
 
-.PHONY: all serve test test-update-snapshots list-examples build-all clean lint lint-fix format format-check help bump-version
+.PHONY: all serve test test-update-snapshots list-examples build-all clean lint lint-fix format format-check help bump-version starter-kits

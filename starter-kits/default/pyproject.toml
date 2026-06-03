@@ -1,0 +1,12 @@
+[project]
+name = "fastly-compute-python-app"
+version = "0.1.0"
+description = "A basic starter kit for Python on Fastly Compute"
+requires-python = ">=3.12"
+dependencies = [
+    "bottle>=0.12.25",
+    "fastly-compute>=0.1.2",
+]
+
+[tool.fastly-compute]
+entry = "main"
