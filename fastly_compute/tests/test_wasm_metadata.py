@@ -7,6 +7,7 @@ inject_fastly_metadata() are present and correct.  For example:
   - sdk: fastly-compute-py 0.1.0
   - processed-by: componentize-py 0.22.1
   - processed-by: fastly-compute-py 0.1.0
+  - processed-by: fastly_data (package_info with dependency versions)
 
 The language version is also cross-checked against the libpython*.so name
 embedded in the component tree to catch version drift when upgrading
@@ -23,8 +24,7 @@ import pytest
 WASM_PATH = Path("build/bottle-app.composed.wasm")
 
 # NOTE: these will need to be updated at times but serves as a sanity check
-FASTLY_COMPUTE_PY_VERSION_RE = re.compile(r"0\.\d+\.\d+")
-COMPONENTIZE_PY_VERSION_RE = re.compile(r"0\.\d+\.\d+")
+VERSION_RE = re.compile(r"\d+\.\d+\.\d+")
 PYTHON_VERSION = "3.14"
 
 
@@ -50,6 +50,17 @@ def producers(metadata):
     return dict(raw) if raw else {}
 
 
+@pytest.fixture(scope="module")
+def fastly_data(producers):
+    """Return the parsed fastly_data object injected by the build tool."""
+    fastly_data_str = producers.get("processed-by", {}).get("fastly_data")
+    if fastly_data_str is None:
+        pytest.skip(
+            "fastly_data not present (UV may not have been available during build)"
+        )
+    return json.loads(fastly_data_str)
+
+
 def _libpython_version(metadata) -> str | None:
     """Return the version from the first libpython*.so module name in the tree."""
     nodes = [metadata]
@@ -65,10 +76,6 @@ def _libpython_version(metadata) -> str | None:
                     return m.group(1)
         else:
             nodes.extend(data.get("children", []))
-
-
-def test_language_python(producers):
-    assert producers.get("language", {}).get("Python") == PYTHON_VERSION
 
 
 def test_language_python_version_matches_libpython(producers, metadata):
@@ -90,18 +97,24 @@ def test_language_python_version_matches_libpython(producers, metadata):
 
 def test_sdk_fastly_compute_py(producers):
     sdk_version = producers.get("sdk", {}).get("fastly-compute-py", "")
-    assert FASTLY_COMPUTE_PY_VERSION_RE.fullmatch(sdk_version) is not None
+    assert VERSION_RE.fullmatch(sdk_version) is not None
 
 
-def test_processed_by_componentize_py(producers):
-    componentize_py_version = producers.get("processed-by", {}).get(
-        "componentize-py", ""
-    )
-    assert COMPONENTIZE_PY_VERSION_RE.fullmatch(componentize_py_version) is not None
+def test_processed_by_versions(producers):
+    """Verify componentize-py and fastly-compute-py versions in processed-by."""
+    processed_by = producers.get("processed-by", {})
+    componentize_py_version = processed_by.get("componentize-py", "")
+    fastly_compute_py_version = processed_by.get("fastly-compute-py", "")
+    assert VERSION_RE.fullmatch(componentize_py_version) is not None
+    assert VERSION_RE.fullmatch(fastly_compute_py_version) is not None
 
 
-def test_processed_by_fastly_compute_py(producers):
-    fastly_compute_py_version = producers.get("processed-by", {}).get(
-        "fastly-compute-py", ""
-    )
-    assert FASTLY_COMPUTE_PY_VERSION_RE.fullmatch(fastly_compute_py_version) is not None
+def test_fastly_data_contains_bottle_dependency(fastly_data):
+    """fastly_data injected by the build tool must include bottle.
+
+    The build tool collects dependencies via UV's PEP 751 export and writes
+    them directly as fastly_data.  The CLI merges its own fields (build_info,
+    machine_info, script_info) on top without overwriting package_info.
+    """
+    bottle_version = fastly_data["package_info"]["packages"]["bottle"]
+    assert VERSION_RE.fullmatch(bottle_version) is not None

@@ -36,7 +36,6 @@ pub enum Command {
         #[arg(short, long)]
         virtualenv: Option<PathBuf>,
     },
-
     /// Generate WIT binding stubs for use with type checkers and IDEs
     Bindings {
         /// WIT directory to generate bindings from (default: wit)
@@ -54,4 +53,26 @@ pub enum Command {
         /// Output directory for the generated stubs
         output_dir: PathBuf,
     },
+    /// List project dependencies in the specified format
+    Dependencies {
+        /// Output format for dependencies
+        #[arg(short, long, default_value = "json")]
+        format: DependencyFormat,
+
+        /// Write output to this file instead of stdout
+        #[arg(short, long)]
+        output: Option<PathBuf>,
+
+        /// Virtual environment in which to look for modules (default:
+        /// VIRTUAL_ENV env var or .venv)
+        #[arg(short, long)]
+        virtualenv: Option<PathBuf>,
+    },
+}
+
+#[derive(Clone, Debug, clap::ValueEnum)]
+pub enum DependencyFormat {
+    /// JSON object format: {"package-name": "1.0.0", ...}
+    /// Matches the format used in fastly_data metadata
+    Json,
 }

@@ -14,6 +14,7 @@ use wasm_metadata::AddMetadata;
 
 pub mod cli;
 pub mod config;
+pub mod dependencies;
 pub mod site_packages;
 
 use cli::Cli;
@@ -112,6 +113,34 @@ pub fn run_main(cli: &Cli) -> Result<()> {
                 world_module.as_deref(),
                 output_dir,
             )?;
+        }
+        cli::Command::Dependencies {
+            format,
+            output,
+            virtualenv,
+        } => {
+            let deps = dependencies::get_dependencies(virtualenv)?;
+
+            match format {
+                cli::DependencyFormat::Json => {
+                    // Convert to HashMap matching fastly_data packages format
+                    let mut packages = std::collections::HashMap::new();
+                    for dep in deps {
+                        packages.insert(dep.name, dep.version);
+                    }
+
+                    let json = serde_json::to_string_pretty(&packages)
+                        .context("Failed to serialize dependencies to JSON")?;
+
+                    match output {
+                        Some(path) => {
+                            fs::write(path, &json)
+                                .context("Failed to write dependencies to output file")?;
+                        }
+                        None => println!("{}", json),
+                    }
+                }
+            }
         }
     }
 
@@ -223,7 +252,7 @@ pub fn build(output: PathBuf, entry_name: String, virtualenv: Option<PathBuf>) -
         compose_with_wasiless(&temp_component_wasm_path, WASILESS_WASM, WRAP_WAC, &output)?;
 
     log::info!("  Injecting Fastly metadata...");
-    let annotated = inject_fastly_metadata(composed)?;
+    let annotated = inject_fastly_metadata(composed, &virtualenv)?;
 
     fs::write(&output, annotated)
         .with_context(|| format!("Failed to write output: {}", output.display()))?;
@@ -302,16 +331,18 @@ fn compose_with_wasiless(
 /// - `processed-by: componentize-py <version>` — the tool that performed the
 ///   core Wasm transformation. `fastly-compute-py` also adds itself here as
 ///   the build orchestrator.
+/// - `processed-by: fastly_data` — package dependency list in the same JSON
+///   format the Fastly CLI uses for all other languages. The CLI merges its
+///   own fields (build_info, machine_info, script_info) on top and skips
+///   re-collecting package_info when this key is already present.
 ///
 /// Note: the Fastly-proprietary `fastly.manifest.*` custom sections
 /// (language, version, service_id, etc.) are **not** written here. Those are
 /// injected during package ingestion, sourced from the `fastly.toml` manifest
 /// that the CLI bundles alongside the Wasm in the upload package.
-/// Dependency lists, build scripts, and machine info are similarly the CLI's
-/// responsibility via its `fastly_data` producers entry.
 ///
 /// [Producers Section spec]: https://github.com/WebAssembly/tool-conventions/blob/main/ProducersSection.md
-fn inject_fastly_metadata(wasm: Vec<u8>) -> Result<Vec<u8>> {
+fn inject_fastly_metadata(wasm: Vec<u8>, virtualenv: &Option<PathBuf>) -> Result<Vec<u8>> {
     let mut add_metadata = AddMetadata::default();
 
     // Source language. The version is the CPython version bundled by
@@ -336,6 +367,19 @@ fn inject_fastly_metadata(wasm: Vec<u8>) -> Result<Vec<u8>> {
         "fastly-compute-py".to_owned(),
         env!("CARGO_PKG_VERSION").to_owned(),
     ));
+
+    // Inject dependencies as fastly_data, matching the format the Fastly CLI
+    // writes for other languages. The CLI merges its own fields on top and
+    // skips re-collecting package_info when this key is already present.
+    let fastly_data_json = dependencies::get_fastly_data_json(virtualenv)?;
+    if !fastly_data_json.is_empty() {
+        log::debug!("Injecting fastly_data with package dependencies");
+        add_metadata
+            .processed_by
+            .push(("fastly_data".to_owned(), fastly_data_json));
+    } else {
+        log::debug!("No dependencies found to inject");
+    }
 
     add_metadata
         .to_wasm(&wasm)

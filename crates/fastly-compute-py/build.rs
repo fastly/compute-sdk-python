@@ -12,7 +12,8 @@ fn main() -> Result<()> {
     println!("cargo:rerun-if-changed=../../wrap_app_in_wasiless.wac");
     println!("cargo:rerun-if-changed=../../Cargo.lock");
 
-    let root_dir = PathBuf::from("../../");
+    let manifest_dir = env::var("CARGO_MANIFEST_DIR").expect("Failed to get CARGO_MANIFEST_DIR");
+    let root_dir: PathBuf = [&manifest_dir, "..", ".."].iter().collect();
     let wit_dir = root_dir.join("wit");
     let out_dir = PathBuf::from(env::var("OUT_DIR")?);
 

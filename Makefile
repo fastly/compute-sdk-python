@@ -73,11 +73,11 @@ serve: $(WASM_FILE)
 
 # Test all examples (requires all WASM files to be built)
 test: $(COMPOSED_WASMS)
-	VICEROY=$(VICEROY) uv run --extra test pytest
+	VICEROY=$(VICEROY) FASTLY_COMPUTE_PY="$(FASTLY_COMPUTE_PY)" uv run --extra test pytest
 
 # Update snapshots for snapshot tests
 test-update-snapshots: $(COMPOSED_WASMS)
-	VICEROY=$(VICEROY) uv run --extra test pytest --snapshot-update
+	VICEROY=$(VICEROY) FASTLY_COMPUTE_PY="$(FASTLY_COMPUTE_PY)" uv run --extra test pytest --snapshot-update
 
 # List available examples
 list-examples:
